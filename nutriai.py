@@ -16,7 +16,7 @@ def get_gemini_repsonse(input,image):
     model=genai.GenerativeModel('gemini-pro-vision')
     response=model.generate_content([input,image[0]],
                                     generation_config=genai.types.GenerationConfig(
-                                        temperature=0.01)
+                                        temperature=0.001)
                                     )
     return response.text
 
