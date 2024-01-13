@@ -12,9 +12,9 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 ## Function to load Google Gemini Pro Vision API And get response
 
-def get_gemini_repsonse(input,image):
+def get_gemini_repsonse(input,image,prompt):
     model=genai.GenerativeModel('gemini-pro-vision')
-    response=model.generate_content([input,image[0]],
+    response=model.generate_content([input,image[0]],prompt,
                                     generation_config=genai.types.GenerationConfig(
                                         temperature=0.001)
                                     )
@@ -43,7 +43,7 @@ st.set_page_config(page_title="NutriAI WebApp",
 
 st.header("NutriAI WebApp")
 st.subheader('Calculate the food nutrition value by uploading the image')
-# input=st.text_input("Input Prompt: ",key="input")
+input=st.text_input("Input items: ",key="input",placeholder='Specify the amount and items (not necessary)')
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 image=""   
 if uploaded_file is not None:
@@ -70,7 +70,7 @@ You are an expert nutritionist where you need to see the food items from the ima
 
 if submit:
     image_data=input_image_setup(uploaded_file)
-    response=get_gemini_repsonse(input_prompt,image_data)
+    response=get_gemini_repsonse(input_prompt,image_data,input)
     st.subheader("Here are the Nutrition values:\n")
     st.write(response)
 
