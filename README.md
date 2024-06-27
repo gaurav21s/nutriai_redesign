@@ -26,7 +26,9 @@ GOOGLE_API_KEY=your_google_api_key_here
 ## Usage
 
 Run the Streamlit app:
+```shell
 streamlit run nutriai.py
+```
 
 Then, open your web browser and go to `http://localhost:8501` to use the application.
 
