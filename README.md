@@ -2,6 +2,8 @@
 
 NutriAI is a vibrant Streamlit application that calculates food nutrition values using Google's Generative AI. It analyzes food items from images or text input and provides nutritional information in an engaging manner.
 
+Visit [NutriAI](https://nutri-aicalc.streamlit.app/)
+
 ## Features
 
 - Analyze food items via text input or image upload
