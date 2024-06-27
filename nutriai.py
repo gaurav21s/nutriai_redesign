@@ -24,6 +24,7 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import re
+from logger import logger
 
 # Load environment variables
 load_dotenv()
@@ -44,6 +45,7 @@ class GoogleAIHandler:
     @staticmethod
     def configure_api():
         """Configure the Google Generative AI API."""
+        logger.info("Configuring Google Generative AI API")
         if not NutriAIConfig.GOOGLE_API_KEY:
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
         genai.configure(api_key=NutriAIConfig.GOOGLE_API_KEY)
@@ -61,6 +63,7 @@ class GoogleAIHandler:
         Returns:
             str: The generated response text.
         """
+        logger.info("Sending request to Google Gemini API")
         model = genai.GenerativeModel('gemini-pro-vision' if image else 'gemini-pro')
         content = [input_text, image[0], prompt] if image else input_text
         response = model.generate_content(
@@ -86,6 +89,7 @@ class ImageHandler:
         Raises:
             FileNotFoundError: If no file is uploaded.
         """
+        logger.info(f"Setting up input image: {uploaded_file.name}")
         if uploaded_file is None:
             raise FileNotFoundError("No file uploaded")
 
@@ -99,6 +103,7 @@ class NutriAIApp:
 
     def __init__(self):
         """Initialize the NutriAI application."""
+        logger.info("Initializing NutriAI application")
         self.configure_page()
         self.google_ai = GoogleAIHandler()
         self.google_ai.configure_api()
@@ -106,6 +111,7 @@ class NutriAIApp:
     @staticmethod
     def configure_page():
         """Configure the Streamlit page settings."""
+        logger.info("Configuring Streamlit page")
         st.set_page_config(
             page_title=NutriAIConfig.PAGE_TITLE,
             page_icon=NutriAIConfig.PAGE_ICON,
@@ -114,6 +120,7 @@ class NutriAIApp:
 
     def run(self):
         """Run the NutriAI application."""
+        logger.info("Starting NutriAI application")
         self.set_background()
         self.set_text_styles()
         self.create_sidebar()
@@ -143,11 +150,14 @@ class NutriAIApp:
             uploaded_file = st.file_uploader("", type=NutriAIConfig.UPLOAD_TYPES)
 
         if (input_text and uploaded_file) or (not input_text and not uploaded_file):
+            logger.warning("User provided invalid input combination")
             st.warning("Please provide either text input OR image input, not both or neither! 🙃")
         elif st.button("Analyze My Food! 🚀", type="primary"):
             try:
+                logger.info("Starting food analysis")
                 with st.spinner("🧙‍♂️ NutriAI is working its magic..."):
                     if uploaded_file:
+                        logger.info(f"Analyzing uploaded image: {uploaded_file.name}")
                         image = Image.open(uploaded_file)
                         st.image(image, caption="Your Yummy Upload 😋", width=300)
                         image_data = ImageHandler.setup_input_image(uploaded_file)
@@ -157,13 +167,16 @@ class NutriAIApp:
                             ""
                         )
                     else:
+                        logger.info(f"Analyzing text input: {input_text}")
                         response = self.google_ai.get_gemini_response(
                             self.get_text_prompt(input_text)
                         )
-
+                
+                logger.info("Analysis complete")
                 st.success("Analysis complete! 🎉")
                 self.display_results(response)
             except Exception as e:
+                logger.error(f"Error during analysis: {str(e)}", exc_info=True)
                 st.error(f"Oops! Something went wrong: {str(e)} 😅")
 
     @staticmethod
@@ -331,6 +344,7 @@ class NutriAIApp:
         Args:
             response (str): The response containing all sections in a single string.
         """
+        logger.info("Displaying analysis results")
         st.markdown("## 🍽️ Your Nutrition Breakdown:")
         sections = re.split(r'(?:Total:|Verdict:|Facts:)', response)
         
@@ -418,5 +432,6 @@ class NutriAIApp:
         """
 
 if __name__ == "__main__":
+    logger.info("Starting the process")
     app = NutriAIApp()
     app.run()
