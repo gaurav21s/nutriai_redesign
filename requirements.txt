@@ -4,3 +4,5 @@ python-dotenv
 langchain
 langchain-together
 fpdf
+streamlit-modal
+pyyaml
