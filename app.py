@@ -52,12 +52,6 @@ class NutriAIApp:
         st.set_page_config(
             page_title="NutriAI: Your Food Detective",
             page_icon="🍽️",
-            theme={
-                "base": "light",  # Set to "dark" for the dark theme
-                "primaryColor": "#b5102d",
-                "backgroundColor": "#dbf3e7",
-                "secondaryBackgroundColor": "#489459",
-            }
         )
 
     def create_navbar(self):
