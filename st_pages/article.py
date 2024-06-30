@@ -48,6 +48,8 @@ def show():
         if st.button(f"Read More", key=f"button_{i}"):
             show_article_details(article)
 
+    st.write("More articles coming soon ....")
+
 def show_article_details(article):
     """
     Display the full details of an article in a modal popup.
