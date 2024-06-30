@@ -8,6 +8,7 @@ allowing users to input food items via text or image for nutritional analysis.
 import streamlit as st
 import re
 from utils.food_analysis import FoodAnalysis, FoodAnalysisConfig
+from utils.logger import logger
 from PIL import Image
 
 def show():
@@ -17,6 +18,7 @@ def show():
     This function handles the layout and functionality of the food analysis page,
     including input methods for food analysis and result display.
     """
+    
     st.title("Food Analysis with NutriAI")
     st.subheader("Uncover the nutritional secrets of your food 🔍🥗")
 
@@ -49,9 +51,10 @@ def show():
         if (input_text and uploaded_file) or (not input_text and not uploaded_file):
             st.warning("Please provide either text input OR image input, not both or neither.")
         else:
-            food_analysis = FoodAnalysis()
-            result = food_analysis.analyze_food(input_text, uploaded_file)
-            st.session_state.analysis_result = result
+            with st.spinner("Analyzing your food..."):
+                food_analysis = FoodAnalysis()
+                result = food_analysis.analyze_food(input_text, uploaded_file)
+                st.session_state.analysis_result = result
 
     if st.session_state.analysis_result:
         st.success("Analysis complete!")
@@ -65,6 +68,7 @@ def show():
 
 def display_results(response: str):
     """Display the nutrition analysis results."""
+    logger.info('Displaying Food analysis result')
     st.subheader("🍽️ Your Nutrition Breakdown:")
     
     sections = re.split(r'(?:Total:|Verdict:|Facts:)', response)

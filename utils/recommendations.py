@@ -5,6 +5,7 @@ Recommendations requirements:
 """
 
 import openai
+import os
 
 class OpenAIHandler:
     def __init__(self):

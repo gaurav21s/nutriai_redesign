@@ -5,6 +5,8 @@ This module contains the functionality for the Recommendations feature of the Nu
 """
 
 import streamlit as st
+from utils.logger import logger
+# from utils.recommendations import Recommender
 
 def show():
     """
@@ -15,9 +17,8 @@ def show():
     st.title("NutriAI Recommendations")
     st.write("""
     Coming soon! Our recommendation engine will provide:
-    - Personalized food suggestions based on your preferences and nutritional needs
     - Healthier alternatives to your favorite foods
-    - Tips for improving your overall diet
+    - Latest recipe trends
 
     We're working hard to bring you the best nutritional recommendations!
     """)

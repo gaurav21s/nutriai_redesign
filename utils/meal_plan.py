@@ -31,7 +31,7 @@ class TogetherAIHandler:
         self.chat_model = ChatTogether(
             together_api_key=MealPlanConfig.TOGETHER_API_KEY,
             model=MealPlanConfig.MODEL_NAME,
-            temperature=0.001
+            temperature=0.0001
         )
 
     def get_model_response(self, input_text: str) -> str:
@@ -57,7 +57,7 @@ class MealPlan:
         self.together_ai_handler = TogetherAIHandler()
 
     @staticmethod
-    def get_meal_plan_prompt(goal: str, diet_choice: str, issue: str, gym: str, height: str, weight: str,food_type: str) -> str:
+    def get_meal_plan_prompt(gender: str, goal: str, diet_choice: str, issue: str, gym: str, height: str, weight: str,food_type: str) -> str:
         """
         Get the prompt for meal plan generation.
 
@@ -73,12 +73,12 @@ class MealPlan:
         """
         workout_options = """
         Pre-Workout:
-        - [Pre-workout option 1: with quantity or portion size]
-        - [Pre-workout option 2: with quantity or portion size]
+        - [Pre-workout option 1: with quantity or portion size: (calories in meal)]
+        - [Pre-workout option 2: with quantity or portion size: (calories in meal)]
 
         Post-Workout:
-        - [Post-workout option 1: with quantity or portion size]
-        - [Post-workout option 2: with quantity or portion size]
+        - [Post-workout option 1: with quantity or portion size: (calories in meal)]
+        - [Post-workout option 2: with quantity or portion size: (calories in meal)]
         """ if 'do gym' in gym.lower() else """
         Pre-Workout:
         - Give "Not needed"
@@ -90,35 +90,35 @@ class MealPlan:
         return f"""
         You are a friendly and expert nutritionist. Create a simple home made meal-plan based on the following preferences:
 
-        User's choice: I want to {goal} and I am {diet_choice} in diet. I have a {issue} condition. I {gym} and my height is {height} and weight is {weight}. I prefer {food_type} of dishes.
+        User's choice: I am a {gender}. I want to {goal} and I am {diet_choice} in diet. I have a {issue} condition. I {gym} and my height is {height} and weight is {weight}. I prefer {food_type} of dishes.
 
         Strictly follow this format for your response:
 
         Breakfast:
-        - [Breakfast option 1: with quantity or portion size]
-        - [Breakfast option 2: with quantity or portion size]
+        - [Breakfast option 1: with quantity or portion size: (calories in meal)]
+        - [Breakfast option 2: with quantity or portion size: (calories in meal)]
 
         Lunch:
-        - [Lunch option 1: with quantity or portion size]
-        - [Lunch option 2: with quantity or portion size]
+        - [Lunch option 1: with quantity or portion size: (calories in meal)]
+        - [Lunch option 2: with quantity or portion size: (calories in meal)]
 
         {workout_options}
 
         Dinner:
-        - [Dinner option 1: with quantity or portion size]
-        - [Dinner option 2: with quantity or portion size]
+        - [Dinner option 1: with quantity or portion size: (calories in meal)]
+        - [Dinner option 2: with quantity or portion size: (calories in meal)]
 
         Important Rules to be followed:
         1. Provide only simple home-made and healthy meal names, not recipes.
-        2. Ensure all meals align with the user's dietary preferences, BMI, and goals.
-        3. Adjust portion sizes and nutrient balance to support the user's goal ({goal}).
+        2. Adjust portion sizes and nutrient balance to support the user's goal ({goal}).
+        3. Adjust the calories required based on height, weight, gender, and goal.
         4. Consider the user's food preferences ({food_type} cuisine) in all meal suggestions.
         5. Account for any dietary issues or allergies ({issue}) when suggesting meals.
         6. Do not add any extra explanations or information outside the specified format.
         7. Ensure each meal option is unique and varied.
         """
 
-    def create_meal_plan(self, goal: str, diet_choice: str, issue: str, gym: str, height: str, weight: str, food_type: str) -> str:
+    def create_meal_plan(self, gender: str, goal: str, diet_choice: str, issue: str, gym: str, height: str, weight: str, food_type: str) -> str:
         """
         Create a meal plan based on user preferences.
 
@@ -132,9 +132,8 @@ class MealPlan:
         Returns:
             str: The generated meal plan.
         """
-        logger.info(f"Creating meal plan for: goal={goal}, diet={diet_choice}, issue={issue}, gym={gym}, height={height}, weight={weight}, food_type={food_type}")
-        # bmi = float(weight)/(float(height)*float(height))
-        prompt = self.get_meal_plan_prompt(goal, diet_choice, issue, gym, height, weight, food_type)
+        logger.info(f"Creating meal plan for: gender={gender} ,goal={goal}, diet={diet_choice}, issue={issue}, gym={gym}, height={height}, weight={weight}, food_type={food_type}")
+        prompt = self.get_meal_plan_prompt(gender, goal, diet_choice, issue, gym, height, weight, food_type)
         meal_plan = self.together_ai_handler.get_model_response(prompt)
         
         return meal_plan
@@ -144,16 +143,17 @@ class MealPlan:
 # meal_planner = MealPlan()
 
 # # Set user preferences
+# gender= "male"
 # goal = "gain muscle"
 # diet_choice = "vegetarian"
 # issue = "no allegry"
-# gym = "do not gym/workout"
+# gym = "do gym/workout"
 # height = '1.8m'
 # weight = '69kg'
 # food_type = "indian"
 
 # # Generate meal plan
-# meal_plan = meal_planner.create_meal_plan(goal, diet_choice, issue, gym, height, weight, food_type)
+# meal_plan = meal_planner.create_meal_plan(gender, goal, diet_choice, issue, gym, height, weight, food_type)
 # print("Generated Meal Plan:")
 # print(meal_plan)
 

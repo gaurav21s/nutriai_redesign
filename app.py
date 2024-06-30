@@ -6,7 +6,7 @@ application's initialization and navigation.
 """
 
 import streamlit as st
-from st_pages import home, about_us, meal_plan, recommendations, food_analysis
+from st_pages import home, about_us, meal_plan, recommendations, food_analysis, article
 from utils.logger import logger
 
 class NutriAIApp:
@@ -48,11 +48,10 @@ class NutriAIApp:
 
         This method sets up the page title, icon, and layout for the Streamlit app.
         """
-        logger.info("Configuring Streamlit page")
+        logger.info("Configuring Streamlit page for NutriAI app")
         st.set_page_config(
             page_title="NutriAI: Your Food Detective",
             page_icon="🍽️",
-            layout="wide"
         )
 
     def create_navbar(self):
@@ -63,7 +62,7 @@ class NutriAIApp:
             str: The selected navigation option.
         """
         st.sidebar.title("NutriAI Navigation")
-        return st.sidebar.radio("Go to", ["Home", "Food Analysis", "Meal Plan", "Recommendations", "About Us"])
+        return st.sidebar.radio("Go to", ["Home", "Food Analysis", "Meal Plan", "Recommendations", "About Us", "Articles"])
 
     def run(self):
         """
@@ -86,6 +85,8 @@ class NutriAIApp:
             recommendations.show()
         elif nav_selection == "About Us":
             about_us.show()
+        elif nav_selection == "Articles":
+            article.show()
 
 if __name__ == "__main__":
     logger.info("Starting the process")

@@ -7,6 +7,7 @@ allowing users to input their preferences and receive a personalized meal plan.
 import re
 import streamlit as st
 from utils.meal_plan import MealPlan
+from utils.logger import logger
 from fpdf import FPDF
 import base64
 
@@ -17,10 +18,13 @@ def show():
     This function handles the layout and functionality of the meal plan page,
     including user preference inputs and meal plan display.
     """
+    logger.info("Started Meal plan page")
     st.title("Meal Planning with NutriAI")
     st.subheader("Get your personalized meal plan based on your preferences 🍽️📅")
 
     # User preferences input
+    gender = st.radio("Your gender:",['Male','Female'])
+    
     goal = st.selectbox("What's your goal?", 
                         ["Gain Weight", "Loss fat", "Maintain weight", "Gain muscle", "Improve overall health"])
     
@@ -39,7 +43,7 @@ def show():
     
     height = st.text_input("What's your height with unit?",
                            placeholder='E.g. 5 ft 11 inch, 1.8 meter, 180cm')
-    
+
     weight = st.text_input("What's your weight with unit?",
                            placeholder='E.g. 69kg, 152 pounds')
     
@@ -47,9 +51,12 @@ def show():
                              ["Indian type", "Continental type","World wide type"])
 
     if st.button("Generate My Meal Plan", type="primary"):
+        # if (not height) and (not weight):
+        #     st.warning("Please enter your height and weight.")
+        # else:
         with st.spinner("Generating your meal plan..."):
             meal_planner = MealPlan()
-            result = meal_planner.create_meal_plan(goal, diet_choice, issue, gym, height, weight, food_type)
+            result = meal_planner.create_meal_plan(gender, goal, diet_choice, issue, gym, height, weight, food_type)
             st.session_state.meal_plan_result = result
 
     if st.session_state.get('meal_plan_result'):
@@ -60,22 +67,38 @@ def show():
             st.session_state.meal_plan_result = None
             st.experimental_rerun()
 
-        st.success('Or Download your meal plan by submitting your name and age.')
-        
+        st.markdown("""
+        <div style='padding: 10px; border-radius: 5px; background-color: #f0f2f6;'>
+            <h4 style='color: #1f618d; text-align: center;'>
+                Download your meal plan by submitting your name and age
+            </h4>
+        </div>
+        <p></p>
+        """, unsafe_allow_html=True)
+    
         with st.form(key='download_form'):
             st.write('Download Form')
-            name = st.text_input("Please enter your full name:")
-            age = st.text_input("Please enter your age:")
+            name = st.text_input("Please enter your full name:", placeholder="Your name please")
+            age = st.text_input("Please enter your age:", placeholder="Your age please")
             submit_button = st.form_submit_button(label='Submit')
 
-        if submit_button and name:
-            pdf_bytes = create_pdf(name, age, goal, diet_choice, issue, gym, height, weight, food_type, st.session_state.meal_plan_result)
-            b64 = base64.b64encode(pdf_bytes).decode()
-            href = f'<a href="data:file/pdf;base64,{b64}" download="NutriAI_Meal_Plan_{name}.pdf">Download Meal Plan</a>'
-            st.markdown(href, unsafe_allow_html=True)
+        if submit_button:
+            if not name or not age:
+                st.warning("Please enter both your name and age.")
+            else:
+                pdf_bytes = create_pdf(name, age, gender, goal, diet_choice, issue, gym, height, weight, food_type, st.session_state.meal_plan_result)
+                
+                st.download_button(
+                    label="Download Meal Plan",
+                    data=pdf_bytes,
+                    file_name=f"NutriAI_Meal_Plan_{name}.pdf",
+                    mime="application/pdf"
+                )
+
 
 def display_meal_plan(meal_plan: str):
     """Display the generated meal plan with styling."""
+    logger.info("Displaying Meal plan results")
     st.subheader("🍳 Your Personalized Meal Plan:")
     
     # Define sections to find and style
@@ -108,7 +131,7 @@ def display_meal_plan(meal_plan: str):
     st.text('')
     st.warning("Remember to adjust portion sizes as needed and consult with a healthcare professional or registered dietitian for medical needs.")
 
-def create_pdf(name, age, goal, diet_choice, issue, gym, height, weight, food_type, meal_plan):
+def create_pdf(name, age, gender,goal, diet_choice, issue, gym, height, weight, food_type, meal_plan):
     """
     Create a PDF document containing the user's personalized meal plan.
 
@@ -120,10 +143,11 @@ def create_pdf(name, age, goal, diet_choice, issue, gym, height, weight, food_ty
     bytes
         The PDF document as a byte string.
     """
+    logger.info('Creating PDF for Meal plan')
     class PDF(FPDF):
         def footer(self):
             self.set_y(-10)
-            self.set_font('Helvetica', 'I', 8)
+            self.set_font('Helvetica', 'I', 9)  # Increased font size
             self.set_text_color(127, 140, 141)
             self.cell(60, 10, 'NutriAI', 0, 0, 'L')
             self.cell(60, 10, f'Page {self.page_no()}', 0, 0, 'C')
@@ -141,23 +165,23 @@ def create_pdf(name, age, goal, diet_choice, issue, gym, height, weight, food_ty
     # Add decorative element first
     pdf.set_draw_color(*secondary_color)
     pdf.set_fill_color(*secondary_color)
-    pdf.rect(10, 10, 190, 15, 'F')
+    pdf.rect(10, 10, 190, 18, 'F')  # Increased height
     
     # Add title over the green rectangle
-    pdf.set_font('Helvetica', 'B', 22)
+    pdf.set_font('Helvetica', 'B', 24)  # Increased font size
     pdf.set_text_color(255, 255, 255)  # White text
-    pdf.cell(0, 15, 'NutriAI Meal Plan', 0, 1, 'C', 0)
+    pdf.cell(0, 18, 'NutriAI Meal Plan', 0, 1, 'C', 0)
     
     pdf.ln(5)  # Reduced space after the title
     
     # User Information Section
-    pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_font("Helvetica", 'B', 15)  # Increased font size
     pdf.set_text_color(*text_color)
-    pdf.cell(0, 8, "User Information:", 0, 1, 'L')
+    pdf.cell(0, 10, "User Information:", 0, 1, 'L')
     
-    pdf.set_font("Helvetica", '', 12)
+    pdf.set_font("Helvetica", '', 11)  # Increased font size
     user_info = [
-        f"Name: {name}", f"Age: {age}", f"Height: {height}", f"Weight: {weight}",
+        f"Name: {name}", f"Age: {age}", f"Gender: {gender}",f"Height: {height}", f"Weight: {weight}",
         f"Goal: {goal}", f"Dietary Preference: {diet_choice}", 
         f"Dietary Issues or Allergies: {issue}", f"Workout Routine: {gym}",
         f"Preferred Cuisine: {food_type}"
@@ -165,11 +189,11 @@ def create_pdf(name, age, goal, diet_choice, issue, gym, height, weight, food_ty
     
     for i, info in enumerate(user_info):
         pdf.cell(95, 8, info, 0, 1 if i % 2 else 0)
-    pdf.ln(10)  # Reduced space after user info
+    pdf.ln(5)  # Reduced space after user info
     
     # Meal Plan Section
-    pdf.set_font("Helvetica", 'B', 16)
-    pdf.cell(0, 8, "Your Personalized Meal Plan:", 0, 1, 'L')
+    pdf.set_font("Helvetica", 'B', 15)  # Increased font size
+    pdf.cell(0, 10, "Your Personalized Meal Plan:", 0, 1, 'L')
     pdf.ln(5)
     sections = ["Breakfast", "Lunch", "Pre-Workout", "Post-Workout", "Dinner"]
     lines = meal_plan.split('\n')
@@ -178,28 +202,37 @@ def create_pdf(name, age, goal, diet_choice, issue, gym, height, weight, food_ty
     
     for section, items in meal_plan_dict.items():
         if items:
-            pdf.set_font("Helvetica", 'B', 14)
+            pdf.set_font("Helvetica", 'B', 13)  # Increased font size
             pdf.set_fill_color(*primary_color)
-            pdf.cell(0, 7, f"{section} options:", 0, 1, 'L', 1)
-            pdf.set_font("Helvetica", '', 12)
+            pdf.cell(0, 8, f"{section} options:", 0, 1, 'L', 1)
+            pdf.set_font("Helvetica", '', 10)  # Increased font size
             for item in items:
                 item_cleaned = item.replace('[', '').replace(']', '')
                 pdf.cell(5)
                 pdf.ln(2)
-                pdf.multi_cell(0, 5, f"- {item_cleaned}", 0, 'L')
+                pdf.multi_cell(0, 6, f"- {item_cleaned}", 0, 'L')
             pdf.ln(4)  # Reduced space between meal sections
     
     # Add a note at the end
-    pdf.set_font("Helvetica", 'I', 10)
+    pdf.set_font("Helvetica", 'I', 10)  # Increased font size
     pdf.set_text_color(127, 140, 141)
-    pdf.multi_cell(0, 4, "Note: Remember to adjust portion sizes as needed and consult with a healthcare professional or registered dietitian for medical needs.", 0, 'L')
+    pdf.multi_cell(0, 5, "Note: Remember to adjust portion sizes as needed and consult with a healthcare professional or registered dietitian for medical needs.", 0, 'L')
     
     return pdf.output(dest='S').encode('latin1')
 
 def _parse_meal_plan(lines, sections):
     """
     Parse the meal plan string into a structured dictionary.
+
+    Parameters:
+    -----------
+    lines : list
+        List of strings representing each line of the meal plan.
+    sections : list
+        List of meal plan sections to look for.
+
     Returns:
+    --------
     dict
         A dictionary with sections as keys and lists of meal items as values.
     """

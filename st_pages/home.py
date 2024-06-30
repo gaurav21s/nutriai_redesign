@@ -6,6 +6,7 @@ providing an introduction and overview of the app's features.
 """
 
 import streamlit as st
+from utils.logger import logger
 
 def show():
     """
@@ -14,6 +15,7 @@ def show():
     This function presents a modern and engaging introduction to NutriAI,
     highlighting its key features and benefits.
     """
+    logger.info("Started Home page")
     st.title("Welcome to NutriAI: Your Personal Nutrition Assistant 🍽️🤖")
 
     st.markdown("""

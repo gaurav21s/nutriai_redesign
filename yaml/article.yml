@@ -1,0 +1,47 @@
+# article_template.yml
+
+- title: "The Benefits of a Plant-Based Diet"
+  summary: "Discover how a plant-based diet can improve your health and the environment."
+  content: |
+    A plant-based diet has numerous benefits for both personal health and the environment. 
+    Some key advantages include:
+
+    1. Lower risk of heart disease
+    2. Reduced risk of certain cancers
+    3. Better weight management
+    4. Improved digestion
+    5. Reduced carbon footprint
+
+    Studies have shown that people who follow a plant-based diet tend to have lower 
+    cholesterol levels, blood pressure, and body mass index. Additionally, plant-based 
+    diets are rich in fiber, vitamins, and minerals, which are essential for overall health.
+
+    From an environmental perspective, reducing meat consumption can significantly lower 
+    greenhouse gas emissions and reduce water usage in agriculture.
+
+    While transitioning to a fully plant-based diet may not be for everyone, even 
+    incorporating more plant-based meals into your diet can have substantial benefits.
+
+- title: "Understanding Macronutrients"
+  summary: "Learn about the three main macronutrients and their roles in your body."
+  content: |
+    Macronutrients are the nutrients that your body needs in large amounts to function 
+    properly. The three main macronutrients are:
+
+    1. Carbohydrates: The body's primary source of energy. They are found in foods like 
+       grains, fruits, vegetables, and legumes.
+
+    2. Proteins: Essential for building and repairing tissues. Good sources include meat, 
+       fish, eggs, dairy, legumes, and nuts.
+
+    3. Fats: Important for hormone production, nutrient absorption, and providing energy. 
+       Healthy fats can be found in avocados, nuts, seeds, and olive oil.
+
+    Balancing these macronutrients in your diet is crucial for maintaining good health. 
+    The ideal ratio can vary depending on individual needs, activity levels, and health goals.
+
+    It's important to focus not just on the quantity of macronutrients, but also on their 
+    quality. Choosing whole, unprocessed foods as your primary sources of macronutrients 
+    can lead to better overall health outcomes.
+
+# Add more articles as needed

@@ -45,6 +45,7 @@ class GoogleAIHandler:
             content,
             generation_config=genai.types.GenerationConfig(temperature=0.001)
         )
+        # print(response.text)
         return response.text
 
 class ImageHandler:
