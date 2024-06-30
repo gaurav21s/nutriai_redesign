@@ -2,7 +2,7 @@
 
 NutriAI is a Streamlit-powered application that leverages AI to analyze food items and provide detailed nutritional information. Whether you input text or upload an image, NutriAI gives you insights into your meal's nutritional content.
 
-Visit the webapp here [NutriAI](https://nutriai-gemini.streamlit.app/).
+Visit the webapp here [NutriAI](https://nutriaiv2.streamlit.app/).
 
 ## Features
 
