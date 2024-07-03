@@ -92,11 +92,17 @@ class FoodAnalysis:
         - Nutrition values: carbs, fiber, protein, fats
         - Details of each food item by proportion or quantity with calorie intake
 
-        Format your response as follows:
+        Follow this format strictly and don't add extra information:
 
-        1. Item 1 (quantity) - calories, carbs, fiber, protein, fats, other details (if available)
-        2. Item 2 (quantity) - calories, carbs, fiber, protein, fats, other details (if available)
+        1. Item 1 (quantity) - calories range, carbs range, fiber range, protein range, fats range, other details (if available)
+        2. Item 2 (quantity) - calories range, carbs range, fiber range, protein range, fats range, other details (if available)
         ...
+        
+        (example: 1 aaloo paratha, 100g yogurt
+        
+        1. 1 aaloo paratha - 200-250 calories, 25-35g carbs, 1-2g fiber, 6-8g protein, 8-10g fats
+        2. 100g yogurt - 50-60 calories, 5-6g carbs, 0g fiber, 5-8g protein, 1-3g fats
+        example ended.)
 
         Total: calories, carbs, fiber, protein, fats
         Verdict: Healthy or Not Healthy
@@ -118,9 +124,15 @@ class FoodAnalysis:
         You are a fun and friendly nutritionist. Calculate nutrition values for these food items or dishes: [{input_text}]
         Follow this format strictly and don't add extra information:
 
-        1. Item 1 (quantity) - calories, carbs, fiber, protein, fats, other details (if available)
-        2. Item 2 (quantity) - calories, carbs, fiber, protein, fats, other details (if available)
+        1. Item 1 (quantity) - calories range, carbs range, fiber range, protein range, fats range, other details (if available)
+        2. Item 2 (quantity) - calories range, carbs range, fiber range, protein range, fats range, other details (if available)
         ...
+        
+        (example: 1 aaloo paratha, 100g yogurt
+        
+        1. 1 aaloo paratha - 200-250 calories, 25-35g carbs, 1-2g fiber, 6-8g protein, 8-10g fats
+        2. 100g yogurt - 50-60 calories, 5-6g carbs, 0g fiber, 5-8g protein, 1-3g fats
+        example ended.)
 
         Total: calories, carbs, fiber, protein, fats
         Verdict: Healthy or Not Healthy
