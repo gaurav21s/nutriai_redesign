@@ -45,10 +45,8 @@ def show():
     for i, article in enumerate(articles):
         st.subheader(article["title"])
         st.write(article["summary"])
-        if st.button(f"Read More", key=f"button_{i}"):
+        if st.button(f"Read More..", key=f"button_{i}"):
             show_article_details(article)
-
-    st.write("More articles coming soon ....")
 
 def show_article_details(article):
     """
@@ -56,9 +54,15 @@ def show_article_details(article):
     article : dict
         A dictionary containing the article details (title, content).
     """
+    # modal = Modal(f"Article: {article['title']}", key=f"modal_{article['title']}")
+    # with modal.container():
+    #     st.markdown(f"<div style='max-height: 20vh; overflow-y: auto;'>", unsafe_allow_html=True)
+    #     st.markdown(f"### {article['title']}")
+    #     st.markdown(article['content'])
+    #     st.markdown("</div>", unsafe_allow_html=True)
     modal = Modal(f"Article: {article['title']}", key=f"modal_{article['title']}")
     with modal.container():
-        st.markdown(f"<div style='max-height: 20vh; overflow-y: auto;'>", unsafe_allow_html=True)
         st.markdown(f"### {article['title']}")
         st.markdown(article['content'])
-        st.markdown("</div>", unsafe_allow_html=True)
+
+    modal.show()

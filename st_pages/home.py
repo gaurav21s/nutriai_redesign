@@ -51,7 +51,7 @@ def show():
         st.write("Discover healthier alternatives and tips to improve your diet.")
 
         st.markdown("✅ **Educational Insights**")
-        st.write("Learn interesting facts about nutrition and make informed food choices.")
+        st.write("Learn interesting facts about nutrition from our articles and make informed food choices.")
 
     st.subheader("🎯 Start Your Journey to Better Nutrition")
     st.write("""

@@ -3,10 +3,14 @@ Main application module for NutriAI.
 
 This module contains the main NutriAIApp class which handles the
 application's initialization and navigation.
+
+Todo:
+1. Add quiz page NutriAI Quiz
+2. NutriAI Calculator for bmi and calorie
 """
 
 import streamlit as st
-from st_pages import home, about_us, meal_plan, recommendations, food_analysis, article
+from st_pages import home, about_us, meal_plan, recipe_generation, food_analysis, article, nutriqa
 from utils.logger import logger
 
 class NutriAIApp:
@@ -62,7 +66,7 @@ class NutriAIApp:
             str: The selected navigation option.
         """
         st.sidebar.title("NutriAI Navigation")
-        return st.sidebar.radio("Go to", ["Home", "Food Analysis", "Meal Plan", "Recommendations", "About Us", "Articles"])
+        return st.sidebar.radio("Go to", ["Home", "Food Analysis", "Meal Plan", "Recipe Recommender", "NutriBot", "About Us", "Articles"])
 
     def run(self):
         """
@@ -81,8 +85,10 @@ class NutriAIApp:
             food_analysis.show()
         elif nav_selection == "Meal Plan":
             meal_plan.show()
-        elif nav_selection == "Recommendations":
-            recommendations.show()
+        elif nav_selection == "Recipe Recommender":
+            recipe_generation.show()
+        elif nav_selection == "NutriBot":
+            nutriqa.show()
         elif nav_selection == "About Us":
             about_us.show()
         elif nav_selection == "Articles":

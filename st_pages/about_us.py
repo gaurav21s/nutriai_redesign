@@ -6,7 +6,6 @@ which is loaded from an HTML template, and includes a Contact Us button.
 """
 
 import streamlit as st
-import urllib.parse
 from utils.logger import logger
 
 def show():
