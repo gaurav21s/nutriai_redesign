@@ -6,3 +6,4 @@ langchain-together
 fpdf
 streamlit-modal
 pyyaml
+mistralai
