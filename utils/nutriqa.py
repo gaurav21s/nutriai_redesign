@@ -41,7 +41,7 @@ class TogetherAIHandler:
         For meal plans, recipes, or detailed food nutrition info, suggest using specific NutriAI features:
         - For meal plans: "Try NutriAI Meal Plan feature"
         - For recipes: "Try NutriAI Recipe Recommender feature"
-        - For nutrition info: "Try NutriAI Food Analysis feature"
+        - For nutrition info: "Try NutriAI Food Insight feature"
         If asked about non-nutrition topics, politely explain you're focused on nutrition and offer to help with diet-related questions. 
         Keep responses concise, fun and friendly, and informative!
         """

@@ -1,0 +1,9 @@
+2024-07-05 16:13:07,363 - NutriAI - INFO - Starting the process
+2024-07-05 16:13:07,365 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:13:07,365 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:13:07,365 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:13:07,368 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:13:07,368 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:13:07,369 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:13:07,369 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:13:08,070 - NutriAI - ERROR - Error generating quiz: Invalid question format: missing required fields. Question: {'question': 'Which of the following exercises is NOT a form of cardio?', 'options': ['Running', 'Swimming', 'Weightlifting', 'Yoga'], 'explanation': 'Weightlifting is a form of resistance training that focuses on building muscle strength, but it is not a cardio exercise that raises your heart rate.'}

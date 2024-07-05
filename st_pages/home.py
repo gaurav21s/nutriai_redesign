@@ -16,7 +16,7 @@ def show():
     highlighting its key features and benefits.
     """
     logger.info("Started Home page")
-    st.title("Welcome to NutriAI: Your Personal Nutrition Assistant 🍽️🤖")
+    st.title("Welcome to NutriAI: Your Personal Nutrition Companion 🌱🤝")
 
     st.markdown("""
     <style>
@@ -30,8 +30,8 @@ def show():
     st.markdown('<p class="big-font">Discover the power of AI-driven nutritional insights!</p>', unsafe_allow_html=True)
 
     st.write("""
-    NutriAI is your cutting-edge companion on the journey to better health and nutrition. 
-    Leveraging advanced artificial intelligence, we provide you with detailed analysis of your food choices, 
+    NutriAI is your intelligent guide on the path to better health and nutrition.
+    Leveraging advanced artificial intelligence, we provide you with detailed analysis of your food choices,
     personalized meal plans, and smart recommendations.
     """)
 
@@ -40,25 +40,25 @@ def show():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("✅ **Food Analysis**")
+        st.markdown("✅ **Food Insight**")
         st.write("Get instant nutritional breakdown of your meals through text or image input.")
 
-        st.markdown("✅ **Personalized Meal Plans**")
+        st.markdown("✅ **Meal Planner**")
         st.write("Receive tailored meal suggestions based on your nutritional needs and preferences.")
 
     with col2:
-        st.markdown("✅ **Smart Recommendations**")
-        st.write("Discover healthier alternatives and tips to improve your diet.")
+        st.markdown("✅ **Recipe Recommender**")
+        st.write("Discover new and healthy recipes to spice up your meals.")
 
-        st.markdown("✅ **Educational Insights**")
-        st.write("Learn interesting facts about nutrition from our articles and make informed food choices.")
+        st.markdown("✅ **NutriQuiz**")
+        st.write("Test your nutrition knowledge with our interactive quiz.")
 
     st.subheader("🎯 Start Your Journey to Better Nutrition")
     st.write("""
-    Whether you're looking to maintain a balanced diet, achieve specific health goals, or simply curious about 
-    what's on your plate, NutriAI is here to guide you every step of the way.
-    
+    Whether you're looking to maintain a balanced diet, achieve specific health goals, or simply curious about
+    what's on your plate, NutriAI is here to support you every step of the way.
+
     Navigate through our features using the sidebar and embark on your path to nutritional wellness!
     """)
 
-    st.markdown("**Ready to dive in? Select 'Food Analysis' from the sidebar to analyze your first meal!**")
+    st.markdown("**Ready to dive in? Select 'Food Insight' from the sidebar to analyze your first meal!**")

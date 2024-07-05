@@ -35,7 +35,7 @@ class ShoppingLinkGenerator:
         amazon_affiliate_code : str
             Amazon affiliate code to be appended to the search URL.
         """
-        self.amazon_base_url = "https://www.amazon.in/s"
+        self.amazon_base_url = "https://www.amazon.com/s"
         self.blinkit_base_url = "https://blinkit.com/s/"
         self.amazon_affiliate_code = os.getenv('affiliate_code')  # Amazon affiliate code
 

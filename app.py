@@ -10,7 +10,7 @@ Todo:
 """
 
 import streamlit as st
-from st_pages import home, about_us, meal_plan, recipe_generation, food_analysis, article, nutriqa
+from st_pages import home, about_us, meal_plan, recipe_generation, food_analysis, article, mcq_quiz, calc, nutriqa
 from utils.logger import logger
 
 class NutriAIApp:
@@ -66,7 +66,7 @@ class NutriAIApp:
             str: The selected navigation option.
         """
         st.sidebar.title("NutriAI Navigation")
-        return st.sidebar.radio("Go to", ["Home", "Food Analysis", "Meal Plan", "Recipe Recommender", "NutriBot", "About Us", "Articles"])
+        return st.sidebar.radio("Go to", ["Home", "Food Insight", "Meal Plan", "Recipe Recommender", "NutriQuiz", "NutriCalc", "NutriBot", "About Us", "Articles"])
 
     def run(self):
         """
@@ -81,12 +81,16 @@ class NutriAIApp:
 
         if nav_selection == "Home":
             home.show()
-        elif nav_selection == "Food Analysis":
+        elif nav_selection == "Food Insight":
             food_analysis.show()
         elif nav_selection == "Meal Plan":
             meal_plan.show()
         elif nav_selection == "Recipe Recommender":
             recipe_generation.show()
+        elif nav_selection == "NutriQuiz":
+            mcq_quiz.show()
+        elif nav_selection == "NutriCalc":
+            calc.show()
         elif nav_selection == "NutriBot":
             nutriqa.show()
         elif nav_selection == "About Us":

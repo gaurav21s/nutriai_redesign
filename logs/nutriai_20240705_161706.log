@@ -1,0 +1,615 @@
+2024-07-05 16:17:11,801 - NutriAI - INFO - Starting the process
+2024-07-05 16:17:11,801 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:17:11,801 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:17:11,802 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:17:11,807 - NutriAI - INFO - Started Home page
+2024-07-05 16:17:19,308 - NutriAI - INFO - Starting the process
+2024-07-05 16:17:19,309 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:17:19,309 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:17:19,310 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:17:19,313 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:17:19,314 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:17:19,314 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:17:19,314 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:20:00,619 - NutriAI - INFO - Starting the process
+2024-07-05 16:20:00,620 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:20:00,620 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:20:00,620 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:20:02,258 - NutriAI - INFO - Starting the process
+2024-07-05 16:20:02,259 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:20:02,259 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:20:02,260 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:20:36,737 - NutriAI - INFO - Starting the process
+2024-07-05 16:20:36,739 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:20:36,740 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:20:36,741 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:20:48,903 - NutriAI - INFO - Starting the process
+2024-07-05 16:20:48,904 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:20:48,904 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:20:48,906 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:20:51,937 - NutriAI - INFO - Starting the process
+2024-07-05 16:20:51,944 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:20:51,945 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:20:51,945 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:20:57,968 - NutriAI - INFO - Starting the process
+2024-07-05 16:20:57,969 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:20:57,969 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:20:57,969 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:02,531 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:02,533 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:02,533 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:02,534 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:10,338 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:10,339 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:10,340 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:10,341 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:15,240 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:15,241 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:15,242 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:15,242 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:16,565 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:16,566 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:16,567 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:16,567 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:16,684 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:16,685 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:16,686 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:16,686 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:16,690 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:21:16,691 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:21:38,323 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:38,327 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:38,327 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:38,329 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:38,339 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:21:38,340 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:21:38,490 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:38,492 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:38,492 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:38,492 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:38,494 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:21:38,494 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:21:38,494 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:21:38,494 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:21:48,976 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:48,979 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:48,980 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:48,982 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:48,987 - NutriAI - INFO - Started Home page
+2024-07-05 16:21:51,487 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:51,487 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:51,488 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:51,489 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:21:51,492 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:21:51,492 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:21:51,493 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:21:51,493 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:21:58,173 - NutriAI - INFO - Starting the process
+2024-07-05 16:21:58,174 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:21:58,175 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:21:58,175 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:01,647 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:01,650 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:01,650 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:01,651 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:03,314 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:03,318 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:03,319 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:03,322 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:07,090 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:07,091 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:07,091 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:07,092 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:11,093 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:11,095 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:11,096 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:11,096 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:12,755 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:12,756 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:12,757 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:12,758 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:13,577 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:13,579 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:13,580 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:13,581 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:13,688 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:13,688 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:13,689 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:13,689 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:13,693 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:22:13,694 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:22:21,757 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:21,758 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:21,759 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:21,759 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:21,768 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:22:21,770 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:22:21,870 - NutriAI - INFO - Starting the process
+2024-07-05 16:22:21,872 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:22:21,872 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:22:21,872 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:22:21,874 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:22:21,874 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:22:21,875 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:22:21,875 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:23:00,312 - NutriAI - INFO - Starting the process
+2024-07-05 16:23:00,315 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:23:00,316 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:23:00,317 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:23:08,193 - NutriAI - INFO - Starting the process
+2024-07-05 16:23:08,196 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:23:08,196 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:23:08,197 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:23:08,198 - NutriAI - INFO - Started Recipe generation page
+2024-07-05 16:23:08,859 - NutriAI - INFO - Starting the process
+2024-07-05 16:23:08,860 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:23:08,861 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:23:08,862 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:23:12,082 - NutriAI - INFO - Starting the process
+2024-07-05 16:23:12,082 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:23:12,083 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:23:12,084 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:23:12,086 - NutriAI - INFO - Started Home page
+2024-07-05 16:23:14,161 - NutriAI - INFO - Starting the process
+2024-07-05 16:23:14,163 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:23:14,163 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:23:14,164 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:23:14,167 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:23:14,167 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:23:14,167 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:23:14,168 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:24:38,110 - NutriAI - INFO - Starting the process
+2024-07-05 16:24:38,112 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:24:38,112 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:24:38,113 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:24:43,209 - NutriAI - INFO - Starting the process
+2024-07-05 16:24:43,210 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:24:43,210 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:24:43,211 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:24:51,946 - NutriAI - INFO - Starting the process
+2024-07-05 16:24:51,947 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:24:51,948 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:24:51,948 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:24:53,826 - NutriAI - INFO - Starting the process
+2024-07-05 16:24:53,827 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:24:53,828 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:24:53,828 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:24:54,727 - NutriAI - INFO - Starting the process
+2024-07-05 16:24:54,728 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:24:54,728 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:24:54,729 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:24:59,020 - NutriAI - INFO - Starting the process
+2024-07-05 16:24:59,021 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:24:59,021 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:24:59,022 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:07,426 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:07,428 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:07,428 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:07,428 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:09,389 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:09,391 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:09,392 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:09,393 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:09,502 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:09,503 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:09,503 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:09,504 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:09,508 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:25:09,508 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:25:37,273 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:37,274 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:37,275 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:37,276 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:37,277 - NutriAI - INFO - Started Home page
+2024-07-05 16:25:40,514 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:40,515 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:40,517 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:40,517 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:40,520 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:25:40,521 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:25:40,521 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:25:40,522 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:25:48,364 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:48,365 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:48,366 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:48,367 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:53,793 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:53,794 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:53,794 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:53,795 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:25:55,110 - NutriAI - INFO - Starting the process
+2024-07-05 16:25:55,111 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:25:55,111 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:25:55,112 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:00,913 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:00,914 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:00,914 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:00,914 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:07,911 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:07,913 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:07,913 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:07,914 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:12,060 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:12,062 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:12,063 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:12,064 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:13,292 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:13,293 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:13,294 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:13,294 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:13,408 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:13,410 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:13,410 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:13,410 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:13,414 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:26:13,415 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:26:20,184 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:20,186 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:20,186 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:20,187 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:20,195 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:26:20,196 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:26:20,298 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:20,299 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:20,299 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:20,299 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:20,301 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:26:20,301 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:26:20,301 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:26:20,301 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:26:37,795 - NutriAI - INFO - Starting the process
+2024-07-05 16:26:37,797 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:26:37,798 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:26:37,798 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:26:37,800 - NutriAI - INFO - Started Home page
+2024-07-05 16:38:16,342 - NutriAI - INFO - Starting the process
+2024-07-05 16:38:16,343 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:38:16,343 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:38:16,345 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:38:16,371 - NutriAI - INFO - Started Home page
+2024-07-05 16:39:24,512 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:24,515 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:24,515 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:24,517 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:24,522 - NutriAI - INFO - Started Home page
+2024-07-05 16:39:26,549 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:26,550 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:26,550 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:26,551 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:28,768 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:28,769 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:28,769 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:28,770 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:28,772 - NutriAI - INFO - Started Meal plan page
+2024-07-05 16:39:29,669 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:29,671 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:29,672 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:29,672 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:29,674 - NutriAI - INFO - Started Recipe generation page
+2024-07-05 16:39:30,652 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:30,654 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:30,654 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:30,654 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:31,469 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:31,470 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:31,471 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:31,472 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:31,475 - NutriAI - INFO - Initializing NutritionQuiz application
+2024-07-05 16:39:31,475 - NutriAI - INFO - Configuring Groq LLM
+2024-07-05 16:39:31,476 - NutriAI - INFO - Generating nutrition quiz
+2024-07-05 16:39:31,476 - NutriAI - INFO - Sending request to Groq LLM
+2024-07-05 16:39:32,308 - NutriAI - ERROR - Error generating quiz: Invalid question format: missing required fields. Question: {'question': "True or False: You can't build muscle without consuming enough protein. Correct Answer: A (True)", 'options': [], 'explanation': 'Adequate protein intake is essential for muscle growth and repair. Aim for 1.2-1.6 grams of protein per kilogram of body weight daily.'}
+2024-07-05 16:39:33,659 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:33,661 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:33,662 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:33,662 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:39:33,664 - NutriAI - INFO - Started Recipe generation page
+2024-07-05 16:39:35,686 - NutriAI - INFO - Starting the process
+2024-07-05 16:39:35,687 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:39:35,688 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:39:35,688 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:40:35,666 - NutriAI - INFO - Starting the process
+2024-07-05 16:40:35,668 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:40:35,668 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:40:35,672 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:40:51,245 - NutriAI - INFO - Starting the process
+2024-07-05 16:40:51,247 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:40:51,248 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:40:51,249 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:07,642 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:07,645 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:07,645 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:07,646 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:21,139 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:21,145 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:21,146 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:21,147 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:22,343 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:22,344 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:22,345 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:22,346 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:23,048 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:23,051 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:23,052 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:23,053 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:27,306 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:27,309 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:27,312 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:27,314 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:27,645 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:27,647 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:27,648 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:27,649 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:27,826 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:27,827 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:27,828 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:27,828 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:28,010 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:28,012 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:28,012 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:28,013 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:28,193 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:28,195 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:28,196 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:28,196 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:28,364 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:28,365 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:28,365 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:28,366 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:28,560 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:28,561 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:28,562 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:28,562 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:28,733 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:28,734 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:28,735 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:28,735 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:28,926 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:28,928 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:28,928 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:28,929 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:29,110 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:29,111 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:29,112 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:29,113 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:29,310 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:29,311 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:29,312 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:29,312 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:29,511 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:29,512 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:29,512 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:29,513 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:29,717 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:29,718 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:29,718 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:29,718 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:29,926 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:29,928 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:29,928 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:29,929 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:30,133 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:30,135 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:30,135 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:30,135 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:30,344 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:30,345 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:30,345 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:30,346 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:30,526 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:30,527 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:30,528 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:30,529 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:30,730 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:30,732 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:30,732 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:30,732 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:30,928 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:30,929 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:30,929 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:30,930 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:31,127 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:31,129 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:31,129 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:31,129 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:31,326 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:31,327 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:31,328 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:31,329 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:31,543 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:31,544 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:31,545 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:31,545 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:31,726 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:31,728 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:31,728 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:31,729 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:31,943 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:31,944 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:31,945 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:31,945 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:32,164 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:32,166 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:32,166 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:32,166 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:32,376 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:32,377 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:32,378 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:32,378 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:32,580 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:32,581 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:32,581 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:32,582 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:32,776 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:32,778 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:32,779 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:32,779 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:32,976 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:32,977 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:32,978 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:32,979 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:33,176 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:33,177 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:33,178 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:33,179 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:33,381 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:33,382 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:33,383 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:33,383 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:33,580 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:33,581 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:33,581 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:33,582 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:33,777 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:33,778 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:33,779 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:33,779 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:33,959 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:33,961 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:33,961 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:33,962 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:44,188 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:44,190 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:44,191 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:44,193 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:41:53,864 - NutriAI - INFO - Starting the process
+2024-07-05 16:41:53,867 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:41:53,868 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:41:53,869 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:14,850 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:14,854 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:14,855 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:14,856 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:21,984 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:21,988 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:21,988 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:21,990 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:23,181 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:23,182 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:23,183 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:23,184 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:33,941 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:33,945 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:33,945 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:33,946 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:35,310 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:35,312 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:35,313 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:35,314 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:43,652 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:43,656 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:43,656 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:43,657 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:43,767 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:43,768 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:43,768 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:43,768 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:48,771 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:48,773 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:48,774 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:48,775 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:48,911 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:48,912 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:48,912 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:48,913 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:53,949 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:53,950 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:53,952 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:53,953 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:54,068 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:54,069 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:54,070 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:54,070 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:59,311 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:59,315 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:59,316 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:59,317 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:42:59,422 - NutriAI - INFO - Starting the process
+2024-07-05 16:42:59,423 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:42:59,423 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:42:59,424 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:04,817 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:04,820 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:04,821 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:04,822 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:04,926 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:04,927 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:04,928 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:04,928 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:10,826 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:10,829 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:10,830 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:10,830 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:10,832 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 16:43:10,834 - NutriAI - INFO - Initializing NutriAIBot
+2024-07-05 16:43:10,835 - NutriAI - INFO - Initializing Together AI handler
+2024-07-05 16:43:13,798 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:13,801 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:13,801 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:13,802 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:13,804 - NutriAI - INFO - Started About Us Page
+2024-07-05 16:43:14,917 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:14,920 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:14,920 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:14,921 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:14,923 - NutriAI - INFO - Started Article page
+2024-07-05 16:43:15,997 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:15,999 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:15,999 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:16,000 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:16,002 - NutriAI - INFO - Started About Us Page
+2024-07-05 16:43:17,130 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:17,133 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:17,134 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:17,135 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:17,137 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 16:43:20,667 - NutriAI - INFO - Starting the process
+2024-07-05 16:43:20,671 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:43:20,671 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:43:20,672 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:43:20,674 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 16:43:20,678 - NutriAI - INFO - Processing question: Hii
+2024-07-05 16:43:20,679 - NutriAI - INFO - Sending request to Together AI API
+2024-07-05 16:44:01,055 - NutriAI - INFO - Starting the process
+2024-07-05 16:44:01,057 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:44:01,058 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:44:01,059 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:44:01,061 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 16:44:17,714 - NutriAI - INFO - Starting the process
+2024-07-05 16:44:17,722 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:44:17,723 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:44:17,725 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:44:17,728 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 16:44:17,734 - NutriAI - INFO - Processing question: give me recipe for cake
+2024-07-05 16:44:17,737 - NutriAI - INFO - Sending request to Together AI API
+2024-07-05 16:44:46,077 - NutriAI - INFO - Starting the process
+2024-07-05 16:44:46,081 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:44:46,082 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:44:46,083 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:44:46,085 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 16:44:46,091 - NutriAI - INFO - Processing question: what is nutriai?
+2024-07-05 16:44:46,093 - NutriAI - INFO - Sending request to Together AI API
+2024-07-05 16:45:15,257 - NutriAI - INFO - Starting the process
+2024-07-05 16:45:15,263 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 16:45:15,264 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 16:45:15,272 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 16:45:15,297 - NutriAI - INFO - NutriAI chatbot page started
+2024-07-05 19:07:16,635 - NutriAI - INFO - Starting the process
+2024-07-05 19:07:16,660 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 19:07:16,661 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 19:07:16,662 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 19:07:16,666 - NutriAI - INFO - Started About Us Page
+2024-07-05 19:07:17,477 - NutriAI - INFO - Starting the process
+2024-07-05 19:07:17,479 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 19:07:17,480 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 19:07:17,481 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 19:07:17,484 - NutriAI - INFO - Started Article page
+2024-07-05 19:07:19,213 - NutriAI - INFO - Starting the process
+2024-07-05 19:07:19,215 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 19:07:19,215 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 19:07:19,218 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 19:07:20,828 - NutriAI - INFO - Starting the process
+2024-07-05 19:07:20,829 - NutriAI - INFO - Initializing NutriAI application
+2024-07-05 19:07:20,831 - NutriAI - INFO - Configuring Streamlit page for NutriAI app
+2024-07-05 19:07:20,832 - NutriAI - INFO - Starting NutriAI application
+2024-07-05 19:07:20,834 - NutriAI - INFO - Started Home page
