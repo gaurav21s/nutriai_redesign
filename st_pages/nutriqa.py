@@ -38,6 +38,16 @@ def process_user_input(user_input: str) -> str:
 def show():
     """Display the NutriAI chatbot in the Streamlit app."""
     logger.info("NutriAI chatbot page started")
+
+    # Add custom CSS to ensure chat input text is visible
+    st.markdown("""
+    <style>
+    .stTextInput > div > div > input::placeholder {
+        color: #4CAF50 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.title("NutriAI ChatBot 🥗💬")
     st.subheader("Your personal nutrition assistant")
 
