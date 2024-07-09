@@ -26,5 +26,7 @@ def show():
     st.text("")
     st.write("Contact us at gaurav21js@gmail.com")
 
-    st.success("Contact us if you want to help or collab with us in this amazing project!!")
+    st.warning("Contact us if you want to help or collab with us in this amazing project!!")
+
+    st.success('Made by Gaurav Shrivastav')
 
