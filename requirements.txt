@@ -9,3 +9,4 @@ pyyaml
 mistralai
 llama-index
 llama-index-llms-groq
+langchain-groq
