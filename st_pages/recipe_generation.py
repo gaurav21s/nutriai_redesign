@@ -41,7 +41,7 @@ def show():
 
         if st.button("Generate New Recipe", key="new_recipe_button"):
             st.session_state.recipe_result = None
-            st.experimental_rerun()
+            st.rerun()
 
 def display_recipe(recipe: str):
     """Display the generated recipe with simple formatting and shopping links."""
