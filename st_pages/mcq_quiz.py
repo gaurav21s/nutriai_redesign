@@ -60,7 +60,7 @@ def show():
             st.warning("Please answer all questions before submitting.")
         else:
             st.session_state.quiz_submitted = True
-            st.experimental_rerun()
+            st.rerun()
 
     if st.session_state.quiz_submitted:
         display_quiz_results(st.session_state.quiz_questions, st.session_state.user_answers)
@@ -69,7 +69,7 @@ def show():
     if st.session_state.quiz_submitted:
         if st.button("Take Another Quiz"):
             reset_quiz()
-            st.experimental_rerun()
+            st.rerun()
 
 def display_quiz_results(questions: List[Dict], user_answers: Dict):
     """
