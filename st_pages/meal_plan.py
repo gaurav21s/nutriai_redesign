@@ -65,7 +65,7 @@ def show():
 
         if st.button("Generate New Meal Plan", key="new_plan_button"):
             st.session_state.meal_plan_result = None
-            st.experimental_rerun()
+            st.rerun()
 
         st.markdown("""
         <div style='padding: 10px; border-radius: 5px; background-color: #f0f2f6;'>
