@@ -41,7 +41,7 @@ def show():
     if st.session_state.clear_inputs:
         st.session_state.clear_inputs = False
         st.session_state.file_uploader_key += 1
-        st.experimental_rerun()
+        st.rerun()
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
@@ -64,7 +64,7 @@ def show():
             st.session_state.clear_inputs = True
             st.session_state.analysis_result = None
             st.session_state.file_uploader_key += 1
-            st.experimental_rerun()
+            st.rerun()
 
 def display_results(response: str):
     """Display the nutrition analysis results."""
