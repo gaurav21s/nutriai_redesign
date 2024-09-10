@@ -10,3 +10,4 @@ mistralai
 llama-index
 llama-index-llms-groq
 langchain-groq
+streamlit-option-menu
