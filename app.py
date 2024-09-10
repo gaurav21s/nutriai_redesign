@@ -66,29 +66,32 @@ class NutriAIApp:
         """
         with st.sidebar:
             
-            st.markdown("<h1 style='text-align: center;'>NutriAI Navigation</h1>", unsafe_allow_html=True)
-            
-            st.markdown("---")
+            # st.markdown("<h1 style='font-size: 3rem; font-weight: bold; text-align: center;'>NutriAI</h1>", unsafe_allow_html=True)
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                st.image("style/nutriai-color.png", width=150, use_column_width=True)
+            # st.markdown("<h1 style='font-size: 2rem; text-align: center;'>NutriAI</h1>", unsafe_allow_html=True)
+            # st.markdown("---")
             
             selected = option_menu(
-                menu_title=None,
+                menu_title="Navigation",
                 options=[
                     "Home", "Food Insight", "Meal Planner", "Recipe Finder",
-                    "NutriQuiz", "Calorie Calculator", "NutriChat", "About Us",
-                    "Learn More", "Nutrition Articles"
+                    "NutriQuiz", "Nutri Calc", "NutriChat", "About Us",
+                    "Learn More", "NutriAI Articles"
                 ],
                 icons=[
                     "house", "eye", "calendar3", "book",
                     "patch-question", "calculator", "chat-dots", "people",
                     "info-circle", "newspaper"
                 ],
-                # menu_icon="list",
+                # menu_icon="compass",
                 default_index=0,
                 styles={
                     "container": {"padding": "5!important", "background-color": "#dbf3e7"},
-                    "icon": {"color": "#b5102d", "font-size": "25px"}, 
+                    "icon": {"color": "#d62176", "font-size": "25px"}, 
                     "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#E9ECEF"},
-                    "nav-link-selected": {"background-color": "#489459", "color": "#F8F9FA"},
+                    # "nav-link-selected": {"background-color": "#09ADA4", "color": "#F8F9FA"},
                 }
             )
 

@@ -10,8 +10,10 @@ def show():
     This function handles the layout and functionality of the quiz page,
     including question display, user input, and result presentation.
     """
-    st.title("Nutrition Quiz with NutriAI")
-    st.subheader("Test your food knowledge and learn fun facts! 🍎🧠")
+    st.markdown("""
+    <h1 style='text-align: center; color: #15627D;'>Nutrition Quiz with NutriAI</h1>
+    <h3 style='text-align: center; color: #333;'>Test your food knowledge and learn fun facts!🧠</h3>
+    """, unsafe_allow_html=True)
 
     # Initialize session state variables
     if 'quiz_questions' not in st.session_state:

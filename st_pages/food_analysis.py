@@ -19,8 +19,10 @@ def show():
     including input methods for food analysis and result display.
     """
     
-    st.title("Food Analysis with NutriAI")
-    st.subheader("Uncover the nutritional secrets of your food 🔍🥗")
+    st.markdown("""
+    <h1 style='text-align: center; color: #15627D;'>Food Analysis with NutriAI</h1>
+    <h3 style='text-align: center; color: #333;'>Uncover the nutritional secrets of your food🥗</h3>
+    """, unsafe_allow_html=True)
 
     st.subheader("Choose your input method:")
 

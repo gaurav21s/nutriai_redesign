@@ -12,8 +12,10 @@ def show():
     including user inputs and recipe display.
     """
     logger.info("Started Recipe generation page")
-    st.title("NutriAI Recipe Recommender")
-    st.subheader("Get recipe recommendation based on your preferences 🍳👨‍🍳")
+    st.markdown("""
+    <h1 style='text-align: center; color: #15627D;'>NutriAI Recipe Finder</h1>
+    <h3 style='text-align: center; color: #333;'>Get recipe recommendation based on your preferences👨‍🍳</h3>
+    """, unsafe_allow_html=True)
 
     # User inputs
     dish_name = st.text_input("Enter a dish name or cuisine type:", placeholder="e.g., Milkshake, Paratha, Bread Sandwich")

@@ -1,10 +1,23 @@
 import streamlit as st
+from streamlit_option_menu import option_menu
 
 def show():
     st.title('NutriAI Calculator')
     st.subheader("Calculate your BMI and maintenance Calorie")
 
-    mode = st.radio('Choose a mode', ('BMI', 'Calorie Calculator'))
+    mode = option_menu(
+        menu_title=None,
+        options=["BMI", "Calorie Calculator"],
+        icons=["rulers", "calculator"],
+        default_index=0,
+        orientation="horizontal",
+        styles={
+            "container": {"padding": "0!important", "background-color": "#dbf3e7"},
+            "icon": {"color": "#d62176", "font-size": "20px"},
+            "nav-link": {"font-size": "16px", "text-align": "center", "margin": "0px", "--hover-color": "#E9ECEF"},
+            "nav-link-selected": {"background-color": "#F4AB4F", "color": "#F8F9FA"},
+        }
+    )
 
     if mode == 'BMI':
         weight = st.number_input('Enter your weight (in kg)', format='%f')

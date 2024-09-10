@@ -19,8 +19,10 @@ def show():
     including user preference inputs and meal plan display.
     """
     logger.info("Started Meal plan page")
-    st.title("Meal Planning with NutriAI")
-    st.subheader("Get your personalized meal plan based on your preferences 🍽️📅")
+    st.markdown("""
+    <h1 style='text-align: center; color: #15627D;'>Meal Planning with NutriAI</h1>
+    <h3 style='text-align: center; color: #333;'>Your personalized meal planner 🍽️📅</h3>
+    """, unsafe_allow_html=True)
 
     # User preferences input
     gender = st.radio("Your gender:",['Male','Female'])

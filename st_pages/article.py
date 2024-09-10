@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_modal import Modal
 import yaml
 import os
 from utils.logger import logger
@@ -32,37 +31,49 @@ def show():
     Display the Articles page of the application.
 
     This function handles the layout and functionality of the articles page,
-    including article listing and detailed view.
+    including article listing, search functionality, and detailed view.
     """
     logger.info("Started Article page")
-    st.title("NutriAI Articles")
-    st.subheader("Explore our collection of nutritional articles 📚")
+    st.markdown("""
+    <h1 style='text-align: center; color: #15627D;'>NutriAI Articles</h1>
+    <h3 style='text-align: center; color: #333;'>Explore our collection of nutritional articles 📚</h3>
+    """, unsafe_allow_html=True)
 
     # Load articles from YAML file
     articles = load_articles()
 
-    # Display article list
-    for i, article in enumerate(articles):
-        st.subheader(article["title"])
-        st.write(article["summary"])
-        if st.button(f"Read More..", key=f"button_{i}"):
-            show_article_details(article)
+    # Search functionality
+    search_query = st.text_input("Search articles", "")
+    filtered_articles = [
+        article for article in articles
+        if search_query.lower() in article["title"].lower() or search_query.lower() in article["summary"].lower()
+    ]
 
-def show_article_details(article):
+    # Display article list
+    for i, article in enumerate(filtered_articles):
+        with st.container():
+            st.markdown(f"### {article['title']}")
+            st.markdown(f"<p style='color: #666;'>{article['summary']}</p>", unsafe_allow_html=True)
+            if st.button(f"Read More", key=f"button_{i}", type="primary"):
+                show_article_popup(article)
+
+        st.markdown("---")
+
+    if not filtered_articles:
+        st.info("No articles found matching your search.")
+
+def show_article_popup(article):
     """
-    Display the full details of an article in a modal popup.
+    Display the full details of an article in a popup.
+    
+    Parameters:
+    -----------
     article : dict
         A dictionary containing the article details (title, content).
     """
-    # modal = Modal(f"Article: {article['title']}", key=f"modal_{article['title']}")
-    # with modal.container():
-    #     st.markdown(f"<div style='max-height: 20vh; overflow-y: auto;'>", unsafe_allow_html=True)
-    #     st.markdown(f"### {article['title']}")
-    #     st.markdown(article['content'])
-    #     st.markdown("</div>", unsafe_allow_html=True)
-    modal = Modal(f"Article: {article['title']}", key=f"modal_{article['title']}")
-    with modal.container():
-        st.markdown(f"### {article['title']}")
+    popup = st.empty()
+    with popup.container():
+        st.markdown(f"<h2 style='text-align: center; color: #15627D;'>{article['title']}</h2>", unsafe_allow_html=True)
         st.markdown(article['content'])
-
-    modal.show()
+        if st.button("Close"):
+            popup.empty()
