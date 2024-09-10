@@ -17,6 +17,7 @@ def show():
     """
     logger.info("Started Home page")
 
+
     st.markdown("""
     <h1 style='text-align: center; color: #15627D;'>Welcome to NutriAI</h1>
     <h3 style='text-align: center; color: #333;'>Your Personal Nutrition Companion 🌱</h3>
@@ -66,4 +67,13 @@ def show():
     <p style='text-align: center; font-size: 16px; color: #555;'>
     Ready to start your journey to better nutrition? Select a feature from the sidebar to begin!
     </p>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <div style='position: fixed; left: 10px; bottom: 10px;'>
+            <img src="https://raw.githubusercontent.com/gaurav21s/nutriai/v2/style/nutriai-favicon-color.png" alt="NutriAI Logo" width="50" height="50">
+        </div>
+        <div style='position: fixed; right: 10px; bottom: 10px;'>
+            <a href="https://github.com/gaurav21s" target="_blank">@gaurav21s</a>
+        </div>
     """, unsafe_allow_html=True)

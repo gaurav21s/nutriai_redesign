@@ -67,6 +67,15 @@ def show():
 
                 st.warning('If you want to lose weight, consume less than this amount.')
                 st.success('If you want to gain weight, consume more than this amount.')
+                
+    st.markdown("""
+        <div style='position: fixed; left: 10px; bottom: 10px;'>
+            <img src="https://raw.githubusercontent.com/gaurav21s/nutriai/v2/style/nutriai-favicon-color.png" alt="NutriAI Logo" width="50" height="50">
+        </div>
+        <div style='position: fixed; right: 10px; bottom: 10px;'>
+            <a href="https://github.com/gaurav21s" target="_blank">@gaurav21s</a>
+        </div>
+    """, unsafe_allow_html=True)
 
 def calculate_bmi(weight, height):
     bmi = weight / ((height / 100) ** 2)
