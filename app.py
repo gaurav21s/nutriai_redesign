@@ -90,10 +90,10 @@ class NutriAIApp:
                 # menu_icon="list",
                 default_index=0,
                 styles={
-                    "container": {"padding": "5!important", "background-color": "#F8F9FA"},
-                    "icon": {"color": "orange", "font-size": "25px"}, 
+                    "container": {"padding": "5!important", "background-color": "#dbf3e7"},
+                    "icon": {"color": "#b5102d", "font-size": "25px"}, 
                     "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#E9ECEF"},
-                    "nav-link-selected": {"background-color": "#00A896", "color": "#F8F9FA"},
+                    "nav-link-selected": {"background-color": "#00A896", "color": "#489459"},
                 }
             )
 
