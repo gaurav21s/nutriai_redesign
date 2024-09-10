@@ -93,7 +93,7 @@ class NutriAIApp:
                     "container": {"padding": "5!important", "background-color": "#dbf3e7"},
                     "icon": {"color": "#b5102d", "font-size": "25px"}, 
                     "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#E9ECEF"},
-                    "nav-link-selected": {"background-color": "#00A896", "color": "#489459"},
+                    "nav-link-selected": {"background-color": "#489459", "color": "#F8F9FA"},
                 }
             )
 
