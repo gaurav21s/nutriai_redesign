@@ -9,6 +9,8 @@ application's initialization and navigation.
 import streamlit as st
 from st_pages import home, about_us, meal_plan, recipe_generation, food_analysis, article, mcq_quiz, calc, nutriqa, docs
 from utils.logger import logger
+from streamlit_option_menu import option_menu
+
 
 class NutriAIApp:
     """
