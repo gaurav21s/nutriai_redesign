@@ -65,13 +65,8 @@ class NutriAIApp:
             str: The selected navigation option.
         """
         with st.sidebar:
-            # Create a simple text-based logo
-            # st.markdown("""
-            # <h1 style='text-align: center; font-size: 3rem; background-color: #E9ECEF; padding: 10px; border-radius: 10px;'>
-            #     <span style='color: #00A896;'>Nutri</span><span style='color: orange;'>AI</span>
-            # </h1>
-            # """, unsafe_allow_html=True)
-            st.markdown("<h1 style='font-size: 2rem;'>NutriAI</h1>", unsafe_allow_html=True)
+            
+            st.markdown("<h1 style='font-size: 3rem; text-align: center;'>NutriAI</h1>", unsafe_allow_html=True)
             
             # st.markdown("---")
             
