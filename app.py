@@ -66,7 +66,7 @@ class NutriAIApp:
         """
         with st.sidebar:
             
-            st.markdown("<h2 style='text-align: center;'>NutriAI Navigation</h2>", unsafe_allow_html=True)
+            st.markdown("<h1 style='text-align: center;'>NutriAI Navigation</h1>", unsafe_allow_html=True)
             
             st.markdown("---")
             
