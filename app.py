@@ -66,12 +66,12 @@ class NutriAIApp:
         """
         with st.sidebar:
             
-            st.markdown("<h1 style='font-size: 3rem; text-align: center;'>NutriAI</h1>", unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center;'>NutriAI Navigation</h2>", unsafe_allow_html=True)
             
-            # st.markdown("---")
+            st.markdown("---")
             
             selected = option_menu(
-                menu_title="Navigation",
+                menu_title=None,
                 options=[
                     "Home", "Food Insight", "Meal Planner", "Recipe Finder",
                     "NutriQuiz", "Calorie Calculator", "NutriChat", "About Us",
