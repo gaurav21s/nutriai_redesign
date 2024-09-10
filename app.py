@@ -62,9 +62,41 @@ class NutriAIApp:
         Returns:
             str: The selected navigation option.
         """
-        st.sidebar.title("NutriAI Navigation")
-        return st.sidebar.radio("Go to", ["Home", "Food Insight", "Meal Plan", "Recipe Recommender", "NutriQuiz", "NutriCalc", "NutriBot", "About Us", "Documentation", "Articles"])
+        with st.sidebar:
+            # Create a simple text-based logo
+            # st.markdown("""
+            # <h1 style='text-align: center; font-size: 3rem; background-color: #E9ECEF; padding: 10px; border-radius: 10px;'>
+            #     <span style='color: #00A896;'>Nutri</span><span style='color: orange;'>AI</span>
+            # </h1>
+            # """, unsafe_allow_html=True)
+            st.markdown("<h1 style='font-size: 2rem;'>NutriAI</h1>", unsafe_allow_html=True)
+            
+            # st.markdown("---")
+            
+            selected = option_menu(
+                menu_title="Navigation",
+                options=[
+                    "Home", "Food Insight", "Meal Planner", "Recipe Finder",
+                    "NutriQuiz", "Calorie Calculator", "NutriChat", "About Us",
+                    "Learn More", "Nutrition Articles"
+                ],
+                icons=[
+                    "house", "eye", "calendar3", "book",
+                    "patch-question", "calculator", "chat-dots", "people",
+                    "info-circle", "newspaper"
+                ],
+                # menu_icon="list",
+                default_index=0,
+                styles={
+                    "container": {"padding": "5!important", "background-color": "#F8F9FA"},
+                    "icon": {"color": "orange", "font-size": "25px"}, 
+                    "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#E9ECEF"},
+                    "nav-link-selected": {"background-color": "#00A896", "color": "#F8F9FA"},
+                }
+            )
 
+        return selected
+        
     def run(self):
         """
         Run the NutriAI application.
@@ -80,21 +112,21 @@ class NutriAIApp:
             home.show()
         elif nav_selection == "Food Insight":
             food_analysis.show()
-        elif nav_selection == "Meal Plan":
+        elif nav_selection == "Meal Planner":
             meal_plan.show()
-        elif nav_selection == "Recipe Recommender":
+        elif nav_selection == "Recipe Finder":
             recipe_generation.show()
         elif nav_selection == "NutriQuiz":
             mcq_quiz.show()
-        elif nav_selection == "NutriCalc":
+        elif nav_selection == "Nutri Calc":
             calc.show()
-        elif nav_selection == "NutriBot":
+        elif nav_selection == "NutriChat":
             nutriqa.show()
         elif nav_selection == "About Us":
             about_us.show()
-        elif nav_selection == "Documentation":
+        elif nav_selection == "Learn More":
             docs.show()
-        elif nav_selection == "Articles":
+        elif nav_selection == "NutriAI Articles":
             article.show()
 
 if __name__ == "__main__":
