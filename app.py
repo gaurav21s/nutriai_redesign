@@ -7,7 +7,7 @@ application's initialization and navigation.
 """
 
 import streamlit as st
-from st_pages import home, about_us, meal_plan, recipe_generation, food_analysis, article, mcq_quiz, calc, nutriqa, docs
+from st_pages import home, about_us, meal_plan, recipe_generation, food_analysis, nutri_info, article, mcq_quiz, calc, nutriqa, docs
 from utils.logger import logger
 from streamlit_option_menu import option_menu
 
@@ -53,7 +53,7 @@ class NutriAIApp:
         """
         logger.info("Configuring Streamlit page for NutriAI app")
         st.set_page_config(
-            page_title="NutriAI: Your Food Detective",
+            page_title="NutriAI: Your Nutrition Companion",
             page_icon="🍽️",
         )
 
@@ -65,23 +65,43 @@ class NutriAIApp:
             str: The selected navigation option.
         """
         with st.sidebar:
+            # Responsive logo sizing
+            screen_width = st.session_state.get("screen_width", 1200)  # Default to desktop width
             
-            # st.markdown("<h1 style='font-size: 3rem; font-weight: bold; text-align: center;'>NutriAI</h1>", unsafe_allow_html=True)
+            if screen_width <= 768:  # Mobile breakpoint
+                logo_width = 75
+            else:
+                logo_width = 125
+            
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
-                st.image("style/nutriai-color.png", width=150, use_column_width=True)
-            # st.markdown("<h1 style='font-size: 2rem; text-align: center;'>NutriAI</h1>", unsafe_allow_html=True)
-            # st.markdown("---")
+                st.image("style/nutriai-color.png", width=logo_width, use_column_width=False)
             
+            # Add a hidden element to detect screen size changes
+            st.markdown(
+                """
+                <script>
+                    var screenWidth = window.innerWidth;
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Streamlit.setComponentValue("screen_width", screenWidth);
+                    });
+                    window.addEventListener('resize', function() {
+                        screenWidth = window.innerWidth;
+                        Streamlit.setComponentValue("screen_width", screenWidth);
+                    });
+                </script>
+                """,
+                unsafe_allow_html=True
+            )
             selected = option_menu(
                 menu_title="Navigation",
                 options=[
-                    "Home", "Food Insight", "Meal Planner", "Recipe Finder",
+                    "Home", "Food Insight", "Ingredient Checker", "Meal Planner", "Recipe Finder",
                     "NutriQuiz", "Nutri Calc", "NutriChat", "About Us",
                     "Learn More", "NutriAI Articles"
                 ],
                 icons=[
-                    "house", "eye", "calendar3", "book",
+                    "house", "eye", 'search', "calendar3", "book",
                     "patch-question", "calculator", "chat-dots", "people",
                     "info-circle", "newspaper"
                 ],
@@ -112,6 +132,8 @@ class NutriAIApp:
             home.show()
         elif nav_selection == "Food Insight":
             food_analysis.show()
+        elif nav_selection == "Ingredient Checker":
+            nutri_info.show()
         elif nav_selection == "Meal Planner":
             meal_plan.show()
         elif nav_selection == "Recipe Finder":

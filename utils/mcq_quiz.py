@@ -25,9 +25,9 @@ class GroqHandler:
         logger.info("Configuring Groq LLM")
         if not QuizConfig.GROQ_API_KEY:
             raise ValueError("GROQ_API_KEY environment variable is not set")
-        self.llm = Groq(model="llama3-8b-8192", api_key=QuizConfig.GROQ_API_KEY, temperature=0.7)
+        self.llm = Groq(model="llama3-8b-8192", api_key=QuizConfig.GROQ_API_KEY, temperature=0.8)
 
-    def get_groq_response(self) -> str:
+    def get_groq_response(self, level: str, topic: str) -> str:
         """
         Get response from Groq LLM.
 
@@ -40,9 +40,9 @@ class GroqHandler:
         logger.info("Sending request to Groq LLM")
 
         # Set the system prompt and user messages differently
-        system_prompt = "You are a quiz creator specializing in fun, interesting, and challenging multiple-choice quizzes on various topics."
-        user_message = f"""Your task is to generate a quiz about food, fitness and nutrition consisting of {QuizConfig.NUM_QUESTIONS} number of questions in given specific format.
-        Each question should have either two or four answer options. Two-option questions should be formatted as true/false, while four-option questions should be labeled A, B, C, and D. The questions should be engaging and include elements of humor or interesting facts in either the questions or answers.
+        system_prompt = "You are a quiz creator specializing in fun and interesting multiple-choice quizzes on various topics."
+        user_message = f"""Your task is to generate a quiz about {topic} consisting of {QuizConfig.NUM_QUESTIONS} number of {level} level questions in given specific format.
+        Each question should have either two or four answer options according to the {level} level difficulty. Two-option questions should be formatted as true/false, while four-option questions should be labeled A, B, C, and D. The questions should be engaging and include elements of humor or interesting facts in either the questions or answers.
 
         For each question, please provide the following:
         1. The question text
@@ -143,7 +143,7 @@ class NutritionQuiz:
         self.google_ai = GroqHandler()
         self.google_ai.configure_api()
 
-    def generate_quiz(self) -> List[Dict]:
+    def generate_quiz(self, level: str, topic: str) -> List[Dict]:
         """
         Generate a nutrition quiz.
 
@@ -151,9 +151,9 @@ class NutritionQuiz:
             List[Dict]: A list of dictionaries, each containing a question, options, correct answer, and explanation.
         """
         logger.info("Generating nutrition quiz")
-        response = self.google_ai.get_groq_response()
+        response = self.google_ai.get_groq_response(level, topic)
         parsed_questions = QuizHandler.parse_quiz_response(response)
-        print(parsed_questions)
+        # print(parsed_questions)
         # Validate parsed questions
         valid_questions = []
         for q in parsed_questions:

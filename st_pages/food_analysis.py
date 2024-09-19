@@ -7,6 +7,7 @@ allowing users to input food items via text or image for nutritional analysis.
 
 import streamlit as st
 import re
+from streamlit_option_menu import option_menu
 from utils.food_analysis import FoodAnalysis, FoodAnalysisConfig
 from utils.logger import logger
 from PIL import Image
@@ -18,54 +19,65 @@ def show():
     This function handles the layout and functionality of the food analysis page,
     including input methods for food analysis and result display.
     """
-    
     st.markdown("""
     <h1 style='text-align: center; color: #15627D;'>Food Analysis with NutriAI</h1>
     <h3 style='text-align: center; color: #333;'>Uncover the nutritional secrets of your food🥗</h3>
     """, unsafe_allow_html=True)
 
-    st.subheader("Choose your input method:")
+    # Options menu for input selection
+    selected = option_menu(
+        menu_title=None,
+        options=["Text Input", "Image Input"],
+        icons=["pencil-square", "camera-fill"],
+        default_index=0,
+        orientation="horizontal",
+        styles={
+            "container": {"padding": "0!important", "background-color": "#dbf3e7"},
+            "icon": {"color": "#d62176", "font-size": "20px"},
+            "nav-link": {"font-size": "16px", "text-align": "center", "margin": "0px", "--hover-color": "#E9ECEF"},
+            "nav-link-selected": {"background-color": "#F4AB4F", "color": "#F8F9FA"},
+        }
+    )
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.text("📝 Text Input")
+    if selected == "Text Input":
+        st.subheader("📝 Enter Your Food Items")
         input_text = st.text_input("Enter food items with quantity", key="input_text", 
                                    placeholder='E.g., 2 slices of pizza, 1 apple', 
-                                   value="" if st.session_state.clear_inputs else None)
-
-    with col2:
-        st.text("📸 Image Input")
+                                   value="" if st.session_state.get('clear_inputs', False) else None)
+        uploaded_file = None
+    else:  # Image Input
+        st.subheader("📸 Upload Food Picture")
         uploaded_file = st.file_uploader("Upload a clear food picture", 
                                          type=FoodAnalysisConfig.UPLOAD_TYPES, 
-                                         key=f"uploaded_file_{st.session_state.file_uploader_key}")
+                                         key=f"uploaded_file_{st.session_state.get('file_uploader_key', 0)}")
+        input_text = ""
 
-    if st.session_state.clear_inputs:
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+            st.image(image, caption="Uploaded Image", use_column_width=True)
+
+    if st.session_state.get('clear_inputs', False):
         st.session_state.clear_inputs = False
-        st.session_state.file_uploader_key += 1
+        st.session_state.file_uploader_key = st.session_state.get('file_uploader_key', 0) + 1
         st.rerun()
 
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", use_column_width=True)
-
     if st.button("Analyze My Food", type="primary"):
-        if (input_text and uploaded_file) or (not input_text and not uploaded_file):
-            st.warning("Please provide either text input OR image input, not both or neither.")
+        if (selected == "Text Input" and not input_text) or (selected == "Image Input" and not uploaded_file):
+            st.warning(f"Please provide {'text input' if selected == 'Text Input' else 'an image'} for analysis.")
         else:
             with st.spinner("Analyzing your food..."):
                 food_analysis = FoodAnalysis()
                 result = food_analysis.analyze_food(input_text, uploaded_file)
                 st.session_state.analysis_result = result
 
-    if st.session_state.analysis_result:
+    if st.session_state.get('analysis_result'):
         st.success("Analysis complete!")
         display_results(st.session_state.analysis_result)
+        st.session_state.clear_inputs = True
+        st.session_state.analysis_result = None
+        st.session_state.file_uploader_key = st.session_state.get('file_uploader_key', 0) + 1
 
         if st.button("Clear Output and Start New Analysis", key="clear_button"):
-            st.session_state.clear_inputs = True
-            st.session_state.analysis_result = None
-            st.session_state.file_uploader_key += 1
             st.rerun()
             
     st.markdown("""

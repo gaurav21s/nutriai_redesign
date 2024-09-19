@@ -23,55 +23,73 @@ def show():
     if 'quiz_submitted' not in st.session_state:
         st.session_state.quiz_submitted = False
 
-    # Generate new quiz if not already generated
-    if st.session_state.quiz_questions is None:
-        with st.spinner("Preparing a delicious quiz for you..."):
-            try:
-                quiz = NutritionQuiz()
-                st.session_state.quiz_questions = quiz.generate_quiz()
-            except Exception as e:
-                logger.error(f"Error generating quiz: {e}")
-                st.error("An error occurred while generating the quiz. Please try again later.")
-                st.stop()
+    # User input for difficulty level and topic
+    col1, col2 = st.columns(2)
+    with col1:
+        difficulty = st.selectbox("Select difficulty level:", ["Easy", "Medium", "Hard"])
+    with col2:
+        topic = st.selectbox("Select quiz topic:", ["Nutrition", "Yoga", "General Health", "Exercise", "Diet Plans", "Cooking Methods", "Food Safety", "Sports Nutrition"])
 
-    # Display quiz questions
-    for i, question in enumerate(st.session_state.quiz_questions):
-        st.subheader(f"Question {i+1}")
-        st.write(question['question'])
+    # Generate new quiz if not already generated or if user changes difficulty/topic
+    if (st.session_state.quiz_questions is None or 
+        'last_difficulty' not in st.session_state or 
+        'last_topic' not in st.session_state or
+        st.session_state.last_difficulty != difficulty or
+        st.session_state.last_topic != topic):
         
-        options = question['options']
-        option_labels = ['A', 'B', 'C', 'D'][:len(options)]
-        
-        answer = st.radio(
-            "Select your answer:",
-            options=option_labels,
-            format_func=lambda x: f"{x}. {options[option_labels.index(x)]}",
-            key=f"q{i}",
-            index=None,
-            disabled=st.session_state.quiz_submitted
-        )
-        
-        if answer:
-            st.session_state.user_answers[i] = answer
+        if st.button("Generate Quiz",type="primary"):
+            with st.spinner("Preparing a delicious quiz for you..."):
+                try:
+                    quiz = NutritionQuiz()
+                    st.session_state.quiz_questions = quiz.generate_quiz(difficulty.lower(), topic.lower())
+                    st.session_state.last_difficulty = difficulty
+                    st.session_state.last_topic = topic
+                    st.session_state.user_answers = {}
+                    st.session_state.quiz_submitted = False
+                except Exception as e:
+                    logger.error(f"Error generating quiz: {e}")
+                    st.error("An error occurred while generating the quiz. Please try again later.")
+                    st.stop()
 
-        st.write("---")
+    # Display quiz questions if they exist
+    if st.session_state.quiz_questions:
+        for i, question in enumerate(st.session_state.quiz_questions):
+            st.subheader(f"Question {i+1}")
+            st.write(question['question'])
+            
+            options = question['options']
+            option_labels = ['A', 'B', 'C', 'D'][:len(options)]
+            
+            answer = st.radio(
+                "Select your answer:",
+                options=option_labels,
+                format_func=lambda x: f"{x}. {options[option_labels.index(x)]}",
+                key=f"q{i}",
+                index=None,
+                disabled=st.session_state.quiz_submitted
+            )
+            
+            if answer:
+                st.session_state.user_answers[i] = answer
 
-    # Submit button
-    if st.button("Submit Quiz", disabled=st.session_state.quiz_submitted):
-        if len(st.session_state.user_answers) < len(st.session_state.quiz_questions):
-            st.warning("Please answer all questions before submitting.")
-        else:
-            st.session_state.quiz_submitted = True
-            st.rerun()
+            st.write("---")
 
-    if st.session_state.quiz_submitted:
-        display_quiz_results(st.session_state.quiz_questions, st.session_state.user_answers)
+        # Submit button
+        if st.button("Submit Quiz", disabled=st.session_state.quiz_submitted):
+            if len(st.session_state.user_answers) < len(st.session_state.quiz_questions):
+                st.warning("Please answer all questions before submitting.")
+            else:
+                st.session_state.quiz_submitted = True
+                st.rerun()
 
-    # Reset button
-    if st.session_state.quiz_submitted:
-        if st.button("Take Another Quiz"):
-            reset_quiz()
-            st.rerun()
+        if st.session_state.quiz_submitted:
+            display_quiz_results(st.session_state.quiz_questions, st.session_state.user_answers)
+
+        # Reset button
+        if st.session_state.quiz_submitted:
+            if st.button("Take Another Quiz"):
+                reset_quiz()
+                st.rerun()
         
     st.markdown("""
         <div style='position: fixed; left: 10px; bottom: 10px;'>
@@ -99,9 +117,6 @@ def display_quiz_results(questions: List[Dict], user_answers: Dict):
         user_answer = user_answers.get(i)
         correct_answer = question['correct_answer']
 
-        # Debug prints
-        # st.write(f"Debug: user_answer = {user_answer}, correct_answer = {correct_answer}")
-
         result = quiz.check_answer(question, user_answer)
         
         if result['is_correct']:
@@ -110,7 +125,6 @@ def display_quiz_results(questions: List[Dict], user_answers: Dict):
         else:
             st.error(f"Question {i+1}: Incorrect")
         
-        # Check if user_answer and correct_answer are single characters
         if len(user_answer) != 1 or len(correct_answer) != 1:
             st.error(f"Error: user_answer or correct_answer is not a single character. user_answer: {user_answer}, correct_answer: {correct_answer}")
             return
