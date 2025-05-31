@@ -3,7 +3,7 @@ import streamlit as st
 def show():
    st.markdown("""
    <h1 style='text-align: center; color: #15627D;'>NutriAI Project Documentation</h1>
-   <h3 style='text-align: center; color: #333;'>Version 2.2.0</h3>
+   <h3 style='text-align: center; color: #333;'>Version 2.3.0</h3>
    """, unsafe_allow_html=True)
    
    st.write('''
@@ -50,7 +50,7 @@ def show():
       4. **NutriQA**: An AI-powered question-answering system for nutritional advice.
       5. **Recipe Generation**: Create new recipes or healthier alternatives to existing dishes.
       6. **Shopping Link Generation**: Generate affiliate links for ingredients on popular platforms.
-      7. **Ingredient Analysis**: Utilize AI to categorize ingredients as healthy or unhealthy and identify potential health issues (powered by `nutri_info.py`).
+      7. **Ingredient Analysis**: Utilize AI to categorize ingredients as healthy or unhealthy and identify potential health issues (powered by `nutri_info.py`). Now with improved image processing capabilities.
       8. **NutriChat**: An AI-powered chatbot that will help users in their nutritional journey. 
       ''')
 
@@ -160,7 +160,8 @@ def show():
          "Expanded database of regional cuisines",
          "Advanced dietary pattern analysis",
          "Collaborative meal planning for households",
-         "Enhanced image recognition for more accurate ingredient identification",
+         "Further improvements to image analysis capabilities",
+         "Support for additional image formats and sources",
          "Integration of nutritional databases for more comprehensive analysis"
       ]
       for enhancement in enhancements:
@@ -169,10 +170,11 @@ def show():
    # Version Information
    with st.expander("ℹ️ Version Info"):
         st.write('''
-        **Current Version**: 2.2.0
+        **Current Version**: 2.3.0
         ''')
         st.subheader("Change Log")
         versions = {
+            "2.3.0": "Updated new AI models and APIs and improved image processing capabilities",
             "2.2.0": "Integrated nutri_info.py for advanced ingredient analysis",
             "2.1.0": "Added recipe generation and shopping link features",
             "2.0.0": "Integrated multiple AI models for enhanced functionality",

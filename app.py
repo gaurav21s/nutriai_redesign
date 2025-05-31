@@ -76,7 +76,7 @@ class NutriAIApp:
             
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
-                st.image("style/nutriai-color.png", width=logo_width, use_column_width=False)
+                st.image("style/nutriai-color.png", width=logo_width, use_container_width=False)
             
             # Add a hidden element to detect screen size changes
             st.markdown(
