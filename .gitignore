@@ -1,5 +1,4 @@
 secrets.toml
-.env
 # ignore logs folder   
 logs/
 .DS_Store

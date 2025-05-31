@@ -111,8 +111,9 @@ class NutriAIApp:
                 styles={
                     "container": {"padding": "5!important", "background-color": "#dbf3e7"},
                     "icon": {"color": "#d62176", "font-size": "25px"}, 
-                    "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#E9ECEF"},
-                    # "nav-link-selected": {"background-color": "#09ADA4", "color": "#F8F9FA"},
+                    "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#E9ECEF", "color": "#333333", "font-weight": "500"},
+                    "nav-link-selected": {"background-color": "#09ADA4", "color": "#FFFFFF", "font-weight": "bold"},
+                    "menu-title": {"color": "#333333", "font-weight": "600", "font-size": "18px"}  # Added styling for menu title
                 }
             )
 
