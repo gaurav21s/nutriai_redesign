@@ -55,6 +55,7 @@ class NutriAIApp:
         st.set_page_config(
             page_title="NutriAI: Your Nutrition Companion",
             page_icon="🍽️",
+            initial_sidebar_state="expanded",
         )
 
     def create_navbar(self):
@@ -127,7 +128,7 @@ class NutriAIApp:
         logger.info("Starting NutriAI application")
         
         nav_selection = self.create_navbar()
-
+        
         if nav_selection == "Home":
             home.show()
         elif nav_selection == "Food Insight":
@@ -150,6 +151,7 @@ class NutriAIApp:
             docs.show()
         elif nav_selection == "NutriAI Articles":
             article.show()
+        
 
 if __name__ == "__main__":
     logger.info("Starting the process")

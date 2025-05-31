@@ -11,3 +11,4 @@ llama-index
 llama-index-llms-groq
 langchain-groq
 streamlit-option-menu
+langchain-google-genai

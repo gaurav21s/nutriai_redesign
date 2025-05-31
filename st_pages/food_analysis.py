@@ -90,34 +90,162 @@ def show():
     """, unsafe_allow_html=True)
 
 def display_results(response: str):
-    """Display the nutrition analysis results."""
+    """Display the nutrition analysis results with modern design elements."""
     logger.info('Displaying Food analysis result')
+    # print(response)
+    # CSS for styling the new sections
+    st.markdown("""
+    <style>
+        .food-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .food-items-table th, .food-items-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .food-items-table th {
+            background-color: #F4AB4F;
+            color: white;
+        }
+        .food-items-table tr:hover {
+            background-color: rgba(214, 33, 118, 0.1);
+        }
+
+        .nutrition-cards {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .nutrition-card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            width: 18%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .nutrition-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .nutrition-card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #15627D;
+        }
+        .nutrition-card-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d62176;
+        }
+
+        .verdict-card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .verdict-card.healthy {
+            transition: background-color 0.3s ease;
+        }
+        .verdict-card.not-healthy {
+            transition: background-color 0.3s ease;
+        }
+        .verdict-card.healthy:hover {
+            background-color: rgba(0, 128, 0, 0.5);  /* Green hover for healthy */
+        }
+        .verdict-card.not-healthy:hover {
+            background-color: rgba(244, 171, 79, 0.5);  /* #F4AB4F with opacity for not healthy */
+        }
+        .verdict-card-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.subheader("🍽️ Your Nutrition Breakdown:")
-    
+
     sections = re.split(r'(?:Total:|Verdict:|Facts:)', response)
-    
+
     if len(sections) >= 3:
-        # Display food items
+        # Food Items Section: Display as a modern table
         food_items_section = sections[0].strip()
         if food_items_section:
-            st.text("Food Items:")
-            st.info(food_items_section)
+            food_items = food_items_section.split("\n")
+            st.write("Food Items:")
+            st.markdown("""
+            <table class="food-items-table">
+                <thead>
+                    <tr>
+                        <th>Food Item</th>
+                        <th>Nutritional Information</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """, unsafe_allow_html=True)
+            
+            for item in food_items:
+                # Split based on the first hyphen to avoid issues with multi-hyphen values
+                if '-' in item:
+                    food_item, nutrition_info = item.split(' - ', 1)
+                    st.markdown(f"""
+                    <tr>
+                        <td>{food_item.strip()}</td>
+                        <td>{nutrition_info.strip()}</td>
+                    </tr>
+                    """, unsafe_allow_html=True)
 
-        # Display total nutrition
+            st.markdown("</tbody></table>", unsafe_allow_html=True)
+
+        # Total Nutrition Section: Display 5 square cards
         total_nutrition_section = sections[1].strip()
         if total_nutrition_section:
-            st.text("Total Nutrition:")
-            st.info(total_nutrition_section)
+            nutrition_values = re.findall(r'(\d+[-]\d+)\s*(calories|g\s*carbs|g\s*fiber|g\s*protein|g\s*fats)', total_nutrition_section)
+            nutrition_dict = {nutrient: value for value, nutrient in nutrition_values}
+            st.write("Total Nutrition:")
+            st.markdown(f"""
+            <div class="nutrition-cards">
+                <div class="nutrition-card">
+                    <div class="nutrition-card-title">Calories</div>
+                    <div class="nutrition-card-value">{nutrition_dict.get('calories', 'N/A')}</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-card-title">Carbs</div>
+                    <div class="nutrition-card-value">{nutrition_dict.get('g carbs', 'N/A')}</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-card-title">Fiber</div>
+                    <div class="nutrition-card-value">{nutrition_dict.get('g fiber', 'N/A')}</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-card-title">Protein</div>
+                    <div class="nutrition-card-value">{nutrition_dict.get('g protein', 'N/A')}</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-card-title">Fats</div>
+                    <div class="nutrition-card-value">{nutrition_dict.get('g fats', 'N/A')}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        # Display verdict
+        # Verdict Section: Medium card with hover effect (green for healthy, #F4AB4F fading for not healthy)
         verdict_section = sections[2].strip()
         if verdict_section:
-            st.text("Verdict:")
-            if "Not" in verdict_section:
-                st.warning(verdict_section)
-            else:
-                st.success(verdict_section)
-
+            verdict_class = "not-healthy" if "Not" in verdict_section else "healthy"
+            st.markdown(f"""
+            <div class="verdict-card {verdict_class}">
+                <div class="verdict-card-text">{verdict_section}</div>
+            </div>
+            """, unsafe_allow_html=True)
         # Display facts
         if len(sections) > 3:
             facts_section = sections[3].strip()

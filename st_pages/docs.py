@@ -51,6 +51,7 @@ def show():
       5. **Recipe Generation**: Create new recipes or healthier alternatives to existing dishes.
       6. **Shopping Link Generation**: Generate affiliate links for ingredients on popular platforms.
       7. **Ingredient Analysis**: Utilize AI to categorize ingredients as healthy or unhealthy and identify potential health issues (powered by `nutri_info.py`).
+      8. **NutriChat**: An AI-powered chatbot that will help users in their nutritional journey. 
       ''')
 
    # Technologies and Platforms
@@ -70,10 +71,9 @@ def show():
          st.subheader("Python Libraries")
          st.write("""
          - LangChain
+         - LlamaIndex
          - Pillow (PIL)
          - dotenv
-         - httpx
-         - base64
          """)
          
    # Project Structure
