@@ -13,6 +13,8 @@ class FoodAnalysisConfig:
 
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     UPLOAD_TYPES = ["jpg", "jpeg", "png"]
+    # Updated to match user preference
+    MODEL_NAME = "gemini-2.0-flash"
 
 class GoogleAIHandler:
     """Handler for Google's Generative AI interactions."""
@@ -22,13 +24,20 @@ class GoogleAIHandler:
         """Configure the Google Generative AI API."""
         logger.info("Configuring Google Generative AI API")
         if not FoodAnalysisConfig.GOOGLE_API_KEY:
+            logger.error("GOOGLE_API_KEY environment variable is not set")
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
-        genai.configure(api_key=FoodAnalysisConfig.GOOGLE_API_KEY)
+        
+        try:
+            genai.configure(api_key=FoodAnalysisConfig.GOOGLE_API_KEY)
+            logger.info("Successfully configured Google Generative AI API")
+        except Exception as e:
+            logger.error(f"Failed to configure Google Generative AI API: {str(e)}")
+            raise
 
     @staticmethod
     def get_gemini_response(input_text: str, image: Optional[List[Dict]] = None, prompt: str = "") -> str:
         """
-        Get response from Google Gemini Pro Vision API.
+        Get response from Google Gemini Flash API.
 
         Args:
             input_text (str): The input text for the model.
@@ -38,15 +47,20 @@ class GoogleAIHandler:
         Returns:
             str: The generated response text.
         """
-        logger.info("Sending request to Google Gemini API")
-        model = genai.GenerativeModel('gemini-pro-vision' if image else 'gemini-pro')
-        content = [input_text, image[0], prompt] if image else input_text
-        response = model.generate_content(
-            content,
-            generation_config=genai.types.GenerationConfig(temperature=0.001)
-        )
-        # print(response.text)
-        return response.text
+        try:
+            logger.info("Sending request to Google Gemini API")
+            # Updated to use more cost-effective model
+            model = genai.GenerativeModel(FoodAnalysisConfig.MODEL_NAME)
+            content = [input_text, image[0], prompt] if image else input_text
+            response = model.generate_content(
+                content,
+                generation_config=genai.types.GenerationConfig(temperature=0.001)
+            )
+            logger.info("Successfully received response from Google Gemini API")
+            return response.text
+        except Exception as e:
+            logger.error(f"Error in Google Gemini API request: {str(e)}")
+            return "I apologize, but I'm currently unable to analyze the food. Please try again later or contact support if the issue persists."
 
 class ImageHandler:
     """Handler for image-related operations."""
@@ -65,14 +79,19 @@ class ImageHandler:
         Raises:
             FileNotFoundError: If no file is uploaded.
         """
-        logger.info(f"Setting up input image: {uploaded_file.name}")
-        if uploaded_file is None:
-            raise FileNotFoundError("No file uploaded")
+        try:
+            logger.info(f"Setting up input image: {uploaded_file.name}")
+            if uploaded_file is None:
+                logger.error("No file uploaded")
+                raise FileNotFoundError("No file uploaded")
 
-        return [{
-            "mime_type": uploaded_file.type,
-            "data": uploaded_file.getvalue()
-        }]
+            return [{
+                "mime_type": uploaded_file.type,
+                "data": uploaded_file.getvalue()
+            }]
+        except Exception as e:
+            logger.error(f"Error setting up input image: {str(e)}")
+            raise
 
 class FoodAnalysis:
     """Main class for FoodAnalysis functionality."""
@@ -80,8 +99,12 @@ class FoodAnalysis:
     def __init__(self):
         """Initialize the FoodAnalysis application."""
         logger.info("Initializing FoodAnalysis application")
-        self.google_ai = GoogleAIHandler()
-        self.google_ai.configure_api()
+        try:
+            self.google_ai = GoogleAIHandler()
+            self.google_ai.configure_api()
+        except Exception as e:
+            logger.error(f"Failed to initialize FoodAnalysis: {str(e)}")
+            raise
 
     @staticmethod
     def get_image_prompt() -> str:
@@ -150,18 +173,23 @@ class FoodAnalysis:
         Returns:
             str: The analysis result.
         """
-        if uploaded_file:
-            logger.info(f"Analyzing uploaded image: {uploaded_file.name}")
-            image_data = ImageHandler.setup_input_image(uploaded_file)
-            response = self.google_ai.get_gemini_response(
-                self.get_image_prompt(),
-                image_data,
-                ""
-            )
-        else:
-            logger.info(f"Analyzing text input: {input_text}")
-            response = self.google_ai.get_gemini_response(
-                self.get_text_prompt(input_text)
-            )
-        
-        return response
+        try:
+            if uploaded_file:
+                logger.info(f"Analyzing uploaded image: {uploaded_file.name}")
+                image_data = ImageHandler.setup_input_image(uploaded_file)
+                response = self.google_ai.get_gemini_response(
+                    self.get_image_prompt(),
+                    image_data,
+                    ""
+                )
+            else:
+                logger.info(f"Analyzing text input: {input_text}")
+                response = self.google_ai.get_gemini_response(
+                    self.get_text_prompt(input_text)
+                )
+            
+            logger.info("Successfully analyzed food")
+            return response
+        except Exception as e:
+            logger.error(f"Error in food analysis: {str(e)}")
+            return "I apologize, but I'm currently unable to analyze the food. Please try again later or contact support if the issue persists."

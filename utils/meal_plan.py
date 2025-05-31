@@ -18,7 +18,8 @@ class MealPlanConfig:
     """Configuration class for MealPlan application."""
 
     TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
-    MODEL_NAME = "mistralai/Mixtral-8x22B-Instruct-v0.1"
+    # Updated to use more cost-effective model
+    MODEL_NAME = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
 
 class TogetherAIHandler:
     """Handler for Together AI API interactions."""
@@ -27,16 +28,23 @@ class TogetherAIHandler:
         """Initialize the Together AI handler."""
         logger.info("Initializing Together AI handler")
         if not MealPlanConfig.TOGETHER_API_KEY:
+            logger.error("TOGETHER_API_KEY environment variable is not set")
             raise ValueError("TOGETHER_API_KEY environment variable is not set")
-        self.chat_model = ChatTogether(
-            together_api_key=MealPlanConfig.TOGETHER_API_KEY,
-            model=MealPlanConfig.MODEL_NAME,
-            temperature=0.0001
-        )
+        
+        try:
+            self.chat_model = ChatTogether(
+                together_api_key=MealPlanConfig.TOGETHER_API_KEY,
+                model=MealPlanConfig.MODEL_NAME,
+                temperature=0.0001
+            )
+            logger.info(f"Successfully initialized Together AI with model: {MealPlanConfig.MODEL_NAME}")
+        except Exception as e:
+            logger.error(f"Failed to initialize Together AI handler: {str(e)}")
+            raise
 
     def get_model_response(self, input_text: str) -> str:
         """
-        Get response from Together AI's Mixtral model.
+        Get response from Together AI's Llama model.
 
         Args:
             input_text (str): The input text for the model.
@@ -44,9 +52,14 @@ class TogetherAIHandler:
         Returns:
             str: The generated response text.
         """
-        logger.info("Sending request to Together AI API")
-        response = self.chat_model.invoke(input_text)
-        return response.content
+        try:
+            logger.info("Sending request to Together AI API")
+            response = self.chat_model.invoke(input_text)
+            logger.info("Successfully received response from Together AI API")
+            return response.content
+        except Exception as e:
+            logger.error(f"Error in Together AI API request: {str(e)}")
+            return "I apologize, but I'm currently unable to generate a meal plan. Please try again later or contact support if the issue persists."
 
 class MealPlan:
     """Main class for MealPlan functionality."""
@@ -54,7 +67,11 @@ class MealPlan:
     def __init__(self):
         """Initialize the MealPlan page."""
         logger.info("Initializing MealPlan application")
-        self.together_ai_handler = TogetherAIHandler()
+        try:
+            self.together_ai_handler = TogetherAIHandler()
+        except Exception as e:
+            logger.error(f"Failed to initialize MealPlan: {str(e)}")
+            raise
 
     @staticmethod
     def get_meal_plan_prompt(gender: str, goal: str, diet_choice: str, issue: str, gym: str, height: str, weight: str,food_type: str) -> str:
@@ -132,11 +149,15 @@ class MealPlan:
         Returns:
             str: The generated meal plan.
         """
-        logger.info(f"Creating meal plan for: gender={gender} ,goal={goal}, diet={diet_choice}, issue={issue}, gym={gym}, height={height}, weight={weight}, food_type={food_type}")
-        prompt = self.get_meal_plan_prompt(gender, goal, diet_choice, issue, gym, height, weight, food_type)
-        meal_plan = self.together_ai_handler.get_model_response(prompt)
-        
-        return meal_plan
+        try:
+            logger.info(f"Creating meal plan for: gender={gender} ,goal={goal}, diet={diet_choice}, issue={issue}, gym={gym}, height={height}, weight={weight}, food_type={food_type}")
+            prompt = self.get_meal_plan_prompt(gender, goal, diet_choice, issue, gym, height, weight, food_type)
+            meal_plan = self.together_ai_handler.get_model_response(prompt)
+            logger.info("Successfully created meal plan")
+            return meal_plan
+        except Exception as e:
+            logger.error(f"Error creating meal plan: {str(e)}")
+            return "I apologize, but I'm currently unable to generate a meal plan. Please try again later or contact support if the issue persists."
     
 # example usage
 

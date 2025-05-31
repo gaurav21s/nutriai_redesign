@@ -17,6 +17,7 @@ import os
 from typing import Literal
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
+from utils.logger import logger
 
 # Load environment variables
 load_dotenv()
@@ -28,35 +29,50 @@ class GroqHandler:
         """Initialize the GroqHandler."""
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
+            logger.error("GROQ_API_KEY environment variable is not set")
             raise ValueError("GROQ_API_KEY environment variable is not set")
-        self.llm = ChatGroq(
-            groq_api_key=api_key,
-            model="mixtral-8x7b-32768",
-            temperature=0,
-            max_tokens=None,
-            timeout=None,
-            max_retries=2,
-        )
+        
+        try:
+            self.llm = ChatGroq(
+                groq_api_key=api_key,
+                # Updated to use more cost-effective model
+                model="llama-3.3-70b-versatile",
+                temperature=0,
+                max_tokens=None,
+                timeout=None,
+                max_retries=2,
+            )
+            logger.info("Successfully initialized Groq with model: llama-3.3-70b-versatile")
+        except Exception as e:
+            logger.error(f"Failed to initialize Groq handler: {str(e)}")
+            raise
 
     def get_model_response(self, input_text: str) -> str:
         """Get a response from the Groq model for the given input text."""
         try:
+            logger.info("Sending request to Groq API")
             messages = [
                 ("system", "You are a helpful assistant that generates recipes."),
                 ("human", input_text),
             ]
             response = self.llm.invoke(messages)
+            logger.info("Successfully received response from Groq API")
             return response.content
         except Exception as e:
-            print(f"Error in Groq API request: {e}")
-            raise
+            logger.error(f"Error in Groq API request: {str(e)}")
+            return "I apologize, but I'm currently unable to generate a recipe. Please try again later or contact support if the issue persists."
 
 class RecipeGenerator:
     """Generates recipes based on user input."""
 
     def __init__(self):
         """Initialize the RecipeGenerator."""
-        self.groq_handler = GroqHandler()
+        try:
+            logger.info("Initializing RecipeGenerator")
+            self.groq_handler = GroqHandler()
+        except Exception as e:
+            logger.error(f"Failed to initialize RecipeGenerator: {str(e)}")
+            raise
 
     def generate_recipe(self, dish_name: str, recipe_type: Literal["normal", "healthier", "new_healthy"]) -> str:
         """
@@ -69,9 +85,15 @@ class RecipeGenerator:
         Returns:
             str: The generated recipe as a formatted string.
         """
-        prompt = self._get_recipe_prompt(dish_name, recipe_type)
-        recipe = self.groq_handler.get_model_response(prompt)
-        return recipe
+        try:
+            logger.info(f"Generating {recipe_type} recipe for: {dish_name}")
+            prompt = self._get_recipe_prompt(dish_name, recipe_type)
+            recipe = self.groq_handler.get_model_response(prompt)
+            logger.info("Successfully generated recipe")
+            return recipe
+        except Exception as e:
+            logger.error(f"Error generating recipe: {str(e)}")
+            return "I apologize, but I'm currently unable to generate a recipe. Please try again later or contact support if the issue persists."
 
     @staticmethod
     def _get_recipe_prompt(dish_name: str, recipe_type: str) -> str:
@@ -98,12 +120,15 @@ class RecipeGenerator:
         """
 
 # Example usage
-if __name__ == "__main__":
-    recipe_generator = RecipeGenerator()
-    
-    # Generate a normal recipe
-    normal_recipe = recipe_generator.generate_recipe("Spaghetti Carbonara", "normal")
-    # Generate a healthier alternative recipe
-    healthier_recipe = recipe_generator.generate_recipe("Chocolate Cake", "healthier")
-    # Generate a new healthy recipe
-    new_healthy_recipe = recipe_generator.generate_recipe("Mediterranean cuisine", "new_healthy")
+# if __name__ == "__main__":
+#     try:
+#         recipe_generator = RecipeGenerator()
+        
+#         # Generate a normal recipe
+#         normal_recipe = recipe_generator.generate_recipe("Spaghetti Carbonara", "normal")
+#         # Generate a healthier alternative recipe
+#         healthier_recipe = recipe_generator.generate_recipe("Chocolate Cake", "healthier")
+#         # Generate a new healthy recipe
+#         new_healthy_recipe = recipe_generator.generate_recipe("Mediterranean cuisine", "new_healthy")
+#     except Exception as e:
+#         logger.error(f"Error in recipe generation example: {str(e)}")

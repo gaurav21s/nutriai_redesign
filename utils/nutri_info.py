@@ -8,13 +8,15 @@ from langchain.schema import HumanMessage, SystemMessage
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 import langchain_core.exceptions
+import base64
+import io
 
 class NutriInfoConfig:
     """Configuration class for NutriInfo application."""
 
     UPLOAD_TYPES = ["jpg", "jpeg", "png"]
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-    MODEL_NAME = "gemini-1.5-pro"
+    MODEL_NAME = "gemini-2.0-flash"
 
 class IngredientAnalysis(BaseModel):
     """Model for ingredient analysis results."""
@@ -29,15 +31,22 @@ class GoogleAIHandler:
         """Initialize the Google AI handler."""
         logger.info("Initializing Google AI handler with Langchain")
         if not NutriInfoConfig.GOOGLE_API_KEY:
+            logger.error("GOOGLE_API_KEY environment variable is not set")
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
-        self.llm = ChatGoogleGenerativeAI(
-            model=NutriInfoConfig.MODEL_NAME,
-            temperature=0,
-            max_tokens=None,
-            timeout=None,
-            max_retries=2,
-            google_api_key=NutriInfoConfig.GOOGLE_API_KEY,
-        )
+        
+        try:
+            self.llm = ChatGoogleGenerativeAI(
+                model=NutriInfoConfig.MODEL_NAME,
+                temperature=0,
+                max_tokens=None,
+                timeout=None,
+                max_retries=2,
+                google_api_key=NutriInfoConfig.GOOGLE_API_KEY,
+            )
+            logger.info(f"Successfully initialized Google AI with model: {NutriInfoConfig.MODEL_NAME}")
+        except Exception as e:
+            logger.error(f"Failed to initialize Google AI handler: {str(e)}")
+            raise
 
     def get_model_response(self, system_message: str, human_message: str, output_parser: PydanticOutputParser) -> IngredientAnalysis:
         """
@@ -51,46 +60,79 @@ class GoogleAIHandler:
         Returns:
             IngredientAnalysis: The parsed analysis result.
         """
-        logger.info("Sending request to Google AI API")
-        messages = [
-            SystemMessage(content=system_message),
-            HumanMessage(content=f"{human_message}\n\n{output_parser.get_format_instructions()}")
-        ]
-        
-        max_retries = 1
-        for attempt in range(max_retries):
-            try:
-                response = self.llm.invoke(messages)
-                return output_parser.parse(response.content)
-            except langchain_core.exceptions.OutputParserException as e:
-                logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
-                if attempt == max_retries - 1:
-                    logger.error(f"All attempts failed. Last error: {str(e)}")
+        try:
+            logger.info("Sending request to Google AI API")
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=f"{human_message}\n\n{output_parser.get_format_instructions()}")
+            ]
+            
+            max_retries = 1
+            for attempt in range(max_retries):
+                try:
+                    response = self.llm.invoke(messages)
+                    logger.info("Successfully received response from Google AI API")
+                    return output_parser.parse(response.content)
+                except langchain_core.exceptions.OutputParserException as e:
+                    logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
+                    if attempt == max_retries - 1:
+                        logger.error(f"All attempts failed. Last error: {str(e)}")
+                        raise
+                except Exception as e:
+                    logger.error(f"Unexpected error: {str(e)}")
                     raise
-            except Exception as e:
-                logger.error(f"Unexpected error: {str(e)}")
-                raise
 
-        # This line should never be reached due to the raise in the loop, but including for completeness
-        raise Exception("Failed to get valid response after multiple attempts")
+            # This line should never be reached due to the raise in the loop, but including for completeness
+            raise Exception("Failed to get valid response after multiple attempts")
+        except Exception as e:
+            logger.error(f"Error in Google AI API request: {str(e)}")
+            # Return a default response for graceful error handling
+            return IngredientAnalysis(
+                healthy_ingredients=[],
+                unhealthy_ingredients=[],
+                health_issues={}
+            )
 
     def analyze_image(self, image: PIL.Image) -> str:
         """
         Analyze image using Google's Generative AI model.
 
         Args:
-            image_data (bytes): The image data.
+            image: PIL Image object.
 
         Returns:
             str: The generated response text describing the image contents.
         """
-        logger.info("Sending image to Google AI API for analysis")
-        messages = [
-            SystemMessage(content="You are an expert in identifying ingredients from images."),
-            HumanMessage(content=[image])
-        ]
-        response = self.llm.invoke(messages)
-        return response.content
+        try:
+            logger.info("Sending image to Google AI API for analysis")
+            
+            # Convert PIL Image to base64 for LangChain compatibility
+            # Convert PIL image to bytes
+            img_byte_arr = io.BytesIO()
+            image.save(img_byte_arr, format='PNG')
+            img_byte_arr = img_byte_arr.getvalue()
+            
+            # Encode to base64
+            img_base64 = base64.b64encode(img_byte_arr).decode()
+            
+            message_content = [
+                {
+                    "type": "text",
+                    "text": "You are an expert in identifying ingredients from images. Please identify all the ingredients you can see in this image and list them separated by commas."
+                },
+                {
+                    "type": "image_url",
+                    "image_url": f"data:image/png;base64,{img_base64}"
+                }
+            ]
+            
+            messages = [HumanMessage(content=message_content)]
+            response = self.llm.invoke(messages)
+            logger.info("Successfully analyzed image with Google AI API")
+            return response.content
+        except Exception as e:
+            logger.error(f"Error in Google AI image analysis: {str(e)}")
+            return "Unable to analyze image at this time. Please try again later."
 
 class NutriInfoHandler:
     """Handler for nutrition information processing."""
@@ -107,34 +149,34 @@ class NutriInfoHandler:
         Returns:
             IngredientAnalysis: The parsed analysis result.
         """
-        logger.info("Processing ingredients for nutritional analysis")
-        system_message = """
-        You are a nutritionist providing health insights about ingredients. 
-        Your response should be in JSON format with the following structure:
-        {
-            "healthy_ingredients": ["ingredient1", "ingredient2", ...],
-            "unhealthy_ingredients": ["ingredient1", "ingredient2", ...],
-            "health_issues": ["issue1","issue2"]
-        }
-        """
-        human_message = f"""
-        Analyze the following ingredients and categorize them as healthy(safe) or unhealthy(unsafe). 
-        For unhealthy ingredients, list potential health issues they may cause:
-        {', '.join(ingredients)}
-
-        Give empty list if there are no healthy or safe and unhealthy or unsafe ingredients.
-        Provide your response in the JSON format specified in the system message.
-        """
-        
-        output_parser = PydanticOutputParser(pydantic_object=IngredientAnalysis)
-        
         try:
+            logger.info("Processing ingredients for nutritional analysis")
+            system_message = """
+            You are a nutritionist providing health insights about ingredients. 
+            Your response should be in JSON format with the following structure:
+            {
+                "healthy_ingredients": ["ingredient1", "ingredient2", ...],
+                "unhealthy_ingredients": ["ingredient1", "ingredient2", ...],
+                "health_issues": ["issue1","issue2"]
+            }
+            """
+            human_message = f"""
+            Analyze the following ingredients and categorize them as healthy(safe) or unhealthy(unsafe). 
+            For unhealthy ingredients, list potential health issues they may cause:
+            {', '.join(ingredients)}
+
+            Give empty list if there are no healthy or safe and unhealthy or unsafe ingredients.
+            Provide your response in the JSON format specified in the system message.
+            """
+            
+            output_parser = PydanticOutputParser(pydantic_object=IngredientAnalysis)
+            
             answer = google_ai_handler.get_model_response(system_message, human_message, output_parser)
-            # print(answer)
+            logger.info("Successfully processed ingredients")
             return answer
-        except langchain_core.exceptions.OutputParserException as e:
-            logger.error(f"Failed to parse API response: {str(e)}")
-            # Return a default IngredientAnalysis object or raise a custom exception
+        except Exception as e:
+            logger.error(f"Error processing ingredients: {str(e)}")
+            # Return a default IngredientAnalysis object for graceful error handling
             return IngredientAnalysis(
                 healthy_ingredients=[],
                 unhealthy_ingredients=[],
@@ -147,7 +189,11 @@ class NutriInfo:
     def __init__(self):
         """Initialize the NutriInfo application."""
         logger.info("Initializing NutriInfo application")
-        self.google_ai_handler = GoogleAIHandler()
+        try:
+            self.google_ai_handler = GoogleAIHandler()
+        except Exception as e:
+            logger.error(f"Failed to initialize NutriInfo: {str(e)}")
+            raise
 
     def analyze_nutrition(self, ingredients_text: str = "", uploaded_file=None) -> Optional[IngredientAnalysis]:
         """
@@ -164,7 +210,9 @@ class NutriInfo:
             ingredients_list = []
             if uploaded_file:
                 logger.info(f"Analyzing uploaded image")
-                image_analysis = self.google_ai_handler.analyze_image(uploaded_file)
+                # Convert Streamlit UploadedFile to PIL Image
+                image = PIL.Image.open(uploaded_file)
+                image_analysis = self.google_ai_handler.analyze_image(image)
                 ingredients_list = [ingredient.strip() for ingredient in image_analysis.split(',')]
             elif ingredients_text:
                 ingredients_list = [ingredient.strip() for ingredient in ingredients_text.split(',')]
@@ -172,12 +220,21 @@ class NutriInfo:
 
             if not ingredients_list:
                 logger.warning("No ingredients provided for analysis")
-                return None
+                return IngredientAnalysis(
+                    healthy_ingredients=[],
+                    unhealthy_ingredients=[],
+                    health_issues={}
+                )
 
             return NutriInfoHandler.process_ingredients(ingredients_list, self.google_ai_handler)
         except Exception as e:
             logger.error(f"Error in analyze_nutrition: {str(e)}")
-            return None
+            # Return a default response instead of None
+            return IngredientAnalysis(
+                healthy_ingredients=[],
+                unhealthy_ingredients=[],
+                health_issues={}
+            )
 
 # Example usage
 

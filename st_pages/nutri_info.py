@@ -47,13 +47,15 @@ def show():
         uploaded_file = None
     else:  # Image Input
         st.subheader("📸 Upload Ingredient Image")
-        st.warning("🚧 This feature is coming soon!")  # Coming soon message
+        # st.warning("🚧 This feature is coming soon!")  # Coming soon message
         # Commenting out the file uploader for now
-        # uploaded_file = st.file_uploader("Upload a clear ingredient picture", 
-        #                                  type=NutriInfoConfig.UPLOAD_TYPES, 
-        #                                  key=f"uploaded_file_{st.session_state.get('file_uploader_key', 0)}")
-        uploaded_file = None  # No file uploader for now
+        uploaded_file = st.file_uploader("Upload a clear ingredient picture", 
+                                         type=NutriInfoConfig.UPLOAD_TYPES, 
+                                         key=f"uploaded_file_{st.session_state.get('file_uploader_key', 0)}")
+        # uploaded_file = None  # No file uploader for now
         input_text = ""
+        if uploaded_file:
+            st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
     if st.session_state.get('clear_inputs', False):
         st.session_state.clear_inputs = False
