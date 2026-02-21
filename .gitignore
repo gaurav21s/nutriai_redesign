@@ -17,6 +17,7 @@ backend/.venv/
 frontend/node_modules/
 frontend/.next/
 frontend/.next_prev_*/
+frontend/.next_bak_*/
 frontend/tsconfig.tsbuildinfo
 frontend/.clerk/
 

@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { ArrowRight, CalendarClock, FlaskConical, Sparkles } from "lucide-react";
 
 import { Sidebar } from "@/components/layout/sidebar";
+import { WorkspaceTabs } from "@/components/layout/workspace-tabs";
 
 const flowItems = [
   { label: "Analyze", href: "/food-insight" },
@@ -69,6 +70,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 ))}
               </div>
             </section>
+
+            <WorkspaceTabs />
 
             <div className="animate-fade-up">{children}</div>
           </main>
