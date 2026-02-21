@@ -1,131 +1,143 @@
-# NutriAI: Your Nutrition Companion 🍽️🧠
+# NutriAI Monorepo
 
-NutriAI is a comprehensive, AI-powered nutrition application built with Streamlit. It offers a suite of tools to help users make informed dietary choices, plan meals, and learn about nutrition.
+NutriAI is now a full-stack platform with:
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://nutriaiv2.streamlit.app/)
+- FastAPI backend (`/backend`) using clean architecture, versioned APIs (`/api/v1`), typed schemas, dependency injection, rate limiting, and structured error handling.
+- Next.js App Router frontend (`/frontend`) using TypeScript strict mode, Tailwind design tokens, Clerk auth, and a typed API client.
+- Convex data layer (`/convex`) with schema + feature queries/mutations/actions + secured HTTP actions for backend-owned persistence.
 
-## Table of Contents
+## Repository Layout
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Technologies Used](#technologies-used)
-- [Contributing](#contributing)
-- [License](#license)
+- `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/backend`
+- `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend`
+- `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/convex`
 
-## Features
+## Prerequisites
 
-NutriAI offers a wide range of features to support your nutritional journey:
+- Python 3.11+
+- Node.js 20+
+- npm 10+
+- Convex CLI (for deployment/sync)
 
-1. **Food Insight**: Analyze food items via text input or image upload for detailed nutritional information.
-2. **Meal Planner**: Generate personalized meal plans based on dietary preferences and nutritional goals.
-3. **Recipe Finder**: Discover and create new recipes tailored to your tastes and dietary requirements.
-4. **NutriQuiz**: Test and expand your nutrition knowledge with an AI-generated quiz.
-5. **Nutri Calc**: Calculate and track your daily nutritional intake.
-6. **NutriChat**: Get instant answers to your nutrition-related questions from an AI assistant.
-7. **NutriAI Articles**: Access a curated collection of informative articles on various nutrition topics.
+## 1) Backend Setup (FastAPI)
 
-## Installation
+```bash
+cd /Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/nutriai.git
-   cd nutriai
-   ```
+Update `.env` with provider/API credentials and service URLs:
 
-2. Set up a virtual environment (optional but recommended):
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
+- `GOOGLE_API_KEY`
+- `TOGETHER_API_KEY`
+- `GROQ_API_KEY`
+- `AFFILIATE_CODE`
+- `CONVEX_HTTP_ACTIONS_URL=https://festive-kudu-214.convex.site`
+- `CONVEX_BACKEND_SECRET=...`
+- Clerk settings (`CLERK_ISSUER`, `CLERK_JWT_PUBLIC_KEY`, `CLERK_AUDIENCE`)
 
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+Run backend:
 
-4. Set up environment variables:
-   Create a `.env` file in the project root and add your API keys:
-   ```
-   OPENAI_API_KEY=your_openai_api_key
-   GOOGLE_API_KEY=your_google_api_key
-   TOGETHER_API_KEY=your_together_api_key
-   GROQ_API_KEY=your_groq_api_key
-   ```
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-## Usage
+Swagger docs:
 
-1. Run the Streamlit app:
-   ```
-   streamlit run app.py
-   ```
+- [http://localhost:8000/docs](http://localhost:8000/docs)
 
-2. Open your web browser and navigate to `http://localhost:8501`
+## 2) Frontend Setup (Next.js + Clerk + Tailwind)
 
-3. Use the navigation menu to explore different features of NutriAI:
-   - Analyze foods in the "Food Insight" section
-   - Generate meal plans in the "Meal Planner" section
-   - Find recipes in the "Recipe Finder" section
-   - Take a nutrition quiz in the "NutriQuiz" section
-   - Calculate nutritional intake in the "Nutri Calc" section
-   - Chat with the AI assistant in the "NutriChat" section
-   - Read nutrition articles in the "NutriAI Articles" section
+```bash
+cd /Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend
+npm install
+cp .env.local.example .env.local
+```
 
-## Project Structure
+Update `.env.local`:
 
-The project structure is designed to be modular and easy to navigate:
+- `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000`
+- `NEXT_PUBLIC_CONVEX_URL=https://festive-kudu-214.convex.cloud`
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...`
+- `CLERK_SECRET_KEY=...`
 
-- `app.py`: The main entry point for the Streamlit application
-- `requirements.txt`: Lists all project dependencies
-- `.env`: Contains environment variables (not tracked by git)
-- `README.md`: Provides project documentation and setup instructions
+Run frontend:
 
-Key directories:
-- `style/`: Houses UI components and custom CSS
-- `st_pages/`: Contains individual feature pages (e.g., food analysis, meal planning)
-- `utils/`: Includes utility functions and helpers for various features
-- `yaml/`: Stores YAML configuration files, such as article data
+```bash
+npm run dev
+```
 
-This structure promotes separation of concerns and makes it easier to maintain and extend the application as it grows.
+Frontend URL:
 
+- [http://localhost:3000](http://localhost:3000)
 
-## Technologies Used
+## 3) Convex Setup
 
-- [Python](https://www.python.org/)
-- [Streamlit](https://streamlit.io/)
-- [OpenAI API](https://openai.com/api/)
-- [Google Cloud Vision API](https://cloud.google.com/vision)
-- [Together AI](https://www.together.ai/)
-- [Groq](https://groq.com/)
+From repo root:
 
-## Contributing
+```bash
+npm install -g convex
+convex login
+convex dev
+```
 
-We welcome contributions to NutriAI! Please follow these steps to contribute:
+Project URLs:
 
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/AmazingFeature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-5. Push to the branch (`git push origin feature/AmazingFeature`)
-6. Open a Pull Request
+- Cloud URL: [https://festive-kudu-214.convex.cloud](https://festive-kudu-214.convex.cloud)
+- HTTP Actions URL: [https://festive-kudu-214.convex.site](https://festive-kudu-214.convex.site)
 
-Please ensure your code adheres to our coding standards and includes appropriate tests.
+Set Convex environment variable for backend HTTP action auth:
 
-## License
+- `BACKEND_CONVEX_SHARED_SECRET` (in Convex env)
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Must match backend:
 
-## Contact
+- `CONVEX_BACKEND_SECRET` (in `backend/.env`)
 
-Gaurav Shrivastav - [LinkedIn](https://www.linkedin.com/in/gaurav-shrivastav-gs/)
+## Auth and Route Protection
 
-Project Link: [NutriAI](https://github.com/gaurav21s/nutriai/tree/v2)
+- Clerk middleware lives at `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend/src/middleware.ts` using `clerkMiddleware()`.
+- Dashboard pages are protected in `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend/src/app/(dashboard)/layout.tsx` via `auth()` and redirect.
 
-## Acknowledgements
+## API Surface (v1)
 
-- [Streamlit](https://streamlit.io/)
-- [OpenAI](https://openai.com/)
-- [Google Cloud](https://cloud.google.com/)
-- [Together AI](https://www.together.ai/)
-- [Groq](https://groq.com/)
+Base URL: `http://localhost:8000/api/v1`
+
+Core feature groups:
+
+- `/food-insights`
+- `/ingredient-checks`
+- `/meal-plans`
+- `/recipes`
+- `/quizzes`
+- `/nutri-chat`
+- `/calculators`
+- `/articles`
+- `/recommendations`
+- `/health`
+
+## Testing
+
+Backend tests:
+
+```bash
+cd /Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/backend
+pytest
+```
+
+Frontend checks:
+
+```bash
+cd /Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend
+npm run typecheck
+npm run lint
+```
+
+## Notes
+
+- All frontend API requests go through `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend/src/lib/api.ts`.
+- Convex provider/client setup is in `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend/src/lib/convex.ts`.
+- Legacy Streamlit implementation has been removed from the codebase.

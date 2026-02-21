@@ -1,0 +1,47 @@
+"""Repository interfaces."""
+
+from __future__ import annotations
+
+from typing import Protocol
+
+
+class RecordRepository(Protocol):
+    async def create_record(self, feature: str, clerk_user_id: str, payload: dict) -> dict: ...
+
+    async def get_record(self, feature: str, clerk_user_id: str, record_id: str) -> dict | None: ...
+
+    async def list_records(self, feature: str, clerk_user_id: str, limit: int = 20) -> list[dict]: ...
+
+
+class ChatRepository(Protocol):
+    async def create_chat_session(self, clerk_user_id: str, title: str) -> dict: ...
+
+    async def list_chat_sessions(self, clerk_user_id: str, limit: int = 30) -> list[dict]: ...
+
+    async def add_chat_message(
+        self,
+        clerk_user_id: str,
+        session_id: str,
+        role: str,
+        content: str,
+    ) -> dict: ...
+
+    async def list_chat_messages(self, clerk_user_id: str, session_id: str, limit: int = 100) -> list[dict]: ...
+
+
+class CompositeRepository(RecordRepository, ChatRepository, Protocol):
+    """Combined repository capabilities used by feature services."""
+
+    async def create_quiz_session(self, clerk_user_id: str, payload: dict) -> dict: ...
+
+    async def get_quiz_session(self, clerk_user_id: str, session_id: str) -> dict | None: ...
+
+    async def store_quiz_submission(self, clerk_user_id: str, session_id: str, payload: dict) -> dict: ...
+
+    async def list_quiz_history(self, clerk_user_id: str, limit: int = 20) -> list[dict]: ...
+
+    async def list_articles(self, query: str | None = None, limit: int = 50) -> list[dict]: ...
+
+    async def get_article_by_slug(self, slug: str) -> dict | None: ...
+
+    async def seed_articles(self, items: list[dict]) -> int: ...
