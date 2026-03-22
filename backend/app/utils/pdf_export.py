@@ -87,6 +87,7 @@ def build_meal_plan_pdf(
     """Generate a meal plan PDF as bytes."""
     try:
         from fpdf import FPDF
+        from fpdf.enums import XPos, YPos
     except ModuleNotFoundError:
         lines = [
             "NutriAI Personalized Meal Plan",
@@ -107,7 +108,14 @@ def build_meal_plan_pdf(
             self.set_y(-10)
             self.set_font("Helvetica", "I", 9)
             self.set_text_color(120, 120, 120)
-            self.cell(0, 8, f"NutriAI Meal Plan | Page {self.page_no()}", 0, 0, "C")
+            self.cell(
+                0,
+                8,
+                f"NutriAI Meal Plan | Page {self.page_no()}",
+                align="C",
+                new_x=XPos.RIGHT,
+                new_y=YPos.TOP,
+            )
 
     pdf = MealPlanPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -124,11 +132,29 @@ def build_meal_plan_pdf(
     pdf.ln(20)
     pdf.set_text_color(35, 35, 35)
     pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 8, f"Generated for: {_normalize_pdf_value(full_name)} (Age {age})", ln=1)
-    pdf.cell(0, 8, f"Date: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')}", ln=1)
+    pdf.cell(
+        0,
+        8,
+        f"Generated for: {_normalize_pdf_value(full_name)} (Age {age})",
+        new_x=XPos.LMARGIN,
+        new_y=YPos.NEXT,
+    )
+    pdf.cell(
+        0,
+        8,
+        f"Date: {datetime.now(tz=timezone.utc).strftime('%Y-%m-%d')}",
+        new_x=XPos.LMARGIN,
+        new_y=YPos.NEXT,
+    )
 
     for key, value in profile.items():
-        pdf.cell(0, 8, f"{_normalize_pdf_value(key)}: {_normalize_pdf_value(value)}", ln=1)
+        pdf.cell(
+            0,
+            8,
+            f"{_normalize_pdf_value(key)}: {_normalize_pdf_value(value)}",
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+        )
 
     pdf.ln(4)
     for section in sections:
@@ -137,7 +163,7 @@ def build_meal_plan_pdf(
 
         pdf.set_fill_color(244, 171, 79)
         pdf.set_font("Helvetica", "B", 13)
-        pdf.cell(0, 9, name, ln=1, fill=True)
+        pdf.cell(0, 9, name, fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         pdf.set_font("Helvetica", "", 11)
         if isinstance(options, list):
@@ -150,7 +176,7 @@ def build_meal_plan_pdf(
                     break_on_hyphens=False,
                 )
                 for row in wrapped or ["-"]:
-                    pdf.cell(0, 7, row, ln=1)
+                    pdf.cell(0, 7, row, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         pdf.ln(1)
 

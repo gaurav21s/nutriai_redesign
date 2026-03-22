@@ -16,10 +16,28 @@ class Message:
     content: str
 
 
+def _response_text(response: object) -> str:
+    content = getattr(response, "content", "")
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+                continue
+            if isinstance(item, dict):
+                text = item.get("text")
+                if isinstance(text, str):
+                    parts.append(text)
+        return "\n".join(part.strip() for part in parts if part.strip()).strip()
+    return str(content).strip()
+
+
 class GeminiClient:
     """Gemini adapter for text and image prompts."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-3-flash-preview") -> None:
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash") -> None:
         if not api_key:
             raise ConfigurationException("GOOGLE_API_KEY is required for Gemini features")
         self.api_key = api_key
@@ -30,12 +48,11 @@ class GeminiClient:
 
     def _generate_text_sync(self, prompt: str) -> str:
         try:
-            import google.generativeai as genai
+            from google import genai
 
-            genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel(self.model_name)
-            response = model.generate_content(prompt)
-            return (response.text or "").strip()
+            client = genai.Client(api_key=self.api_key)
+            response = client.models.generate_content(model=self.model_name, contents=prompt)
+            return str(getattr(response, "text", "") or "").strip()
         except Exception as exc:
             raise ExternalServiceException("Gemini text generation failed", details={"reason": str(exc)}) from exc
 
@@ -44,20 +61,15 @@ class GeminiClient:
 
     def _generate_with_image_sync(self, prompt: str, image_bytes: bytes, mime_type: str) -> str:
         try:
-            import google.generativeai as genai
+            from google import genai
+            from google.genai import types
 
-            genai.configure(api_key=self.api_key)
-            model = genai.GenerativeModel(self.model_name)
-            response = model.generate_content(
-                [
-                    prompt,
-                    {
-                        "mime_type": mime_type,
-                        "data": image_bytes,
-                    },
-                ]
+            client = genai.Client(api_key=self.api_key)
+            response = client.models.generate_content(
+                model=self.model_name,
+                contents=[prompt, types.Part.from_bytes(data=image_bytes, mime_type=mime_type)],
             )
-            return (response.text or "").strip()
+            return str(getattr(response, "text", "") or "").strip()
         except Exception as exc:
             raise ExternalServiceException("Gemini image generation failed", details={"reason": str(exc)}) from exc
 
@@ -69,28 +81,53 @@ class GeminiClient:
 class TogetherClient:
     """Together adapter for text generation."""
 
-    def __init__(self, api_key: str, model_name: str = "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo") -> None:
+    def __init__(self, api_key: str, model_name: str = "meta-llama/Llama-3.3-70B-Instruct-Turbo") -> None:
         if not api_key:
             raise ConfigurationException("TOGETHER_API_KEY is required for Together features")
         self.api_key = api_key
         self.model_name = model_name
+        self.fallback_model_name = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
 
     async def generate_text(self, prompt: str, temperature: float = 0.2) -> str:
         return await asyncio.to_thread(self._generate_text_sync, prompt, temperature)
 
     def _generate_text_sync(self, prompt: str, temperature: float) -> str:
-        try:
-            from langchain_together import ChatTogether
+        from langchain_together import ChatTogether
 
-            model = ChatTogether(
-                together_api_key=self.api_key,
-                model=self.model_name,
-                temperature=temperature,
-            )
-            response = model.invoke(prompt)
-            return str(response.content).strip()
-        except Exception as exc:
-            raise ExternalServiceException("Together generation failed", details={"reason": str(exc)}) from exc
+        models_to_try = [self.model_name]
+        if self.fallback_model_name not in models_to_try:
+            models_to_try.append(self.fallback_model_name)
+
+        last_error: Exception | None = None
+        access_blocked = False
+        for candidate in models_to_try:
+            try:
+                model = ChatTogether(
+                    api_key=self.api_key,
+                    model=candidate,
+                    temperature=temperature,
+                )
+                response = model.invoke([("human", prompt)])
+                return _response_text(response)
+            except Exception as exc:
+                last_error = exc
+                reason = str(exc).lower()
+                if "unable to access non-serverless model" in reason:
+                    access_blocked = True
+                    continue
+                if "non-serverless model" not in reason:
+                    break
+
+        if access_blocked:
+            from app.utils.fallback_ai_clients import FallbackTogetherClient
+
+            # Keep meal-plan and chat available in development when provider access is restricted.
+            return asyncio.run(FallbackTogetherClient().generate_text(prompt, temperature))
+
+        raise ExternalServiceException(
+            "Together generation failed",
+            details={"reason": str(last_error) if last_error else "unknown error"},
+        ) from last_error
 
 
 class GroqClient:
@@ -110,7 +147,7 @@ class GroqClient:
             from langchain_groq import ChatGroq
 
             model = ChatGroq(
-                groq_api_key=self.api_key,
+                api_key=self.api_key,
                 model=self.model_name,
                 temperature=temperature,
             )
@@ -121,7 +158,7 @@ class GroqClient:
             messages.append(("human", prompt))
 
             response = model.invoke(messages)
-            return str(response.content).strip()
+            return _response_text(response)
         except Exception as exc:
             raise ExternalServiceException("Groq generation failed", details={"reason": str(exc)}) from exc
 

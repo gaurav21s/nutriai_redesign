@@ -1,9 +1,8 @@
 """Application configuration using pydantic-settings."""
 
 from functools import lru_cache
-from typing import Any, Literal
+from typing import Literal
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,6 +42,11 @@ class Settings(BaseSettings):
     enable_convex_persistence: bool = True
     convex_http_actions_url: str = ""
     convex_backend_secret: str = ""
+
+    # Billing / Stripe
+    stripe_secret_key: str = ""
+    stripe_publishable_key: str = ""
+    stripe_webhook_secret: str = ""
 
     # Non-secret business config
     affiliate_code: str = ""
