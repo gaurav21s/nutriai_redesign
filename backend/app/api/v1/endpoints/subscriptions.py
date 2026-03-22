@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AuthorizationException
+from app.core.subscription import is_local_demo_user
 from app.core.security import AuthContext, get_auth_context
 from app.dependencies import default_rate_limit, get_subscription_service
 from app.schemas.subscriptions import (
@@ -75,8 +76,18 @@ async def get_subscription_history(
 async def select_plan(
     payload: SelectPlanRequest,
     auth: AuthContext = Depends(get_auth_context),
+    settings: Settings = Depends(get_settings),
     service: SubscriptionService = Depends(get_subscription_service),
 ) -> SubscriptionResponse:
+    if payload.tier != "free" and not is_local_demo_user(
+        settings.environment,
+        auth.clerk_user_id,
+        settings.dev_user_id,
+    ):
+        raise AuthorizationException(
+            "Paid plans must be activated through checkout",
+            details={"tier": payload.tier, "suggested_action": "Use Stripe checkout for paid plans"},
+        )
     return await service.select_plan(auth.clerk_user_id, payload)
 
 

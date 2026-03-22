@@ -1,15 +1,14 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { useConvex } from "convex/react";
 import { PostHogErrorBoundary, PostHogProvider as PostHogReactProvider } from "posthog-js/react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 import { APIClient } from "@/lib/api";
+import { useOptionalConvexClient } from "@/lib/convex";
 import { initPostHog, isPostHogEnabled, posthog, resolveConvexDeploymentKey } from "@/lib/posthog";
-import type { SubscriptionRecord } from "@/types/api";
 
 interface ConvexUserRecord {
   id: string;
@@ -26,7 +25,7 @@ interface ConvexUserRecord {
 export function PostHogProvider({ children }: { children: ReactNode }) {
   const { getToken, userId } = useAuth();
   const { isLoaded, isSignedIn, user } = useUser();
-  const convex = useConvex();
+  const convex = useOptionalConvexClient();
   const pathname = usePathname();
   const syncedIdentityRef = useRef<string | null>(null);
   const convexDeploymentKey = resolveConvexDeploymentKey();
@@ -64,9 +63,11 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
     async function syncIdentity() {
       const [subscriptionResult, convexUserResult] = await Promise.allSettled([
         api.getCurrentSubscription(),
-        (convex as any).query("users:getByClerkUserId" as any, {
-          clerk_user_id: currentUser.id,
-        }) as Promise<ConvexUserRecord | null>,
+        convex
+          ? ((convex as any).query("users:getByClerkUserId" as any, {
+              clerk_user_id: currentUser.id,
+            }) as Promise<ConvexUserRecord | null>)
+          : Promise.resolve(null),
       ]);
 
       if (cancelled) {

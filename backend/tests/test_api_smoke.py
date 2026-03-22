@@ -129,7 +129,9 @@ def test_full_api_smoke(monkeypatch) -> None:
 
     current = client.get("/api/v1/subscriptions/current")
     assert current.status_code == 200
-    assert current.json()["subscription"]["tier"] in {"free", "plus", "pro"}
+    assert current.json()["subscription"]["tier"] == "pro"
+    assert current.json()["subscription"]["is_demo"] is True
+    assert all(current.json()["subscription"]["permissions"].values()) is True
 
     selected = client.post("/api/v1/subscriptions/select", json={"tier": "plus", "currency": "INR"})
     assert selected.status_code == 200

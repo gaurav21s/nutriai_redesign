@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useConvex } from "convex/react";
+
+import { useOptionalConvexClient } from "@/lib/convex";
 
 interface UseConvexHistoryOptions {
   functionName: string;
@@ -21,7 +22,7 @@ export function useConvexHistory<T>({
   limit = 20,
   pollIntervalMs,
 }: UseConvexHistoryOptions) {
-  const convex = useConvex();
+  const convex = useOptionalConvexClient();
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +37,7 @@ export function useConvexHistory<T>({
     async (options: { silent?: boolean } = {}) => {
       const { silent = false } = options;
 
-      if (!clerkUserId) {
+      if (!clerkUserId || !convex) {
         setData([]);
         if (!silent) {
           setLoading(false);

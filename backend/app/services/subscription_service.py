@@ -8,8 +8,14 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
-from app.core.subscription import PERMISSION_KEYS, get_default_subscription_payload, get_tier_permissions
-from app.core.exceptions import ConfigurationException, ExternalServiceException
+from app.core.subscription import (
+    PERMISSION_KEYS,
+    get_default_subscription_payload,
+    get_demo_subscription_payload,
+    get_tier_permissions,
+    is_local_demo_user,
+)
+from app.core.exceptions import AuthorizationException, ConfigurationException, ExternalServiceException
 from app.repositories.base import CompositeRepository
 from app.schemas.subscriptions import (
     ConfirmCheckoutRequest,
@@ -98,11 +104,18 @@ class SubscriptionService:
         stripe_secret_key: str = "",
         stripe_publishable_key: str = "",
         demo_users_file: Path | None = None,
+        environment: str = "development",
+        dev_user_id: str = "dev_user",
     ) -> None:
         self.repository = repository
         self.stripe_secret_key = stripe_secret_key
         self.stripe_publishable_key = stripe_publishable_key
         self.demo_users_file = demo_users_file or (Path(__file__).resolve().parents[1] / "data" / "demo_users.json")
+        self.environment = environment
+        self.dev_user_id = dev_user_id
+
+    def is_local_demo_user(self, clerk_user_id: str) -> bool:
+        return is_local_demo_user(self.environment, clerk_user_id, self.dev_user_id)
 
     async def list_plans(self) -> PricingCatalogResponse:
         return PricingCatalogResponse(
@@ -112,6 +125,22 @@ class SubscriptionService:
 
     async def get_current_subscription(self, clerk_user_id: str) -> SubscriptionResponse:
         row = await self.repository.get_subscription(clerk_user_id)
+        if self.is_local_demo_user(clerk_user_id):
+            expected_demo_payload = get_demo_subscription_payload()
+            expected_permissions = expected_demo_payload["permissions"]
+            if not row or not row.get("is_demo") or any(
+                bool((row.get("permissions", {}) or {}).get(key)) != expected_permissions[key] for key in PERMISSION_KEYS
+            ):
+                row = await self.repository.upsert_subscription(
+                    clerk_user_id,
+                    expected_demo_payload,
+                )
+                await self.repository.add_subscription_event(
+                    clerk_user_id,
+                    "demo_subscription_initialized",
+                    {"tier": expected_demo_payload["tier"]},
+                )
+
         if row:
             tier = str(row.get("tier") or "free")
             expected_permissions = get_tier_permissions(tier)
@@ -276,6 +305,12 @@ class SubscriptionService:
             raise ExternalServiceException("Stripe checkout session retrieval failed", details={"reason": str(exc)}) from exc
 
         metadata = dict(getattr(session, "metadata", {}) or {})
+        session_clerk_user_id = str(metadata.get("clerk_user_id") or "")
+        if session_clerk_user_id != clerk_user_id:
+            raise AuthorizationException(
+                "Checkout session does not belong to the authenticated user",
+                details={"session_id": payload.session_id},
+            )
         tier = str(metadata.get("tier", "plus"))
         currency = str(metadata.get("currency", "USD")).upper()
 

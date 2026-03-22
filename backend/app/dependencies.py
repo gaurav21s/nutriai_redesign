@@ -13,7 +13,11 @@ from app.core.exceptions import AuthorizationException, ConfigurationException, 
 from app.core.logging import get_logger
 from app.core.rate_limit import InMemoryRateLimiter
 from app.core.security import get_auth_context
-from app.core.subscription import get_default_subscription_payload
+from app.core.subscription import (
+    get_default_subscription_payload,
+    get_demo_subscription_payload,
+    is_local_demo_user,
+)
 from app.core.security import AuthContext, get_optional_auth_context
 from app.repositories.base import CompositeRepository
 from app.repositories.convex_http import ConvexHttpRepository
@@ -200,6 +204,8 @@ def get_subscription_service(
         stripe_secret_key=settings.stripe_secret_key,
         stripe_publishable_key=settings.stripe_publishable_key,
         demo_users_file=demo_users_file,
+        environment=settings.environment,
+        dev_user_id=settings.dev_user_id,
     )
 
 
@@ -207,13 +213,30 @@ def require_permission(permission_key: str) -> Callable:
     async def dependency(
         auth: AuthContext = Depends(get_auth_context),
         repository: CompositeRepository = Depends(get_repository),
+        settings: Settings = Depends(get_settings),
     ) -> None:
         subscription = await repository.get_subscription(auth.clerk_user_id)
+        should_force_demo_access = is_local_demo_user(
+            settings.environment,
+            auth.clerk_user_id,
+            settings.dev_user_id,
+        )
+
         if not subscription:
             subscription = await repository.upsert_subscription(
                 auth.clerk_user_id,
-                get_default_subscription_payload(),
+                get_demo_subscription_payload() if should_force_demo_access else get_default_subscription_payload(),
             )
+        elif should_force_demo_access:
+            expected_permissions = get_demo_subscription_payload()["permissions"]
+            permissions = subscription.get("permissions", {})
+            if not subscription.get("is_demo") or any(
+                bool(permissions.get(key)) != expected_permissions[key] for key in expected_permissions
+            ):
+                subscription = await repository.upsert_subscription(
+                    auth.clerk_user_id,
+                    get_demo_subscription_payload(),
+                )
 
         permissions = subscription.get("permissions", {})
         if not isinstance(permissions, dict):
