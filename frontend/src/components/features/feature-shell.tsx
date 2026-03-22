@@ -1,6 +1,8 @@
-import { ReactNode } from "react";
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReactNode, useState } from "react";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
+
 import { cn } from "@/lib/cn";
 
 interface FeatureShellProps {
@@ -12,17 +14,32 @@ interface FeatureShellProps {
 }
 
 export function FeatureShell({ title, description, children, aside, className }: FeatureShellProps) {
-  return (
-    <div className={cn("grid gap-7 xl:grid-cols-[1.7fr_1fr]", className)}>
-      <Card className="animate-fade-up border-accent-200/70 bg-white/90">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-[2rem] sm:text-[2.2rem]">{title}</CardTitle>
-          <p className="mt-1 max-w-3xl text-sm text-accent-600">{description}</p>
-        </CardHeader>
-        <CardContent className="pt-1">{children}</CardContent>
-      </Card>
+  const [showAside, setShowAside] = useState(false);
 
-      <div className="space-y-7">{aside}</div>
+  return (
+    <div className={cn("space-y-5", className)}>
+      <section className="flex items-start justify-between gap-4 border-b border-black/[0.08] pb-4">
+        <div>
+          <h1 className="text-3xl font-display text-foreground">{title}</h1>
+          <p className="mt-1 max-w-3xl text-sm text-foreground/65">{description}</p>
+        </div>
+
+        {aside ? (
+          <button
+            type="button"
+            onClick={() => setShowAside((prev) => !prev)}
+            className="inline-flex items-center gap-2 rounded-editorial border border-black/[0.12] bg-white px-3 py-2 text-sm text-foreground hover:bg-muted"
+          >
+            {showAside ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+            {showAside ? "Hide History" : "Show History"}
+          </button>
+        ) : null}
+      </section>
+
+      <div className={cn("grid gap-5", showAside && aside ? "xl:grid-cols-[minmax(0,1fr)_320px]" : "grid-cols-1")}>
+        <section className="app-panel p-6">{children}</section>
+        {showAside && aside ? <aside className="xl:h-fit">{aside}</aside> : null}
+      </div>
     </div>
   );
 }

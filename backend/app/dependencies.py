@@ -9,12 +9,15 @@ from typing import Callable, Literal
 from fastapi import Depends, Request
 
 from app.core.config import Settings, get_settings
-from app.core.exceptions import ConfigurationException, RateLimitException
+from app.core.exceptions import AuthorizationException, ConfigurationException, RateLimitException
 from app.core.logging import get_logger
 from app.core.rate_limit import InMemoryRateLimiter
+from app.core.security import get_auth_context
+from app.core.subscription import get_default_subscription_payload
 from app.core.security import AuthContext, get_optional_auth_context
 from app.repositories.base import CompositeRepository
 from app.repositories.convex_http import ConvexHttpRepository
+from app.repositories.hybrid import HybridRepository
 from app.repositories.in_memory import InMemoryRepository
 from app.services.article_service import ArticleService
 from app.services.calculator_service import CalculatorService
@@ -25,6 +28,7 @@ from app.services.nutri_chat_service import NutriChatService
 from app.services.quiz_service import QuizService
 from app.services.recipe_service import RecipeService
 from app.services.recommendation_service import RecommendationService
+from app.services.subscription_service import SubscriptionService
 from app.utils.ai_clients import GeminiClient, GroqClient, TogetherClient
 from app.utils.fallback_ai_clients import (
     FallbackGeminiClient,
@@ -90,11 +94,12 @@ def get_in_memory_repository() -> InMemoryRepository:
 
 def get_repository(settings: Settings = Depends(get_settings)) -> CompositeRepository:
     if settings.enable_convex_persistence and settings.convex_http_actions_url and settings.convex_backend_secret:
-        return ConvexHttpRepository(
+        primary = ConvexHttpRepository(
             base_url=settings.convex_http_actions_url,
             backend_secret=settings.convex_backend_secret,
             timeout_seconds=settings.request_timeout_seconds,
         )
+        return HybridRepository(primary=primary, fallback=get_in_memory_repository())
 
     logger.warning("Using in-memory repository; Convex persistence is disabled or not configured")
     return get_in_memory_repository()
@@ -183,6 +188,49 @@ def get_recommendation_service(
         repository=repository,
         groq_client=_build_groq_client(settings),
     )
+
+
+def get_subscription_service(
+    repository: CompositeRepository = Depends(get_repository),
+    settings: Settings = Depends(get_settings),
+) -> SubscriptionService:
+    demo_users_file = Path(__file__).resolve().parent / "data" / "demo_users.json"
+    return SubscriptionService(
+        repository=repository,
+        stripe_secret_key=settings.stripe_secret_key,
+        stripe_publishable_key=settings.stripe_publishable_key,
+        demo_users_file=demo_users_file,
+    )
+
+
+def require_permission(permission_key: str) -> Callable:
+    async def dependency(
+        auth: AuthContext = Depends(get_auth_context),
+        repository: CompositeRepository = Depends(get_repository),
+    ) -> None:
+        subscription = await repository.get_subscription(auth.clerk_user_id)
+        if not subscription:
+            subscription = await repository.upsert_subscription(
+                auth.clerk_user_id,
+                get_default_subscription_payload(),
+            )
+
+        permissions = subscription.get("permissions", {})
+        if not isinstance(permissions, dict):
+            permissions = {}
+
+        if bool(permissions.get(permission_key)) is True:
+            return
+
+        raise AuthorizationException(
+            "Your current plan does not include this feature",
+            details={
+                "permission": permission_key,
+                "suggested_action": "Upgrade your subscription plan",
+            },
+        )
+
+    return dependency
 
 
 def rate_limit_dependency(kind: Literal["ai", "chat", "default"]) -> Callable:

@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/cn";
 
 interface HistoryPanelProps {
   title: string;
@@ -9,34 +8,32 @@ interface HistoryPanelProps {
   empty: boolean;
   syncing?: boolean;
   children: ReactNode;
+  className?: string;
 }
 
-export function HistoryPanel({ title, loading, empty, syncing = false, children }: HistoryPanelProps) {
+export function HistoryPanel({ title, loading, empty, syncing = false, children, className }: HistoryPanelProps) {
   return (
-    <Card className="border-accent-200/70 bg-white/92">
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">{title}</CardTitle>
-          {syncing ? (
-            <span className="rounded-full bg-brand-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-700">
-              Syncing
-            </span>
-          ) : null}
+    <section className={cn("rounded-editorial border border-black/[0.03] bg-white/60 backdrop-blur-sm p-6 shadow-soft-glow", className)}>
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground/60">{title}</h2>
+        {syncing ? (
+          <span className="rounded-full bg-vibrant/5 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-vibrant border border-vibrant/10">
+            Syncing
+          </span>
+        ) : null}
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
         </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-full" />
-          </div>
-        ) : empty ? (
-          <p className="text-sm text-accent-500">No history yet.</p>
-        ) : (
-          <div className="space-y-3">{children}</div>
-        )}
-      </CardContent>
-    </Card>
+      ) : empty ? (
+        <p className="text-sm text-foreground/30 font-medium italic">No recent activity detected.</p>
+      ) : (
+        <div className="space-y-3">{children}</div>
+      )}
+    </section>
   );
 }

@@ -72,6 +72,11 @@ function normalizeArticle(row: Record<string, unknown>) {
   return { id: String(_id ?? ""), ...rest };
 }
 
+function normalizeSubscription(row: Record<string, unknown>) {
+  const { _id, _creationTime, ...rest } = row;
+  return rest;
+}
+
 function ensureBackendSecret(req: Request): boolean {
   const expected = process.env.BACKEND_CONVEX_SHARED_SECRET;
   if (!expected) return true;
@@ -369,6 +374,100 @@ http.route({
     const inserted = await ctx.runMutation("articles:seed" as any, { items });
 
     return json({ ok: true, data: { inserted } });
+  }),
+});
+
+http.route({
+  path: "/backend/users/upsert",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      payload: Record<string, unknown>;
+    };
+
+    const user = await ctx.runMutation("users:upsert" as any, {
+      clerk_user_id: clerkUserId,
+      ...payload,
+    });
+
+    return json({ ok: true, data: user });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/get",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId } = (await req.json()) as { clerkUserId: string };
+    const row = (await ctx.runQuery("subscriptions:getByUser" as any, {
+      clerk_user_id: clerkUserId,
+    })) as Record<string, unknown> | null;
+
+    return json({ ok: true, data: row ? normalizeSubscription(row) : null });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/upsert",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      payload: Record<string, unknown>;
+    };
+
+    const row = (await ctx.runMutation("subscriptions:upsert" as any, {
+      clerk_user_id: clerkUserId,
+      payload,
+    })) as Record<string, unknown>;
+
+    return json({ ok: true, data: normalizeSubscription(row) });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/events/add",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, eventType, payload } = (await req.json()) as {
+      clerkUserId: string;
+      eventType: string;
+      payload: Record<string, unknown>;
+    };
+
+    const event = await ctx.runMutation("subscriptions:addEvent" as any, {
+      clerk_user_id: clerkUserId,
+      event_type: eventType,
+      payload,
+    });
+
+    return json({ ok: true, data: event });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/events/list",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, limit = 50 } = (await req.json()) as { clerkUserId: string; limit?: number };
+
+    const items = await ctx.runQuery("subscriptions:listEvents" as any, {
+      clerk_user_id: clerkUserId,
+      limit: Math.min(Math.max(limit, 1), 200),
+    });
+
+    return json({ ok: true, data: { items } });
   }),
 });
 

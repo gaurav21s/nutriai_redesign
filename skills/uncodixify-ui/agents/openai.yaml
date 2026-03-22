@@ -1,0 +1,4 @@
+interface:
+  display_name: "Uncodixify UI"
+  short_description: "Build restrained, human-looking interfaces"
+  default_prompt: "Use $uncodixify-ui to design or refactor this interface so it avoids generic AI UI patterns and follows a stricter, product-grade layout."

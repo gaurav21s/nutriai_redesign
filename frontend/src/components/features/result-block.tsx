@@ -1,14 +1,11 @@
 import { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-export function ResultBlock({ title, children }: { title: string; children: ReactNode }) {
+export function ResultBlock({ title, children, className }: { title: string; children: ReactNode; className?: string }) {
   return (
-    <Card className="border-brand-200/75 bg-white/95">
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <section className={cn("rounded-editorial border border-black/[0.03] bg-black/[0.01] p-6 mt-8", className)}>
+      <h3 className="text-xs font-bold uppercase tracking-widest text-vibrant mb-6">{title}</h3>
+      <div className="mt-2 text-foreground/80 leading-relaxed font-medium">{children}</div>
+    </section>
   );
 }

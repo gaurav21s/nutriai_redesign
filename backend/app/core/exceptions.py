@@ -9,6 +9,9 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.core.config import get_settings
+from app.utils.posthog_client import capture_posthog_event
+
 
 class AppException(Exception):
     """Base domain exception with structured metadata."""
@@ -102,6 +105,22 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
         request_id = getattr(request.state, "request_id", None)
+        settings = get_settings()
+        distinct_id = getattr(request.state, "posthog_distinct_id", None) or request_id or "anonymous_backend"
+
+        capture_posthog_event(
+            "backend_exception",
+            distinct_id=distinct_id,
+            properties={
+                "path": request.url.path,
+                "method": request.method,
+                "request_id": request_id,
+                "environment": settings.environment,
+                "error_type": exc.__class__.__name__,
+                "error_message": str(exc),
+            },
+        )
+
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content=_error_payload(

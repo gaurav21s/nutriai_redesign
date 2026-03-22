@@ -150,3 +150,39 @@ class ConvexHttpRepository(CompositeRepository):
     async def seed_articles(self, items: list[dict]) -> int:
         result = await self._post("/backend/articles/seed", {"items": items})
         return int(result.get("inserted", 0))
+
+    async def upsert_user(self, clerk_user_id: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/users/upsert",
+            {"clerkUserId": clerk_user_id, "payload": payload},
+        )
+
+    async def get_subscription(self, clerk_user_id: str) -> dict | None:
+        result = await self._post(
+            "/backend/subscriptions/get",
+            {"clerkUserId": clerk_user_id},
+        )
+        return result or None
+
+    async def upsert_subscription(self, clerk_user_id: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/subscriptions/upsert",
+            {"clerkUserId": clerk_user_id, "payload": payload},
+        )
+
+    async def add_subscription_event(self, clerk_user_id: str, event_type: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/subscriptions/events/add",
+            {
+                "clerkUserId": clerk_user_id,
+                "eventType": event_type,
+                "payload": payload,
+            },
+        )
+
+    async def list_subscription_events(self, clerk_user_id: str, limit: int = 50) -> list[dict]:
+        result = await self._post(
+            "/backend/subscriptions/events/list",
+            {"clerkUserId": clerk_user_id, "limit": limit},
+        )
+        return result.get("items", [])

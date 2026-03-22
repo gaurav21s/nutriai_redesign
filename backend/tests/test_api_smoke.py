@@ -96,7 +96,10 @@ def test_full_api_smoke(monkeypatch) -> None:
         json={"dish_name": "Paneer Bowl", "recipe_type": "healthier"},
     )
     assert recipe.status_code == 200
-    recipe_id = recipe.json()["id"]
+    recipe_payload = recipe.json()
+    recipe_id = recipe_payload["id"]
+    assert "shopping_links" in recipe_payload
+    assert isinstance(recipe_payload["shopping_links"], dict)
     links = client.post(
         "/api/v1/recipes/shopping-links",
         json={"ingredients": ["paneer", "spinach", "olive oil"]},
@@ -119,7 +122,26 @@ def test_full_api_smoke(monkeypatch) -> None:
     assert client.get("/api/v1/quizzes/history").status_code == 200
     assert client.get(f"/api/v1/quizzes/history/{session_id}").status_code == 200
 
-    # Chat
+    # Subscriptions (upgrade before plan-gated features)
+    plans = client.get("/api/v1/subscriptions/plans")
+    assert plans.status_code == 200
+    assert len(plans.json()["plans"]) == 3
+
+    current = client.get("/api/v1/subscriptions/current")
+    assert current.status_code == 200
+    assert current.json()["subscription"]["tier"] in {"free", "plus", "pro"}
+
+    selected = client.post("/api/v1/subscriptions/select", json={"tier": "plus", "currency": "INR"})
+    assert selected.status_code == 200
+    assert selected.json()["subscription"]["tier"] == "plus"
+    assert selected.json()["subscription"]["currency"] == "INR"
+
+    assert client.get("/api/v1/subscriptions/history").status_code == 200
+    seeded = client.post("/api/v1/subscriptions/demo-users/seed")
+    assert seeded.status_code == 200
+    assert len(seeded.json()["users"]) == 2
+
+    # Chat (allowed after plus plan selection)
     session = client.post("/api/v1/nutri-chat/sessions", json={"title": "General Nutrition"})
     assert session.status_code == 200
     chat_session_id = session.json()["session_id"]
@@ -155,7 +177,7 @@ def test_full_api_smoke(monkeypatch) -> None:
     assert len(articles) > 0
     assert client.get(f"/api/v1/articles/{articles[0]['slug']}").status_code == 200
 
-    # Recommendations
+    # Recommendations (allowed after plus plan selection)
     recommendation = client.post(
         "/api/v1/recommendations/generate",
         json={"query": "white rice dinner", "recommendation_type": "both"},

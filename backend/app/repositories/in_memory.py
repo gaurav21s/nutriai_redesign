@@ -19,6 +19,9 @@ class InMemoryRepository(CompositeRepository):
         self._chat_sessions: dict[str, dict] = {}
         self._chat_messages: dict[str, list[dict]] = defaultdict(list)
         self._articles: dict[str, dict] = {}
+        self._users: dict[str, dict] = {}
+        self._subscriptions: dict[str, dict] = {}
+        self._subscription_events: dict[str, list[dict]] = defaultdict(list)
 
     @staticmethod
     def _now_iso() -> str:
@@ -173,3 +176,47 @@ class InMemoryRepository(CompositeRepository):
             self._articles[slug] = article
             inserted += 1
         return inserted
+
+    async def upsert_user(self, clerk_user_id: str, payload: dict) -> dict:
+        existing = self._users.get(clerk_user_id)
+        now = self._now_iso()
+        doc = {
+            "clerk_user_id": clerk_user_id,
+            "created_at": existing.get("created_at") if existing else now,
+            **(existing or {}),
+            **payload,
+        }
+        self._users[clerk_user_id] = doc
+        return doc
+
+    async def get_subscription(self, clerk_user_id: str) -> dict | None:
+        return self._subscriptions.get(clerk_user_id)
+
+    async def upsert_subscription(self, clerk_user_id: str, payload: dict) -> dict:
+        existing = self._subscriptions.get(clerk_user_id)
+        now = self._now_iso()
+        doc = {
+            "clerk_user_id": clerk_user_id,
+            "created_at": existing.get("created_at") if existing else now,
+            "updated_at": now,
+            **(existing or {}),
+            **payload,
+        }
+        self._subscriptions[clerk_user_id] = doc
+        return doc
+
+    async def add_subscription_event(self, clerk_user_id: str, event_type: str, payload: dict) -> dict:
+        item = {
+            "id": str(uuid4()),
+            "clerk_user_id": clerk_user_id,
+            "event_type": event_type,
+            "payload": payload,
+            "created_at": self._now_iso(),
+        }
+        self._subscription_events[clerk_user_id].append(item)
+        return item
+
+    async def list_subscription_events(self, clerk_user_id: str, limit: int = 50) -> list[dict]:
+        rows = self._subscription_events.get(clerk_user_id, [])
+        rows_sorted = sorted(rows, key=lambda item: item.get("created_at", ""), reverse=True)
+        return rows_sorted[:limit]

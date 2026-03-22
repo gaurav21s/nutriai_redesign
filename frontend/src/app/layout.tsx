@@ -1,42 +1,28 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
-import { Fraunces, Manrope } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
-import { ConvexClientProvider } from "@/lib/convex";
+import { AppProviders } from "@/components/providers/app-providers";
 import "@/styles/globals.css";
-
-const displayFont = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["500", "600", "700"],
-});
-
-const bodyFont = Manrope({
-  subsets: ["latin"],
-  variable: "--font-body",
-  weight: ["400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: "NutriAI",
-  description: "AI-powered nutrition companion",
+  description: "Nutrition tools for analysis, planning, and tracking.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={`${displayFont.variable} ${bodyFont.variable} font-body`}>
-          <ConvexClientProvider>
+    <html lang="en">
+      <body className="font-body bg-background text-foreground antialiased">
+        <AppProviders>
+          <div className="relative z-10 flex min-h-screen flex-col">
             <Navbar />
-            <main className="min-h-[calc(100vh-8rem)]">{children}</main>
+            <main className="flex-1 overflow-hidden">{children}</main>
             <Footer />
-          </ConvexClientProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          </div>
+        </AppProviders>
+      </body>
+    </html>
   );
 }

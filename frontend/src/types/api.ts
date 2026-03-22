@@ -67,6 +67,11 @@ export interface RecipeIngredient {
   raw: string;
 }
 
+export interface ShoppingLinkPair {
+  amazon: string;
+  blinkit: string;
+}
+
 export interface RecipeResponse {
   id: string;
   created_at: string;
@@ -74,18 +79,13 @@ export interface RecipeResponse {
   ingredients: RecipeIngredient[];
   steps: string[];
   ingredient_list: string[];
+  shopping_links: Record<string, ShoppingLinkPair>;
   explanation?: string | null;
   raw_response: string;
 }
 
 export interface ShoppingLinksResponse {
-  links: Record<
-    string,
-    {
-      amazon: string;
-      blinkit: string;
-    }
-  >;
+  links: Record<string, ShoppingLinkPair>;
 }
 
 export type QuizDifficulty = "easy" | "medium" | "hard";
@@ -177,4 +177,71 @@ export interface RecommendationResponse {
   title: string;
   recommendations: string[];
   raw_response: string;
+}
+
+export type CurrencyCode = "USD" | "INR";
+export type PlanTier = "free" | "plus" | "pro";
+export type SubscriptionStatus = "active" | "trialing" | "canceled" | "incomplete" | "unpaid";
+
+export interface PlanPrice {
+  currency: CurrencyCode;
+  amount: number;
+  interval: "month";
+}
+
+export interface PlanSummary {
+  tier: PlanTier;
+  label: string;
+  description: string;
+  recommended: boolean;
+  features: string[];
+  price_usd: PlanPrice;
+  price_inr: PlanPrice;
+}
+
+export interface PricingCatalogResponse {
+  plans: PlanSummary[];
+  stripe_publishable_key?: string | null;
+}
+
+export interface SubscriptionRecord {
+  clerk_user_id: string;
+  tier: PlanTier;
+  status: SubscriptionStatus;
+  currency: CurrencyCode;
+  amount: number;
+  interval: "month";
+  permissions: Record<string, boolean>;
+  is_demo: boolean;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  stripe_checkout_session_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionResponse {
+  subscription: SubscriptionRecord;
+}
+
+export interface SubscriptionEvent {
+  id: string;
+  clerk_user_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CreateCheckoutSessionResponse {
+  session_id: string;
+  checkout_url: string;
+}
+
+export interface DemoUserRecord {
+  clerk_user_id: string;
+  email: string;
+  name: string;
+  permissions: Record<string, boolean>;
+  tier: PlanTier;
+  created_at: string;
 }

@@ -5,19 +5,27 @@ import type {
   CalculationHistoryItem,
   ChatMessage,
   ChatSession,
+  CreateCheckoutSessionResponse,
+  CurrencyCode,
+  DemoUserRecord,
   FoodInsightResponse,
   IngredientCheckResponse,
   MealPlanGenerateRequest,
   MealPlanResponse,
+  PlanTier,
+  PricingCatalogResponse,
   QuizHistoryItem,
   QuizSessionResponse,
   QuizSubmitResponse,
   RecipeResponse,
   RecommendationResponse,
+  SubscriptionEvent,
+  SubscriptionResponse,
   RecommendationType,
   RecipeType,
   ShoppingLinksResponse,
 } from "@/types/api";
+import { captureEvent } from "@/lib/posthog";
 
 interface ApiErrorPayload {
   error?: {
@@ -25,6 +33,12 @@ interface ApiErrorPayload {
     message?: string;
     details?: unknown;
   };
+}
+
+interface RequestAnalyticsOptions {
+  category?: "api" | "llm" | "billing" | "content" | "workflow";
+  feature?: string;
+  properties?: Record<string, unknown>;
 }
 
 export class ApiError extends Error {
@@ -54,6 +68,45 @@ export class APIClient {
     this.devUserIdProvider = options?.devUserIdProvider;
   }
 
+  private resolveFallbackBaseUrl(): string | null {
+    try {
+      const url = new URL(this.baseUrl);
+      if (url.hostname === "localhost") {
+        url.hostname = "127.0.0.1";
+        return url.toString().replace(/\/$/, "");
+      }
+      if (url.hostname === "127.0.0.1") {
+        url.hostname = "localhost";
+        return url.toString().replace(/\/$/, "");
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async fetchWithFallback(path: string, init: RequestInit): Promise<Response> {
+    const primaryUrl = `${this.baseUrl}${path}`;
+    try {
+      return await fetch(primaryUrl, init);
+    } catch {
+      const fallbackBaseUrl = this.resolveFallbackBaseUrl();
+      if (!fallbackBaseUrl || fallbackBaseUrl === this.baseUrl) {
+        throw new ApiError("Cannot connect to backend. Please make sure FastAPI is running on port 8008.", 0, "NETWORK_ERROR");
+      }
+
+      try {
+        return await fetch(`${fallbackBaseUrl}${path}`, init);
+      } catch {
+        throw new ApiError(
+          "Cannot connect to backend. Please make sure FastAPI is running on port 8008.",
+          0,
+          "NETWORK_ERROR"
+        );
+      }
+    }
+  }
+
   private async getAuthHeader(): Promise<Record<string, string>> {
     if (!this.tokenProvider) return {};
     const token = await this.tokenProvider();
@@ -69,17 +122,92 @@ export class APIClient {
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+    return this.requestWithAnalytics(path, init);
+  }
+
+  private deriveAnalytics(path: string, init: RequestInit, analytics?: RequestAnalyticsOptions): RequestAnalyticsOptions {
+    if (analytics) {
+      return analytics;
+    }
+
+    const method = (init.method ?? "GET").toUpperCase();
+    const base: RequestAnalyticsOptions = {
+      category: "api",
+      feature: "general",
+      properties: {
+        method,
+      },
+    };
+
+    if (path.includes("/food-insights/")) return { ...base, category: "llm", feature: "food_insight" };
+    if (path.includes("/ingredient-checks/")) return { ...base, category: "llm", feature: "ingredient_checker" };
+    if (path.includes("/meal-plans/")) return { ...base, category: "llm", feature: "meal_planner" };
+    if (path.includes("/recipes/")) return { ...base, category: "llm", feature: "recipe_finder" };
+    if (path.includes("/quizzes/")) return { ...base, category: "llm", feature: "nutri_quiz" };
+    if (path.includes("/nutri-chat/")) return { ...base, category: "llm", feature: "nutri_chat" };
+    if (path.includes("/recommendations/")) return { ...base, category: "llm", feature: "recommendations" };
+    if (path.includes("/calculators/")) return { ...base, category: "workflow", feature: "nutri_calc" };
+    if (path.includes("/subscriptions/")) return { ...base, category: "billing", feature: "subscription" };
+    if (path.includes("/articles")) return { ...base, category: "content", feature: "articles" };
+
+    return base;
+  }
+
+  private captureRequestEvent(
+    phase: "completed" | "failed",
+    path: string,
+    method: string,
+    latencyMs: number,
+    analytics: RequestAnalyticsOptions,
+    extra: Record<string, unknown>
+  ): void {
+    const properties = {
+      category: analytics.category ?? "api",
+      feature: analytics.feature ?? "general",
+      path,
+      method,
+      latency_ms: latencyMs,
+      ...analytics.properties,
+      ...extra,
+    };
+
+    captureEvent(`frontend_api_request_${phase}`, properties);
+
+    if (analytics.category === "llm") {
+      captureEvent(`frontend_llm_request_${phase}`, properties);
+    }
+  }
+
+  private async requestWithAnalytics<T>(
+    path: string,
+    init: RequestInit = {},
+    analytics?: RequestAnalyticsOptions
+  ): Promise<T> {
     const headers: HeadersInit = {
       ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(await this.getAuthHeader()),
       ...(await this.getDevUserHeader()),
       ...(init.headers ?? {}),
     };
+    const startedAt = performance.now();
+    const method = (init.method ?? "GET").toUpperCase();
+    const resolvedAnalytics = this.deriveAnalytics(path, init, analytics);
 
-    const response = await fetch(`${this.baseUrl}${path}`, {
-      ...init,
-      headers,
-    });
+    let response: Response;
+
+    try {
+      response = await this.fetchWithFallback(path, {
+        ...init,
+        headers,
+      });
+    } catch (error) {
+      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), resolvedAnalytics, {
+        status_code: 0,
+        error_code: error instanceof ApiError ? error.code ?? "NETWORK_ERROR" : "NETWORK_ERROR",
+        error_message: error instanceof Error ? error.message : "Network error",
+      });
+      throw error;
+    }
 
     if (!response.ok) {
       let payload: ApiErrorPayload = {};
@@ -89,8 +217,17 @@ export class APIClient {
         payload = {};
       }
       const message = payload.error?.message ?? `Request failed with status ${response.status}`;
+      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), resolvedAnalytics, {
+        status_code: response.status,
+        error_code: payload.error?.code ?? "REQUEST_FAILED",
+        error_message: message,
+      });
       throw new ApiError(message, response.status, payload.error?.code, payload.error?.details);
     }
+
+    this.captureRequestEvent("completed", path, method, Math.round(performance.now() - startedAt), resolvedAnalytics, {
+      status_code: response.status,
+    });
 
     if (response.status === 204) {
       return {} as T;
@@ -104,19 +241,42 @@ export class APIClient {
   }
 
   async analyzeFoodText(text: string): Promise<FoodInsightResponse> {
-    return this.request("/api/v1/food-insights/analyze", {
-      method: "POST",
-      body: JSON.stringify({ input_mode: "text", text }),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/food-insights/analyze",
+      {
+        method: "POST",
+        body: JSON.stringify({ input_mode: "text", text }),
+      },
+      {
+        category: "llm",
+        feature: "food_insight",
+        properties: {
+          input_mode: "text",
+          input_length: text.trim().length,
+        },
+      }
+    );
   }
 
   async analyzeFoodImage(file: File): Promise<FoodInsightResponse> {
     const data = new FormData();
     data.append("image", file);
-    return this.request("/api/v1/food-insights/analyze", {
-      method: "POST",
-      body: data,
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/food-insights/analyze",
+      {
+        method: "POST",
+        body: data,
+      },
+      {
+        category: "llm",
+        feature: "food_insight",
+        properties: {
+          input_mode: "image",
+          file_size_bytes: file.size,
+          mime_type: file.type,
+        },
+      }
+    );
   }
 
   async getFoodHistory(limit = 20): Promise<FoodInsightResponse[]> {
@@ -127,19 +287,42 @@ export class APIClient {
   }
 
   async analyzeIngredientsText(ingredientsText: string): Promise<IngredientCheckResponse> {
-    return this.request("/api/v1/ingredient-checks/analyze", {
-      method: "POST",
-      body: JSON.stringify({ input_mode: "text", ingredients_text: ingredientsText }),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/ingredient-checks/analyze",
+      {
+        method: "POST",
+        body: JSON.stringify({ input_mode: "text", ingredients_text: ingredientsText }),
+      },
+      {
+        category: "llm",
+        feature: "ingredient_checker",
+        properties: {
+          input_mode: "text",
+          input_length: ingredientsText.trim().length,
+        },
+      }
+    );
   }
 
   async analyzeIngredientsImage(file: File): Promise<IngredientCheckResponse> {
     const data = new FormData();
     data.append("image", file);
-    return this.request("/api/v1/ingredient-checks/analyze", {
-      method: "POST",
-      body: data,
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/ingredient-checks/analyze",
+      {
+        method: "POST",
+        body: data,
+      },
+      {
+        category: "llm",
+        feature: "ingredient_checker",
+        properties: {
+          input_mode: "image",
+          file_size_bytes: file.size,
+          mime_type: file.type,
+        },
+      }
+    );
   }
 
   async getIngredientHistory(limit = 20): Promise<IngredientCheckResponse[]> {
@@ -150,10 +333,22 @@ export class APIClient {
   }
 
   async generateMealPlan(input: MealPlanGenerateRequest): Promise<MealPlanResponse> {
-    return this.request("/api/v1/meal-plans/generate", {
-      method: "POST",
-      body: JSON.stringify(input),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/meal-plans/generate",
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      },
+      {
+        category: "llm",
+        feature: "meal_planner",
+        properties: {
+          goal: input.goal,
+          diet_choice: input.diet_choice,
+          food_type: input.food_type,
+        },
+      }
+    );
   }
 
   async getMealPlanHistory(limit = 20): Promise<MealPlanResponse[]> {
@@ -164,7 +359,8 @@ export class APIClient {
   }
 
   async exportMealPlanPdf(recordId: string, fullName: string, age: number): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}/api/v1/meal-plans/${recordId}/export/pdf`, {
+    const startedAt = performance.now();
+    const response = await this.fetchWithFallback(`/api/v1/meal-plans/${recordId}/export/pdf`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -175,17 +371,47 @@ export class APIClient {
     });
 
     if (!response.ok) {
+      this.captureRequestEvent("failed", `/api/v1/meal-plans/${recordId}/export/pdf`, "POST", Math.round(performance.now() - startedAt), {
+        category: "workflow",
+        feature: "meal_planner",
+        properties: {
+          export_format: "pdf",
+        },
+      }, {
+        status_code: response.status,
+      });
       throw new ApiError(`Failed to export PDF (${response.status})`, response.status);
     }
+
+    this.captureRequestEvent("completed", `/api/v1/meal-plans/${recordId}/export/pdf`, "POST", Math.round(performance.now() - startedAt), {
+      category: "workflow",
+      feature: "meal_planner",
+      properties: {
+        export_format: "pdf",
+      },
+    }, {
+      status_code: response.status,
+    });
 
     return response.blob();
   }
 
   async generateRecipe(dishName: string, recipeType: RecipeType): Promise<RecipeResponse> {
-    return this.request("/api/v1/recipes/generate", {
-      method: "POST",
-      body: JSON.stringify({ dish_name: dishName, recipe_type: recipeType }),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/recipes/generate",
+      {
+        method: "POST",
+        body: JSON.stringify({ dish_name: dishName, recipe_type: recipeType }),
+      },
+      {
+        category: "llm",
+        feature: "recipe_finder",
+        properties: {
+          recipe_type: recipeType,
+          dish_name_length: dishName.trim().length,
+        },
+      }
+    );
   }
 
   async getRecipeHistory(limit = 20): Promise<RecipeResponse[]> {
@@ -194,17 +420,39 @@ export class APIClient {
   }
 
   async getShoppingLinks(ingredients: string[]): Promise<ShoppingLinksResponse> {
-    return this.request("/api/v1/recipes/shopping-links", {
-      method: "POST",
-      body: JSON.stringify({ ingredients }),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/recipes/shopping-links",
+      {
+        method: "POST",
+        body: JSON.stringify({ ingredients }),
+      },
+      {
+        category: "workflow",
+        feature: "recipe_finder",
+        properties: {
+          ingredient_count: ingredients.length,
+        },
+      }
+    );
   }
 
   async generateQuiz(topic: string, difficulty: "easy" | "medium" | "hard", questionCount = 5) {
-    return this.request<QuizSessionResponse>("/api/v1/quizzes/generate", {
-      method: "POST",
-      body: JSON.stringify({ topic, difficulty, question_count: questionCount }),
-    });
+    return this.requestWithAnalytics<QuizSessionResponse>(
+      "/api/v1/quizzes/generate",
+      {
+        method: "POST",
+        body: JSON.stringify({ topic, difficulty, question_count: questionCount }),
+      },
+      {
+        category: "llm",
+        feature: "nutri_quiz",
+        properties: {
+          topic_length: topic.trim().length,
+          difficulty,
+          question_count: questionCount,
+        },
+      }
+    );
   }
 
   async submitQuiz(
@@ -222,11 +470,25 @@ export class APIClient {
     return payload.items;
   }
 
+  async getQuizSession(sessionId: string): Promise<QuizSessionResponse> {
+    return this.request(`/api/v1/quizzes/history/${sessionId}`);
+  }
+
   async createChatSession(title?: string): Promise<ChatSession> {
-    return this.request("/api/v1/nutri-chat/sessions", {
-      method: "POST",
-      body: JSON.stringify({ title }),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/nutri-chat/sessions",
+      {
+        method: "POST",
+        body: JSON.stringify({ title }),
+      },
+      {
+        category: "workflow",
+        feature: "nutri_chat",
+        properties: {
+          has_custom_title: Boolean(title?.trim()),
+        },
+      }
+    );
   }
 
   async listChatSessions(limit = 30): Promise<ChatSession[]> {
@@ -235,10 +497,21 @@ export class APIClient {
   }
 
   async sendChatMessage(sessionId: string, content: string): Promise<ChatMessage> {
-    return this.request(`/api/v1/nutri-chat/sessions/${sessionId}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ content }),
-    });
+    return this.requestWithAnalytics(
+      `/api/v1/nutri-chat/sessions/${sessionId}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      },
+      {
+        category: "llm",
+        feature: "nutri_chat",
+        properties: {
+          content_length: content.trim().length,
+          has_session_id: Boolean(sessionId),
+        },
+      }
+    );
   }
 
   async listChatMessages(sessionId: string, limit = 100): Promise<ChatMessage[]> {
@@ -287,10 +560,21 @@ export class APIClient {
   }
 
   async generateRecommendations(query: string, recommendationType: RecommendationType): Promise<RecommendationResponse> {
-    return this.request("/api/v1/recommendations/generate", {
-      method: "POST",
-      body: JSON.stringify({ query, recommendation_type: recommendationType }),
-    });
+    return this.requestWithAnalytics(
+      "/api/v1/recommendations/generate",
+      {
+        method: "POST",
+        body: JSON.stringify({ query, recommendation_type: recommendationType }),
+      },
+      {
+        category: "llm",
+        feature: "recommendations",
+        properties: {
+          recommendation_type: recommendationType,
+          query_length: query.trim().length,
+        },
+      }
+    );
   }
 
   async getRecommendationHistory(limit = 20): Promise<RecommendationResponse[]> {
@@ -298,5 +582,83 @@ export class APIClient {
       `/api/v1/recommendations/history?limit=${limit}`
     );
     return payload.items;
+  }
+
+  async getPricingPlans(): Promise<PricingCatalogResponse> {
+    return this.request("/api/v1/subscriptions/plans");
+  }
+
+  async getCurrentSubscription(): Promise<SubscriptionResponse> {
+    return this.request("/api/v1/subscriptions/current");
+  }
+
+  async getSubscriptionHistory(limit = 50): Promise<SubscriptionEvent[]> {
+    const payload = await this.request<{ items: SubscriptionEvent[] }>(`/api/v1/subscriptions/history?limit=${limit}`);
+    return payload.items;
+  }
+
+  async selectSubscriptionPlan(tier: PlanTier, currency: CurrencyCode): Promise<SubscriptionResponse> {
+    return this.requestWithAnalytics(
+      "/api/v1/subscriptions/select",
+      {
+        method: "POST",
+        body: JSON.stringify({ tier, currency }),
+      },
+      {
+        category: "billing",
+        feature: "subscription",
+        properties: {
+          tier,
+          currency,
+        },
+      }
+    );
+  }
+
+  async createCheckoutSession(payload: {
+    tier: Extract<PlanTier, "plus" | "pro">;
+    currency: CurrencyCode;
+    success_url: string;
+    cancel_url: string;
+  }): Promise<CreateCheckoutSessionResponse> {
+    return this.requestWithAnalytics(
+      "/api/v1/subscriptions/checkout-session",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      {
+        category: "billing",
+        feature: "subscription",
+        properties: {
+          tier: payload.tier,
+          currency: payload.currency,
+        },
+      }
+    );
+  }
+
+  async confirmCheckoutSession(sessionId: string): Promise<SubscriptionResponse> {
+    return this.requestWithAnalytics(
+      "/api/v1/subscriptions/checkout/confirm",
+      {
+        method: "POST",
+        body: JSON.stringify({ session_id: sessionId }),
+      },
+      {
+        category: "billing",
+        feature: "subscription",
+        properties: {
+          has_session_id: Boolean(sessionId),
+        },
+      }
+    );
+  }
+
+  async seedDemoUsers(): Promise<DemoUserRecord[]> {
+    const payload = await this.request<{ users: DemoUserRecord[] }>("/api/v1/subscriptions/demo-users/seed", {
+      method: "POST",
+    });
+    return payload.users;
   }
 }

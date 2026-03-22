@@ -20,6 +20,11 @@ class RecipeIngredient(BaseModel):
     raw: str
 
 
+class ShoppingLinkPair(BaseModel):
+    amazon: str
+    blinkit: str
+
+
 class RecipeResponse(BaseModel):
     id: str
     created_at: datetime
@@ -27,6 +32,7 @@ class RecipeResponse(BaseModel):
     ingredients: list[RecipeIngredient]
     steps: list[str]
     ingredient_list: list[str]
+    shopping_links: dict[str, ShoppingLinkPair] = Field(default_factory=dict)
     explanation: str | None = None
     raw_response: str
 
@@ -37,11 +43,6 @@ class RecipeHistoryResponse(BaseModel):
 
 class ShoppingLinksRequest(BaseModel):
     ingredients: list[str] = Field(default_factory=list)
-
-
-class ShoppingLinkPair(BaseModel):
-    amazon: str
-    blinkit: str
 
 
 class ShoppingLinksResponse(BaseModel):

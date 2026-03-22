@@ -1,5 +1,4 @@
 import { TextareaHTMLAttributes, forwardRef } from "react";
-
 import { cn } from "@/lib/cn";
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
@@ -8,7 +7,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
       <textarea
         ref={ref}
         className={cn(
-          "min-h-[120px] w-full rounded-xl border border-accent-200 bg-white/95 px-3 py-2 text-sm text-accent-900 placeholder:text-accent-400 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200",
+          "min-h-[120px] w-full border-2 border-white/5 bg-white/5 px-4 py-3 text-sm font-bold uppercase tracking-widest text-white placeholder:text-neutral-600 transition-all focus:border-brand focus:bg-brand/5 focus:outline-none focus:shadow-neo-glow resize-none",
           className
         )}
         {...props}

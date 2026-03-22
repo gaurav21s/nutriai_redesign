@@ -23,12 +23,14 @@ class RecipeService:
             temperature=0.2,
         )
         parsed = parse_recipe(raw)
+        shopping_links = build_shopping_links(parsed.get("ingredient_list", []), self.affiliate_code)
 
         record = await self.repository.create_record(
             "recipes",
             clerk_user_id,
             {
                 **parsed,
+                "shopping_links": shopping_links,
                 "input": payload.model_dump(),
             },
         )

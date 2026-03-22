@@ -1,5 +1,4 @@
 import { InputHTMLAttributes, forwardRef } from "react";
-
 import { cn } from "@/lib/cn";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
@@ -8,7 +7,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
       <input
         ref={ref}
         className={cn(
-          "h-11 w-full rounded-xl border border-accent-200 bg-white/95 px-3 text-sm text-accent-900 placeholder:text-accent-400 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200",
+          "h-10 w-full rounded-editorial border border-black/[0.12] bg-white px-3 text-sm text-foreground ring-offset-background placeholder:text-foreground/35 transition-colors duration-150 focus:border-foreground/30 focus:outline-none focus:ring-2 focus:ring-black/5",
           className
         )}
         {...props}

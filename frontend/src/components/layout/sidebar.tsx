@@ -3,169 +3,138 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import type { LucideIcon } from "lucide-react";
 import {
   Apple,
-  BookOpen,
+  Brain,
   Calculator,
-  ChartPie,
-  ClipboardList,
-  FileText,
-  House,
+  FolderKanban,
+  LayoutGrid,
+  Leaf,
+  Lock,
   MessageSquare,
-  Search,
-  Sparkles,
+  Microscope,
+  ShieldCheck,
   Soup,
-  TrendingUp,
-  Users,
+  Sparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
-type NavTab = { id: string; label: string; items: NavItem[] };
+type PermissionMap = Record<string, boolean>;
 
-const navTabs: NavTab[] = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: typeof LayoutGrid;
+  permissionKey?: string;
+};
+
+type NavSection = {
+  title: string;
+  items: NavItem[];
+};
+
+const sections: NavSection[] = [
   {
-    id: "workflow",
-    label: "Workflow",
+    title: "Overview",
+    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutGrid }],
+  },
+  {
+    title: "Tools",
     items: [
-      { href: "/food-insight", label: "Food Insight", icon: ChartPie },
-      { href: "/ingredient-checker", label: "Ingredient Checker", icon: Search },
-      { href: "/meal-planner", label: "Meal Planner", icon: ClipboardList },
-      { href: "/recipe-finder", label: "Recipe Finder", icon: Soup },
+      { href: "/food-insight", label: "Food Insight", icon: Brain, permissionKey: "food_insight" },
+      { href: "/ingredient-checker", label: "Ingredient Checker", icon: Microscope, permissionKey: "ingredient_checker" },
+      { href: "/meal-planner", label: "Meal Planner", icon: Leaf, permissionKey: "meal_planner" },
+      { href: "/recipe-finder", label: "Recipe Finder", icon: Soup, permissionKey: "recipe_finder" },
+      { href: "/nutri-chat", label: "Nutri Chat", icon: MessageSquare, permissionKey: "nutri_chat" },
+      { href: "/nutri-quiz", label: "Nutri Quiz", icon: Sparkles, permissionKey: "nutri_quiz" },
+      { href: "/nutri-calc", label: "Nutri Calc", icon: Calculator, permissionKey: "nutri_calc" },
+      { href: "/recommendations", label: "Recommendations", icon: Apple, permissionKey: "recommendations" },
     ],
   },
   {
-    id: "coach",
-    label: "Coach",
+    title: "Account",
     items: [
-      { href: "/nutri-chat", label: "Nutri Chat", icon: MessageSquare },
-      { href: "/recommendations", label: "Recommendations", icon: Apple },
-      { href: "/nutri-quiz", label: "Nutri Quiz", icon: Sparkles },
-      { href: "/nutri-calc", label: "Nutri Calc", icon: Calculator },
-    ],
-  },
-  {
-    id: "library",
-    label: "Library",
-    items: [
-      { href: "/", label: "Home", icon: House },
-      { href: "/articles", label: "Articles", icon: BookOpen },
-      { href: "/docs", label: "Docs", icon: FileText },
-      { href: "/about", label: "About", icon: Users },
+      { href: "/library", label: "Library", icon: FolderKanban },
+      { href: "/subscription", label: "Subscription", icon: ShieldCheck },
     ],
   },
 ];
 
-function findTabForPath(pathname: string): string {
-  for (const tab of navTabs) {
-    for (const item of tab.items) {
-      const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-      if (isActive) return tab.id;
-    }
-  }
-  return "workflow";
-}
-
-export function Sidebar() {
+export function Sidebar({
+  onNavigate,
+  permissions,
+  collapsed = false,
+}: {
+  onNavigate?: () => void;
+  permissions?: PermissionMap | null;
+  collapsed?: boolean;
+}) {
   const pathname = usePathname();
-  const [activeTab, setActiveTab] = useState<string>(() => findTabForPath(pathname));
-
-  useEffect(() => {
-    setActiveTab(findTabForPath(pathname));
-  }, [pathname]);
-
-  const tabItems = useMemo(() => navTabs.find((tab) => tab.id === activeTab)?.items ?? navTabs[0].items, [activeTab]);
 
   return (
-    <aside className="xl:sticky xl:top-[5.35rem] xl:h-[calc(100vh-6.6rem)] xl:overflow-y-auto">
-      <div className="space-y-5">
-        <div className="rounded-3xl border border-accent-200/70 bg-accent-900 px-5 py-6 text-white shadow-card">
-          <div className="flex items-center gap-3">
-            <Image src="/nutriai-color.png" alt="NutriAI logo" width={56} height={56} className="rounded-2xl" />
+    <aside className="flex h-full flex-col border-r border-black/[0.08] bg-white">
+      <div className={cn("border-b border-black/[0.08] py-4", collapsed ? "px-3" : "px-4")}>
+        <Link
+          href="/dashboard"
+          onClick={onNavigate}
+          className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}
+          title="Dashboard"
+        >
+          <div className="relative h-8 w-8 flex-shrink-0">
+            <Image
+              src="/images/nutriai-favicon-color.png"
+              alt="NutriAI"
+              fill
+              className="object-contain"
+            />
+          </div>
+          {!collapsed ? (
             <div>
-              <p className="font-display text-2xl leading-none text-brand-200">NutriAI</p>
-              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-surface-100/95">Nutrition Companion</p>
+              <div className="text-sm font-semibold text-vibrant">NutriAI</div>
+              <div className="text-xs text-foreground/55">Dashboard</div>
             </div>
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-white/15 bg-white/10 px-3 py-3">
-            <p className="inline-flex items-center gap-1 text-xs uppercase tracking-[0.18em] text-brand-100">
-              <TrendingUp className="h-3.5 w-3.5" />
-              Flow
-            </p>
-            <p className="mt-1 text-sm text-surface-100/95">Analyze → Plan → Refine → Track</p>
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-accent-200/70 bg-white/90 p-4 shadow-card">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-500">Navigation</p>
-
-          <div className="mt-3 grid grid-cols-3 gap-1 rounded-2xl border border-accent-200/70 bg-surface-50 p-1">
-            {navTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "rounded-xl px-2 py-2 text-xs font-semibold tracking-[0.08em] transition",
-                  activeTab === tab.id ? "bg-white text-accent-900 shadow-soft" : "text-accent-600 hover:text-accent-800"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <nav className="mt-3 space-y-1.5">
-            {tabItems.map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all",
-                    isActive
-                      ? "border border-brand-300 bg-brand-100 text-accent-900 shadow-soft"
-                      : "border border-transparent text-accent-700 hover:border-accent-200 hover:bg-surface-50 hover:text-accent-900"
-                  )}
-                >
-                  <Icon className={cn("h-4 w-4", isActive ? "text-secondary-700" : "text-accent-500")} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="rounded-3xl border border-accent-200/70 bg-white/88 p-4 shadow-card">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-500">Quick Start</p>
-          <div className="mt-3 space-y-2">
-            <Link
-              href="/food-insight"
-              className="block rounded-xl border border-accent-200 bg-surface-50 px-3 py-2.5 text-sm font-semibold text-accent-800 hover:border-brand-300"
-            >
-              1. Analyze meal
-            </Link>
-            <Link
-              href="/meal-planner"
-              className="block rounded-xl border border-accent-200 bg-surface-50 px-3 py-2.5 text-sm font-semibold text-accent-800 hover:border-brand-300"
-            >
-              2. Build plan
-            </Link>
-            <Link
-              href="/nutri-chat"
-              className="block rounded-xl border border-accent-200 bg-surface-50 px-3 py-2.5 text-sm font-semibold text-accent-800 hover:border-brand-300"
-            >
-              3. Refine strategy
-            </Link>
-          </div>
-        </div>
+          ) : null}
+        </Link>
       </div>
+
+      <nav className={cn("flex-1 overflow-y-auto py-4", collapsed ? "px-2" : "px-3")}>
+        <div className="space-y-6">
+          {sections.map((section) => (
+            <div key={section.title}>
+              {!collapsed ? (
+                <div className="px-3 pb-2 text-xs text-foreground/55">{section.title}</div>
+              ) : null}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                  const locked = Boolean(item.permissionKey && permissions && permissions[item.permissionKey] === false);
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={locked ? "/pricing" : item.href}
+                      onClick={onNavigate}
+                      title={item.label}
+                      className={cn(
+                        "flex items-center py-2 text-sm",
+                        collapsed ? "justify-center px-2" : "gap-3 px-3",
+                        active ? "bg-muted text-foreground" : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                        locked && "opacity-70"
+                      )}
+                    >
+                      <Icon className={cn("h-4 w-4 flex-shrink-0 text-vibrant", active && "text-vibrant")} />
+                      {!collapsed ? <span className="flex-1">{item.label}</span> : null}
+                      {!collapsed && locked ? <Lock className="h-3.5 w-3.5 text-foreground/40" /> : null}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </nav>
     </aside>
   );
 }

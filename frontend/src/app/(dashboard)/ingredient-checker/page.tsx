@@ -2,12 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { Sparkles, ShieldCheck, AlertCircle } from "lucide-react";
 
 import { FeatureShell } from "@/components/features/feature-shell";
 import { HistoryPanel } from "@/components/features/history-panel";
 import { ResultBlock } from "@/components/features/result-block";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiClient } from "@/hooks/useApiClient";
@@ -49,94 +51,133 @@ export default function IngredientCheckerPage() {
   return (
     <FeatureShell
       title="Ingredient Checker"
-      description="Evaluate ingredients and identify safer choices with potential health issue flags."
+      description="Check ingredients and see what is good, what is risky, and why."
       aside={
-        <HistoryPanel title="Recent Ingredient Checks" loading={historyLoading} empty={!history.length} syncing={loading}>
+        <HistoryPanel title="Recent Analysis" loading={historyLoading} empty={!history.length} syncing={loading}>
           {history.map((item) => (
             <button
               key={item.id}
-              className="w-full rounded-xl border border-surface-200 bg-surface-50 p-3 text-left"
+              className="w-full rounded-editorial border border-black/[0.03] bg-white/40 backdrop-blur-sm p-4 text-left transition-all hover:border-vibrant/20 shadow-soft-glow group"
               onClick={() => setResult(item)}
             >
-              <p className="text-sm font-semibold text-accent-800">{new Date(item.created_at).toLocaleString()}</p>
-              <p className="mt-1 text-xs text-accent-600">
-                Healthy: {item.healthy_ingredients.length} | Mindful: {item.unhealthy_ingredients.length}
-              </p>
+              <p className="text-sm font-semibold text-foreground group-hover:text-vibrant transition-colors">{new Date(item.created_at).toLocaleString()}</p>
+              <div className="mt-2 flex gap-3 text-[9px] font-bold uppercase tracking-widest">
+                <span className="text-success-600">Good: {item.healthy_ingredients.length}</span>
+                <span className="text-vibrant">Risky: {item.unhealthy_ingredients.length}</span>
+              </div>
             </button>
           ))}
         </HistoryPanel>
       }
     >
-      <div className="space-y-5">
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant={mode === "text" ? "primary" : "ghost"} onClick={() => setMode("text")}>
+      <div className="space-y-8">
+        <div className="flex p-1 bg-black/[0.03] rounded-full w-fit">
+          <button
+            type="button"
+            className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${mode === "text" ? "bg-white shadow-soft-glow text-foreground" : "text-foreground/40 hover:text-foreground/60"
+              }`}
+            onClick={() => setMode("text")}
+          >
             Text Input
-          </Button>
-          <Button type="button" variant={mode === "image" ? "primary" : "ghost"} onClick={() => setMode("image")}>
-            Image Upload
-          </Button>
+          </button>
+          <button
+            type="button"
+            className={`px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${mode === "image" ? "bg-white shadow-soft-glow text-foreground" : "text-foreground/40 hover:text-foreground/60"
+              }`}
+            onClick={() => setMode("image")}
+          >
+            Image Input
+          </button>
         </div>
 
-        <form className="space-y-4" onSubmit={onSubmit}>
+        <form className="space-y-6" onSubmit={onSubmit}>
           {mode === "text" ? (
-            <Textarea
-              placeholder="Example: spinach, olive oil, sugar, trans fat"
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-            />
+            <div className="space-y-2">
+              <FieldLabel htmlFor="ingredient-text">Ingredients list</FieldLabel>
+              <Textarea
+                id="ingredient-text"
+                placeholder="Example: spinach, olive oil, sugar, trans fat"
+                className="h-32 bg-white/50 border-black/[0.05] focus:border-vibrant transition-all"
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+              />
+            </div>
           ) : (
-            <Input type="file" accept="image/png,image/jpg,image/jpeg,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            <div className="space-y-2">
+              <FieldLabel htmlFor="ingredient-image">Upload ingredient label image</FieldLabel>
+              <div className="relative group">
+                <Input
+                  id="ingredient-image"
+                  type="file"
+                  className="h-32 rounded-editorial border-dashed border-black/[0.1] bg-black/[0.01] hover:bg-black/[0.02] transition-all flex items-center justify-center text-center cursor-pointer"
+                  accept="image/png,image/jpg,image/jpeg,image/webp"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                />
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-foreground/30 group-hover:text-vibrant/60 transition-colors">
+                  <Sparkles className="h-6 w-6 mb-2" />
+                  <p className="text-xs font-semibold uppercase tracking-widest">{file ? file.name : "Drop or click to upload"}</p>
+                </div>
+              </div>
+            </div>
           )}
 
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" size="lg" className="rounded-full bg-vibrant hover:bg-vibrant/90 text-white shadow-soft-glow px-12" disabled={loading}>
             {loading ? "Analyzing..." : "Analyze Ingredients"}
           </Button>
         </form>
 
-        {error ? <Alert variant="error">{error}</Alert> : null}
+        {error ? <Alert variant="error" className="rounded-2xl border-vibrant/20 bg-vibrant/5 text-vibrant">{error}</Alert> : null}
 
         {result ? (
-          <div className="space-y-4">
-            <ResultBlock title="Safe Ingredients">
+          <div className="space-y-6 animate-reveal">
+            <ResultBlock title="Good Ingredients" className="bg-success-50/10 border-success-500/10">
               <div className="flex flex-wrap gap-2">
                 {result.healthy_ingredients.length ? (
                   result.healthy_ingredients.map((item) => (
-                    <span key={item} className="rounded-full bg-success-50 px-3 py-1 text-xs font-semibold text-success-700">
+                    <span key={item} className="rounded-full bg-success-500 border border-success-500/20 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">
                       {item}
                     </span>
                   ))
                 ) : (
-                  <p className="text-sm text-accent-600">No specific safe ingredients identified.</p>
+                  <p className="text-sm text-foreground/30 italic">No clearly healthy ingredients found.</p>
                 )}
               </div>
             </ResultBlock>
 
-            <ResultBlock title="Ingredients To Be Mindful Of">
+            <ResultBlock title="Ingredients To Limit" className="bg-vibrant/5 border-vibrant/10">
               <div className="flex flex-wrap gap-2">
                 {result.unhealthy_ingredients.length ? (
                   result.unhealthy_ingredients.map((item) => (
-                    <span key={item} className="rounded-full bg-warning-50 px-3 py-1 text-xs font-semibold text-warning-700">
+                    <span key={item} className="rounded-full bg-vibrant px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">
                       {item}
                     </span>
                   ))
                 ) : (
-                  <p className="text-sm text-accent-600">No concerning ingredients identified.</p>
+                  <p className="text-sm text-foreground/30 italic">No high-risk ingredients found.</p>
                 )}
               </div>
             </ResultBlock>
 
-            <ResultBlock title="Potential Health Concerns">
+            <ResultBlock title="Health Notes">
               {Object.keys(result.health_issues).length ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {Object.entries(result.health_issues).map(([ingredient, issues]) => (
-                    <div key={ingredient} className="rounded-lg border border-danger-500/20 bg-danger-50 px-3 py-2">
-                      <p className="text-sm font-semibold text-danger-700">{ingredient}</p>
-                      <p className="text-xs text-danger-700">{issues.join(", ")}</p>
+                    <div key={ingredient} className="rounded-editorial border border-black/[0.03] bg-white/40 p-5 shadow-soft-glow flex items-start gap-4">
+                      <div className="mt-1 h-8 w-8 flex items-center justify-center rounded-full bg-vibrant/10 text-vibrant">
+                        <AlertCircle className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-foreground mb-1">{ingredient}</p>
+                        <p className="text-xs text-foreground/50 font-medium italic">{issues.join(" • ")}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-accent-600">No specific health concerns detected.</p>
+                <div className="flex items-center gap-4 text-success-600 italic">
+                  <ShieldCheck className="h-5 w-5" />
+                  <p className="text-sm font-medium">No health flags detected.</p>
+                </div>
               )}
             </ResultBlock>
           </div>

@@ -7,8 +7,38 @@ export default defineSchema({
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     image_url: v.optional(v.string()),
+    permissions: v.optional(v.any()),
+    is_demo: v.optional(v.boolean()),
+    tier: v.optional(v.string()),
     created_at: v.string(),
   }).index("by_clerk_user_id", ["clerk_user_id"]),
+
+  subscriptions: defineTable({
+    subscription_id: v.string(),
+    clerk_user_id: v.string(),
+    tier: v.string(),
+    status: v.string(),
+    currency: v.string(),
+    amount: v.number(),
+    interval: v.string(),
+    permissions: v.any(),
+    is_demo: v.optional(v.boolean()),
+    stripe_customer_id: v.optional(v.string()),
+    stripe_subscription_id: v.optional(v.string()),
+    stripe_checkout_session_id: v.optional(v.string()),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_user", ["clerk_user_id"])
+    .index("by_user_updated", ["clerk_user_id", "updated_at"]),
+
+  subscriptionEvents: defineTable({
+    event_id: v.string(),
+    clerk_user_id: v.string(),
+    event_type: v.string(),
+    payload: v.any(),
+    created_at: v.string(),
+  }).index("by_user_created", ["clerk_user_id", "created_at"]),
 
   foodInsights: defineTable({
     record_id: v.string(),

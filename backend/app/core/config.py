@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     stripe_publishable_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # Observability / analytics
+    posthog_project_api_key: str = ""
+    posthog_host: str = "https://us.i.posthog.com"
+
     # Non-secret business config
     affiliate_code: str = ""
 
