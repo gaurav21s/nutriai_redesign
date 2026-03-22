@@ -25,7 +25,7 @@ def parse_food_insight(raw: str) -> dict:
 
     lines = [line.strip() for line in raw.splitlines() if line.strip()]
 
-    item_pattern = re.compile(r"^\d+\.\s*(.+?)\s*-\s*(.+)$")
+    item_pattern = re.compile(r"^\d+[.)]\s*(.+?)\s*-\s*(.+)$")
 
     for line in lines:
         if line.lower().startswith("total:"):
@@ -55,7 +55,7 @@ def parse_food_insight(raw: str) -> dict:
                 items.append(
                     {
                         "name": name,
-                        "quantity": None,
+                        "quantity": _find_labeled_value(details, "quantity"),
                         "calories_range": _find_metric(details, "calories"),
                         "carbs_range": _find_metric(details, "carbs"),
                         "fiber_range": _find_metric(details, "fiber"),
@@ -80,6 +80,11 @@ def parse_food_insight(raw: str) -> dict:
 
 def _find_metric(text: str, metric: str) -> str | None:
     match = re.search(rf"([^,;]*{metric}[^,;]*)", text, re.IGNORECASE)
+    return match.group(1).strip() if match else None
+
+
+def _find_labeled_value(text: str, label: str) -> str | None:
+    match = re.search(rf"{label}\s*:\s*([^,;]+)", text, re.IGNORECASE)
     return match.group(1).strip() if match else None
 
 

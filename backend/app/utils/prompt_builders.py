@@ -8,36 +8,59 @@ from app.schemas.recommendations import RecommendationType
 
 def food_text_prompt(input_text: str) -> str:
     return f"""
-You are a nutritionist. Analyze these food items: [{input_text}].
-Return structured output with:
-1) line-by-line item breakdown with quantity and nutrient ranges,
-2) Total: calories, carbs, fiber, protein, fats,
-3) Verdict: Healthy or Not Healthy,
-4) Facts: 2-3 concise nutrition facts.
+You are a careful nutrition analyst. Analyze these food items: [{input_text}].
+Estimate realistic serving sizes when the user is vague, and keep the answer practical rather than overly clinical.
+
+Return plain text in this format:
+1. [Food item] - quantity: [serving]; calories: [value]; carbs: [value]; fiber: [value]; protein: [value]; fats: [value]
+2. [Food item] - quantity: [serving]; calories: [value]; carbs: [value]; fiber: [value]; protein: [value]; fats: [value]
+Total: calories [value], carbs [value], fiber [value], protein [value], fats [value]
+Verdict: [Healthy / Mostly healthy / Not healthy]
+Facts: [fact 1]; [fact 2]; [fact 3]
+
+Rules:
+- Include only the foods actually mentioned.
+- Use short, readable nutrient estimates with units.
+- Mention the main nutrition tradeoff in the verdict.
 """.strip()
 
 
 def food_image_prompt() -> str:
     return """
-You are a nutritionist. Analyze food items visible in the image.
-Return:
-1) itemized breakdown with quantity and nutrient ranges,
-2) Total: calories, carbs, fiber, protein, fats,
-3) Verdict,
-4) Facts (2-3 concise lines).
+You are a careful nutrition analyst. Analyze the visible food items in the image.
+If an item is uncertain, use the most likely food instead of listing many guesses.
+
+Return plain text in this format:
+1. [Food item] - quantity: [serving]; calories: [value]; carbs: [value]; fiber: [value]; protein: [value]; fats: [value]
+2. [Food item] - quantity: [serving]; calories: [value]; carbs: [value]; fiber: [value]; protein: [value]; fats: [value]
+Total: calories [value], carbs [value], fiber [value], protein [value], fats [value]
+Verdict: [Healthy / Mostly healthy / Not healthy]
+Facts: [fact 1]; [fact 2]; [fact 3]
+
+Rules:
+- Focus on the most visible foods and approximate portions.
+- Avoid markdown tables or extra commentary.
 """.strip()
 
 
 def ingredient_check_prompt(ingredients: list[str]) -> str:
     return f"""
-You are a nutritionist.
-Categorize these ingredients as healthy or unhealthy and list health issues for unhealthy ones.
+You are a nutritionist reviewing packaged-food ingredients.
+Categorize each ingredient as generally healthy, neutral, or unhealthy, then place only clearly beneficial items in healthy_ingredients and only concerning items in unhealthy_ingredients.
+For unhealthy ingredients, explain the main health concerns in short consumer-friendly phrases.
+
 Return strict JSON:
 {{
   "healthy_ingredients": ["..."],
   "unhealthy_ingredients": ["..."],
   "health_issues": {{"ingredient": ["issue1", "issue2"]}}
 }}
+
+Rules:
+- Return JSON only, with no markdown fences.
+- Preserve the ingredient names as written when possible.
+- If an ingredient is neutral or unclear, omit it from both healthy_ingredients and unhealthy_ingredients.
+
 Ingredients: {", ".join(ingredients)}
 """.strip()
 
@@ -98,9 +121,11 @@ Dinner:
 - ...
 
 Rules:
-- Include portions and calories.
-- Keep foods realistic and home-friendly.
-- Tailor for user goal and constraints.
+- Include realistic portions and approximate calories for every option.
+- Keep foods realistic, affordable, and home-friendly.
+- Tailor choices for the user's goal, diet, workout status, and health issue.
+- Prefer balanced meals with protein, fiber, and easy-to-follow combinations.
+- Do not add extra sections or commentary outside the required headings.
 """.strip()
 
 
@@ -125,6 +150,12 @@ Steps:
 2. ...
 Ingredient List: ingredient1, ingredient2, ingredient3
 {explanation_line}
+
+Rules:
+- Keep the recipe practical for a home kitchen.
+- Use clear numbered steps with actionable wording.
+- Ingredient List must contain short grocery-search-friendly names only.
+- If recipe_type is healthier, keep the flavor profile similar while improving nutrition.
 """.strip()
 
 
@@ -138,16 +169,24 @@ B. [option]
 C. [optional]
 D. [optional]
 Correct Answer: [A/B/C/D]
-Explanation: [2-3 lines]
-No extra commentary.
+Explanation: [1 concise sentence that teaches the concept]
+
+Rules:
+- Make questions practical, accurate, and easy to understand.
+- Provide exactly 4 options per question.
+- Only one option can be correct.
+- Avoid trick wording and avoid repeating the same answer letter too often.
+- No extra commentary.
 """.strip()
 
 
 def chat_system_prompt() -> str:
     return """
-You are NutriBot, a concise and friendly nutrition assistant.
-Stay focused on nutrition, fitness, meal quality, vitamins, and healthy habits.
-For deep tasks (meal plans, recipes, full analysis, quizzes), recommend the appropriate NutriAI feature.
+You are NutriBot, a friendly and trustworthy nutrition assistant.
+Stay focused on nutrition, meal quality, fitness, hydration, recovery, supplements, and healthy daily habits.
+Give practical advice that an everyday user can follow, ask for clarification only when needed, and avoid sounding alarmist.
+When the user asks for diagnosis, emergency care, or highly specific medical treatment, recommend professional care.
+For deep tasks such as full meal plans, recipes, ingredient analysis, and quizzes, briefly point the user to the relevant NutriAI feature when helpful.
 """.strip()
 
 
@@ -161,4 +200,10 @@ def recommendation_prompt(query: str, recommendation_type: RecommendationType) -
 {type_map[recommendation_type]}
 User query: {query}
 Return concise bullet points only.
+
+Rules:
+- Each bullet must be a complete recommendation, not a fragment.
+- Include the nutrition reason or benefit in the same bullet.
+- Keep the suggestions realistic for regular grocery shopping or home cooking.
+- Avoid generic advice that does not connect to the user query.
 """.strip()
