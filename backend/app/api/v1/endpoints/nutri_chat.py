@@ -1,10 +1,13 @@
 """NutriChat endpoints."""
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 
 from app.core.security import AuthContext, get_auth_context
 from app.dependencies import chat_rate_limit, default_rate_limit, get_nutri_chat_service
 from app.schemas.nutri_chat import (
+    ChatActionResponse,
+    ChatContextResponse,
     ChatMessage,
     ChatMessageCreateRequest,
     ChatMessagesResponse,
@@ -48,6 +51,20 @@ async def list_chat_sessions(
     return ChatSessionsResponse(items=items)
 
 
+@router.get(
+    "/context",
+    response_model=ChatContextResponse,
+    summary="Get chat context snapshot",
+    description="Returns a compact summary of the current user's saved NutriAI data used by the agent chat.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def get_chat_context(
+    auth: AuthContext = Depends(get_auth_context),
+    service: NutriChatService = Depends(get_nutri_chat_service),
+) -> ChatContextResponse:
+    return await service.get_context(auth.clerk_user_id)
+
+
 @router.post(
     "/sessions/{session_id}/messages",
     response_model=ChatMessage,
@@ -62,6 +79,24 @@ async def send_chat_message(
     service: NutriChatService = Depends(get_nutri_chat_service),
 ) -> ChatMessage:
     return await service.send_message(auth.clerk_user_id, session_id, payload.content)
+
+
+@router.post(
+    "/sessions/{session_id}/turns/stream",
+    summary="Stream an agent chat turn",
+    description="Streams reasoning updates and the final assistant reply for one text-based chat turn.",
+    dependencies=[Depends(chat_rate_limit)],
+)
+async def stream_chat_turn(
+    session_id: str,
+    payload: ChatMessageCreateRequest,
+    auth: AuthContext = Depends(get_auth_context),
+    service: NutriChatService = Depends(get_nutri_chat_service),
+) -> StreamingResponse:
+    return StreamingResponse(
+        service.stream_turn(auth.clerk_user_id, session_id, payload.content),
+        media_type="application/x-ndjson",
+    )
 
 
 @router.get(
@@ -79,3 +114,33 @@ async def list_chat_messages(
 ) -> ChatMessagesResponse:
     items = await service.list_messages(auth.clerk_user_id, session_id, limit)
     return ChatMessagesResponse(session_id=session_id, messages=items)
+
+
+@router.post(
+    "/sessions/{session_id}/actions/{action_id}/confirm",
+    response_model=ChatActionResponse,
+    summary="Confirm and save a pending agent action",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def confirm_chat_action(
+    session_id: str,
+    action_id: str,
+    auth: AuthContext = Depends(get_auth_context),
+    service: NutriChatService = Depends(get_nutri_chat_service),
+) -> ChatActionResponse:
+    return await service.confirm_action(auth.clerk_user_id, session_id, action_id)
+
+
+@router.post(
+    "/sessions/{session_id}/actions/{action_id}/reject",
+    response_model=ChatActionResponse,
+    summary="Reject a pending agent action",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def reject_chat_action(
+    session_id: str,
+    action_id: str,
+    auth: AuthContext = Depends(get_auth_context),
+    service: NutriChatService = Depends(get_nutri_chat_service),
+) -> ChatActionResponse:
+    return await service.reject_action(auth.clerk_user_id, session_id, action_id)

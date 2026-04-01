@@ -17,10 +17,15 @@ export function FeatureShell({ title, description, children, aside, className }:
   const [showAside, setShowAside] = useState(false);
 
   return (
-    <div className={cn("space-y-5", className)}>
-      <section className="flex items-start justify-between gap-4 border-b border-black/[0.08] pb-4">
+    <div className={cn("space-y-6 pt-6", className)}>
+      <section className="flex items-start justify-between gap-4 border-b border-black/[0.08] pb-5">
         <div>
-          <h1 className="text-3xl font-display text-foreground">{title}</h1>
+          <h1 className="text-3xl font-display">
+            <span className="text-foreground">{title.split(" ")[0]}</span>
+            {title.includes(" ") && (
+              <> <span className="text-vibrant">{title.split(" ").slice(1).join(" ")}</span></>
+            )}
+          </h1>
           <p className="mt-1 max-w-3xl text-sm text-foreground/65">{description}</p>
         </div>
 

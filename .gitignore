@@ -14,10 +14,12 @@ backend/.pytest_cache/
 backend/.venv/
 
 # Node / Next
+node_modules/
 frontend/node_modules/
 frontend/.next/
 frontend/.next_prev_*/
 frontend/.next_bak_*/
+frontend/.next_corrupt_*/
 frontend/tsconfig.tsbuildinfo
 frontend/.clerk/
 

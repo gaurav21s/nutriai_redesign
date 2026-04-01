@@ -5,11 +5,13 @@ import { useUser } from "@clerk/nextjs";
 import type { ComponentType } from "react";
 import {
   Apple,
+  ArrowRight,
   Brain,
   Calculator,
   Leaf,
   MessageSquare,
   Microscope,
+  Plus,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -101,53 +103,95 @@ const flow = ["Analyze", "Plan", "Refine", "Track"] as const;
 
 export default function DashboardOverview() {
   const { user } = useUser();
+  const firstName = user?.firstName?.trim();
+  const primaryActions = features.slice(0, 4);
 
   return (
-    <div className="space-y-8 pb-8">
-      <section className="border-b border-black/[0.08] pb-4">
-        <h1 className="text-3xl font-display text-foreground">
-          Welcome{user?.firstName ? `, ${user.firstName}` : ""}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-foreground/65">Pick a feature to get started. Your history is saved in Library.</p>
-      </section>
+    <div className="relative overflow-hidden rounded-[34px] border border-black/[0.06] bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.96))] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-150px)] w-full max-w-[1120px] flex-col justify-center pb-8 pt-4">
+        <section className="mx-auto w-full max-w-[840px] text-center">
+          <p className="text-sm font-medium text-foreground/45">NutriAI workspace</p>
+          <h1 className="mt-5 text-4xl font-display leading-tight text-foreground sm:text-5xl lg:text-6xl">
+            Ready when you are{firstName ? `, ${firstName}` : ""}.
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-foreground/60 sm:text-lg">
+            Start with a nutrition task, jump into a saved workflow, or pick a tool below to keep momentum going.
+          </p>
+        </section>
 
-      <section className="space-y-6">
-        {flow.map((group) => {
-          const cards = features.filter((item) => item.group === group);
-          if (!cards.length) return null;
-
-          return (
-            <div key={group} className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-px w-8 bg-vibrant/40" />
-                <h2 className="text-base font-display text-foreground">{group}</h2>
+        <section className="mx-auto mt-10 w-full max-w-[920px]">
+          <div className="rounded-[32px] border border-black/[0.06] bg-white/92 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgb(255,247,237)] text-vibrant">
+                <Plus className="h-5 w-5" />
               </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {cards.map((feature) => {
-                  const Icon = feature.icon;
-                  return (
-                    <Link
-                      key={feature.href}
-                      href={feature.href}
-                      className="app-panel group border-l-2 border-l-vibrant/80 p-5 hover:border-l-vibrant hover:bg-muted"
-                    >
-                      <div className="flex items-start gap-3">
-                        <Icon className="mt-0.5 h-4 w-4 text-vibrant" />
-                        <div>
-                          <h3 className="text-base font-display text-foreground">
-                            {feature.title}
-                          </h3>
-                          <p className="mt-1 text-sm text-foreground/65">{feature.description}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-base font-medium text-foreground/80 sm:text-lg">What would you like to do today?</p>
+                <p className="text-sm text-foreground/45">Choose a tool and jump straight into analysis, planning, or tracking.</p>
               </div>
+              <Link
+                href="/nutri-chat"
+                className="hidden h-11 items-center rounded-full bg-vibrant px-5 text-sm font-medium text-white transition hover:bg-vibrant/90 sm:inline-flex"
+              >
+                Open Nutri Chat
+              </Link>
             </div>
-          );
-        })}
-      </section>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {primaryActions.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <Link
+                    key={feature.href}
+                    href={feature.href}
+                    className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-background px-4 py-2.5 text-sm text-foreground/75 transition hover:border-vibrant/25 hover:text-foreground"
+                  >
+                    <Icon className="h-4 w-4 text-vibrant" />
+                    {feature.title}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {flow.map((group) => {
+              const cards = features.filter((item) => item.group === group);
+              return (
+                <div key={group} className="rounded-[28px] border border-black/[0.06] bg-white/78 p-4 backdrop-blur">
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-black/[0.08]" />
+                    <h2 className="text-sm font-display text-foreground">{group}</h2>
+                  </div>
+                  <div className="space-y-2">
+                    {cards.map((feature) => {
+                      const Icon = feature.icon;
+                      return (
+                        <Link
+                          key={feature.href}
+                          href={feature.href}
+                          className="group flex items-center gap-3 rounded-2xl px-3 py-3 transition hover:bg-[rgb(255,247,237)]"
+                        >
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgb(255,247,237)] text-vibrant">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1 text-left">
+                            <p className="text-sm font-medium text-foreground">{feature.title}</p>
+                            <p className="truncate text-xs text-foreground/50">{feature.description}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-foreground/25 transition group-hover:translate-x-0.5 group-hover:text-vibrant" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

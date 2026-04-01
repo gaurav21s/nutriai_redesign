@@ -18,6 +18,7 @@ class InMemoryRepository(CompositeRepository):
         self._quiz_attempts: dict[str, list[dict]] = defaultdict(list)
         self._chat_sessions: dict[str, dict] = {}
         self._chat_messages: dict[str, list[dict]] = defaultdict(list)
+        self._chat_actions: dict[str, dict[str, dict]] = defaultdict(dict)
         self._articles: dict[str, dict] = {}
         self._users: dict[str, dict] = {}
         self._subscriptions: dict[str, dict] = {}
@@ -69,6 +70,13 @@ class InMemoryRepository(CompositeRepository):
         self._chat_sessions[session_id] = session
         return session
 
+    async def update_chat_session(self, clerk_user_id: str, session_id: str, payload: dict) -> dict | None:
+        session = self._chat_sessions.get(session_id)
+        if not session or session.get("clerk_user_id") != clerk_user_id:
+            return None
+        session.update(payload)
+        return session
+
     async def list_chat_sessions(self, clerk_user_id: str, limit: int = 30) -> list[dict]:
         sessions = [
             session
@@ -78,7 +86,14 @@ class InMemoryRepository(CompositeRepository):
         sessions.sort(key=lambda item: item.get("last_message_at") or item.get("created_at"), reverse=True)
         return sessions[:limit]
 
-    async def add_chat_message(self, clerk_user_id: str, session_id: str, role: str, content: str) -> dict:
+    async def add_chat_message(
+        self,
+        clerk_user_id: str,
+        session_id: str,
+        role: str,
+        content: str,
+        metadata: dict | None = None,
+    ) -> dict:
         session = self._chat_sessions.get(session_id)
         if not session or session.get("clerk_user_id") != clerk_user_id:
             raise ValueError("Chat session not found")
@@ -89,6 +104,7 @@ class InMemoryRepository(CompositeRepository):
             "role": role,
             "content": content,
             "created_at": self._now_iso(),
+            "metadata": metadata,
         }
         self._chat_messages[session_id].append(message)
 
@@ -100,6 +116,43 @@ class InMemoryRepository(CompositeRepository):
         if not session or session.get("clerk_user_id") != clerk_user_id:
             return []
         return self._chat_messages.get(session_id, [])[-limit:]
+
+    async def create_chat_action(self, clerk_user_id: str, session_id: str, payload: dict) -> dict:
+        session = self._chat_sessions.get(session_id)
+        if not session or session.get("clerk_user_id") != clerk_user_id:
+            raise ValueError("Chat session not found")
+
+        action_id = str(uuid4())
+        doc = {
+            "action_id": action_id,
+            "session_id": session_id,
+            "clerk_user_id": clerk_user_id,
+            "created_at": self._now_iso(),
+            "resolved_at": None,
+            **payload,
+        }
+        self._chat_actions[session_id][action_id] = doc
+        return doc
+
+    async def get_chat_action(self, clerk_user_id: str, session_id: str, action_id: str) -> dict | None:
+        action = self._chat_actions.get(session_id, {}).get(action_id)
+        if not action or action.get("clerk_user_id") != clerk_user_id:
+            return None
+        return action
+
+    async def update_chat_action(self, clerk_user_id: str, session_id: str, action_id: str, payload: dict) -> dict | None:
+        action = self._chat_actions.get(session_id, {}).get(action_id)
+        if not action or action.get("clerk_user_id") != clerk_user_id:
+            return None
+
+        updated = {
+            **action,
+            **payload,
+        }
+        if payload.get("status") in {"confirmed", "rejected"} and not updated.get("resolved_at"):
+            updated["resolved_at"] = self._now_iso()
+        self._chat_actions[session_id][action_id] = updated
+        return updated
 
     async def create_quiz_session(self, clerk_user_id: str, payload: dict) -> dict:
         session_id = str(uuid4())

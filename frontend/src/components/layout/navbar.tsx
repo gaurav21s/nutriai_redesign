@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export function Navbar() {
   return (
     <div className="fixed left-0 right-0 top-0 z-[100] border-b border-black/[0.08] bg-background">
-      <header className="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="mx-auto flex h-16 w-full max-w-[1560px] items-center justify-between px-8 sm:px-10 lg:px-14">
         <Link href="/" className="inline-flex items-center gap-3 text-foreground">
           <div className="relative h-10 w-10 flex-shrink-0">
             <Image
@@ -21,8 +21,9 @@ export function Navbar() {
             />
           </div>
           <div className="leading-none">
-            <div className="text-[28px] font-display font-semibold tracking-tight text-vibrant">
-              NutriAI
+            <div className="text-[28px] font-display font-semibold tracking-tight text-foreground">
+              <span>Nutri</span>
+              <span className="text-vibrant italic">AI</span>
             </div>
             <div className="mt-1 text-[11px] text-foreground/55">
               Your Nutrition Companion
@@ -61,7 +62,9 @@ export function Navbar() {
 
           <SignedIn>
             <Link href="/dashboard">
-              <Button variant="outline" size="sm">Dashboard</Button>
+              <Button variant="outline" size="sm" className="px-4">
+                Dashboard
+              </Button>
             </Link>
             <UserButton appearance={{ elements: { userButtonAvatarBox: "h-8 w-8 rounded-full border border-black/10" } }} afterSignOutUrl="/" />
           </SignedIn>

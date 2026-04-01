@@ -108,14 +108,6 @@ export default function PricingPage() {
       <div className="mx-auto w-full max-w-[1440px] px-6 sm:px-10 lg:px-16">
         <header className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-12">
           <div className="max-w-2xl">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 flex items-center gap-3 text-vibrant font-semibold tracking-widest uppercase text-[10px]"
-            >
-              <div className="h-[1px] w-12 bg-vibrant/30" />
-              NutriAI Excellence
-            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

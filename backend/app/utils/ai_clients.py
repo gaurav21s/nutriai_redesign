@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import json
 from dataclasses import dataclass
 from typing import Sequence
+
+import httpx
 
 from app.core.exceptions import ConfigurationException, ExternalServiceException
 
@@ -161,6 +164,90 @@ class GroqClient:
             return _response_text(response)
         except Exception as exc:
             raise ExternalServiceException("Groq generation failed", details={"reason": str(exc)}) from exc
+
+
+class OpenRouterClient:
+    """OpenRouter adapter for text generation."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = "openai/gpt-oss-20b:free",
+        base_url: str = "https://openrouter.ai/api/v1",
+        fallback_models: Sequence[str] | None = None,
+        site_url: str = "",
+        app_name: str = "NutriAI",
+        timeout_seconds: int = 45,
+    ) -> None:
+        if not api_key:
+            raise ConfigurationException("OPENROUTER_API_KEY is required for agent chat")
+        self.api_key = api_key
+        self.model_name = model_name
+        self.base_url = base_url.rstrip("/")
+        self.fallback_models = [item for item in (fallback_models or []) if item and item != model_name]
+        self.site_url = site_url
+        self.app_name = app_name
+        self.timeout_seconds = timeout_seconds
+
+    @property
+    def _headers(self) -> dict[str, str]:
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        if self.site_url:
+            headers["HTTP-Referer"] = self.site_url
+        if self.app_name:
+            headers["X-Title"] = self.app_name
+        return headers
+
+    async def generate_text(self, prompt: str, system_prompt: str | None = None, temperature: float = 0.2) -> str:
+        models_to_try = [self.model_name, *self.fallback_models]
+        last_error: Exception | None = None
+
+        for model_name in models_to_try:
+            payload: dict[str, object] = {
+                "model": model_name,
+                "messages": [],
+                "temperature": temperature,
+            }
+            messages: list[dict[str, str]] = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+            payload["messages"] = messages
+
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                    response = await client.post(
+                        f"{self.base_url}/chat/completions",
+                        headers=self._headers,
+                        json=payload,
+                    )
+                response.raise_for_status()
+                body = response.json()
+                choices = body.get("choices", [])
+                if not choices:
+                    raise ExternalServiceException("OpenRouter returned no choices", details={"body": body})
+
+                content = choices[0].get("message", {}).get("content", "")
+                if isinstance(content, list):
+                    parts = []
+                    for item in content:
+                        if isinstance(item, dict) and isinstance(item.get("text"), str):
+                            parts.append(item["text"])
+                    return "\n".join(parts).strip()
+                if isinstance(content, str):
+                    return content.strip()
+                return json.dumps(content)
+            except Exception as exc:
+                last_error = exc
+                continue
+
+        raise ExternalServiceException(
+            "OpenRouter generation failed",
+            details={"reason": str(last_error) if last_error else "unknown error"},
+        ) from last_error
 
 
 def decode_base64_payload(payload: str) -> bytes:

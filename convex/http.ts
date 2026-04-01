@@ -67,6 +67,11 @@ function normalizeChatMessage(row: Record<string, unknown>) {
   return { id: String(message_id ?? ""), ...rest };
 }
 
+function normalizeChatAction(row: Record<string, unknown>) {
+  const { _id, _creationTime, ...rest } = row;
+  return rest;
+}
+
 function normalizeArticle(row: Record<string, unknown>) {
   const { _id, _creationTime, ...rest } = row;
   return { id: String(_id ?? ""), ...rest };
@@ -184,6 +189,28 @@ http.route({
 });
 
 http.route({
+  path: "/backend/chat/sessions/update",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      sessionId: string;
+      payload: Record<string, unknown>;
+    };
+
+    const updated = await ctx.runMutation("chat:updateSession" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+      payload,
+    });
+
+    return json({ ok: true, data: updated ?? null });
+  }),
+});
+
+http.route({
   path: "/backend/chat/sessions/list",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
@@ -206,11 +233,12 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
 
-    const { clerkUserId, sessionId, role, content } = (await req.json()) as {
+    const { clerkUserId, sessionId, role, content, metadata } = (await req.json()) as {
       clerkUserId: string;
       sessionId: string;
       role: string;
       content: string;
+      metadata?: Record<string, unknown>;
     };
 
     try {
@@ -219,12 +247,81 @@ http.route({
         session_id: sessionId,
         role,
         content,
+        metadata,
       })) as Record<string, unknown>;
 
       return json({ ok: true, data: normalizeChatMessage(message) });
     } catch {
       return json({ ok: false, error: "session_not_found" }, 404);
     }
+  }),
+});
+
+http.route({
+  path: "/backend/chat/actions/create",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      sessionId: string;
+      payload: Record<string, unknown>;
+    };
+
+    const action = (await ctx.runMutation("chat:createAction" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+      payload,
+    })) as Record<string, unknown>;
+
+    return json({ ok: true, data: normalizeChatAction(action) });
+  }),
+});
+
+http.route({
+  path: "/backend/chat/actions/get",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId, actionId } = (await req.json()) as {
+      clerkUserId: string;
+      sessionId: string;
+      actionId: string;
+    };
+
+    const action = (await ctx.runQuery("chat:getAction" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+      action_id: actionId,
+    })) as Record<string, unknown> | null;
+
+    return json({ ok: true, data: action ? normalizeChatAction(action) : null });
+  }),
+});
+
+http.route({
+  path: "/backend/chat/actions/update",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId, actionId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      sessionId: string;
+      actionId: string;
+      payload: Record<string, unknown>;
+    };
+
+    const action = (await ctx.runMutation("chat:updateAction" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+      action_id: actionId,
+      payload,
+    })) as Record<string, unknown> | null;
+
+    return json({ ok: true, data: action ? normalizeChatAction(action) : null });
   }),
 });
 

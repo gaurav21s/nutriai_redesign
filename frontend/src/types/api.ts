@@ -134,12 +134,64 @@ export interface ChatSession {
   last_message_at?: string | null;
 }
 
+export interface ChatReasoningStep {
+  id: string;
+  label: string;
+  detail: string;
+  status: "running" | "completed" | "info";
+  created_at: string;
+}
+
+export interface ChatSourceReference {
+  source_type: "context" | "tool" | "history";
+  feature: string;
+  label: string;
+  record_id?: string | null;
+}
+
+export interface ChatPendingAction {
+  action_id: string;
+  session_id: string;
+  kind: "save_calculation" | "save_recommendations" | "save_recipe";
+  title: string;
+  summary: string;
+  status: "pending" | "confirmed" | "rejected";
+  preview_payload: Record<string, unknown>;
+  created_at: string;
+  resolved_at?: string | null;
+  saved_record_id?: string | null;
+}
+
+export interface ChatMessageMetadata {
+  reasoning_steps: ChatReasoningStep[];
+  source_references: ChatSourceReference[];
+  pending_action?: ChatPendingAction | null;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  metadata?: ChatMessageMetadata | null;
 }
+
+export interface ChatContextSection {
+  feature: string;
+  label: string;
+  item_count: number;
+  summary: string;
+  last_updated?: string | null;
+}
+
+export type ChatStreamEvent =
+  | { type: "context"; data: { items: ChatContextSection[] } }
+  | { type: "reasoning_step"; data: ChatReasoningStep }
+  | { type: "assistant_delta"; data: { delta: string } }
+  | { type: "pending_action"; data: ChatPendingAction }
+  | { type: "message"; data: ChatMessage }
+  | { type: "error"; data: { message: string } }
+  | { type: "done"; data: Record<string, never> };
 
 export interface BMIResponse {
   bmi: number;

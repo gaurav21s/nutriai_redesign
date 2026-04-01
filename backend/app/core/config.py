@@ -35,8 +35,15 @@ class Settings(BaseSettings):
     together_api_key: str = ""
     groq_api_key: str = ""
     openai_api_key: str = ""
+    openrouter_api_key: str = "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"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_chat_model: str = "openai/gpt-oss-20b:free"
+    openrouter_fallback_models: str = ""
+    openrouter_site_url: str = ""
+    openrouter_app_name: str = "NutriAI"
     allow_mock_ai_fallback: bool = True
     force_mock_ai_fallback: bool = False
+    agent_chat_provider: str = "groq"  # "groq" or "openrouter"
 
     # Convex persistence
     enable_convex_persistence: bool = True

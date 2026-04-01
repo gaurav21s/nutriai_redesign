@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Lock, Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { Lock, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { SignInButton, useUser } from "@clerk/nextjs";
 
@@ -104,28 +104,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background pt-14">
-      <div className="mx-auto max-w-[1280px] px-4 py-6 sm:px-6 lg:px-8">
-        <section className="mb-6 flex items-center justify-between border-b border-black/[0.08] pb-4">
+      <div className="mx-auto w-full max-w-[1560px] px-4 py-4 sm:px-5 xl:px-8">
+        <div className="mb-4 xl:hidden">
           <button
             type="button"
             onClick={() => setSidebarOpen((prev) => !prev)}
-            className="inline-flex items-center gap-2 border border-black/[0.12] bg-white px-3 py-2 text-sm text-foreground hover:bg-muted xl:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-black/[0.10] bg-white text-foreground shadow-sm hover:bg-muted"
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            {sidebarOpen ? "Close menu" : "Open menu"}
           </button>
-          <div className="hidden items-center gap-3 xl:flex">
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="inline-flex items-center gap-2 border border-black/[0.12] bg-white px-3 py-2 text-sm text-foreground hover:bg-muted"
-            >
-              {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4 text-vibrant" /> : <PanelLeftClose className="h-4 w-4 text-vibrant" />}
-              {sidebarCollapsed ? "Open sidebar" : "Close sidebar"}
-            </button>
-            <div className="text-sm text-foreground/55">Tools and history</div>
-          </div>
-        </section>
+        </div>
 
         {sidebarOpen ? (
           <div
@@ -134,13 +123,17 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           />
         ) : null}
 
-        <div className={cn("grid gap-6", sidebarCollapsed ? "xl:grid-cols-[72px_minmax(0,1fr)]" : "xl:grid-cols-[252px_minmax(0,1fr)]")}>
+        <div className={cn("grid gap-4 lg:gap-5", sidebarCollapsed ? "xl:grid-cols-[88px_minmax(0,1fr)]" : "xl:grid-cols-[280px_minmax(0,1fr)]")}>
           <div className="hidden xl:block">
-            <Sidebar permissions={permissions} collapsed={sidebarCollapsed} />
+            <Sidebar
+              permissions={permissions}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+            />
           </div>
 
           {sidebarOpen ? (
-            <div className="fixed left-0 top-0 z-50 h-screen w-[252px] overflow-y-auto bg-white xl:hidden">
+            <div className="fixed left-0 top-0 z-50 h-screen w-[280px] overflow-y-auto bg-white xl:hidden">
               <div className="flex h-14 items-center justify-end border-b border-black/[0.08] px-4">
                 <button onClick={() => setSidebarOpen(false)} className="text-foreground/55 hover:text-foreground">
                   <X className="h-6 w-6" />

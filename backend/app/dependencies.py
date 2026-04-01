@@ -28,17 +28,14 @@ from app.services.calculator_service import CalculatorService
 from app.services.food_insights_service import FoodInsightsService
 from app.services.ingredient_checks_service import IngredientChecksService
 from app.services.meal_plan_service import MealPlanService
+from app.services.nutri_chat_agent import GroqAgentModel, NutriChatAgentRuntime, OpenRouterAgentModel
 from app.services.nutri_chat_service import NutriChatService
 from app.services.quiz_service import QuizService
 from app.services.recipe_service import RecipeService
 from app.services.recommendation_service import RecommendationService
 from app.services.subscription_service import SubscriptionService
-from app.utils.ai_clients import GeminiClient, GroqClient, TogetherClient
-from app.utils.fallback_ai_clients import (
-    FallbackGeminiClient,
-    FallbackGroqClient,
-    FallbackTogetherClient,
-)
+from app.utils.ai_clients import GeminiClient, GroqClient, OpenRouterClient, TogetherClient
+from app.utils.fallback_ai_clients import FallbackGeminiClient, FallbackGroqClient, FallbackTogetherClient
 
 logger = get_logger("app.dependencies")
 
@@ -84,6 +81,18 @@ def _build_groq_client(settings: Settings) -> GroqClient | FallbackGroqClient:
             logger.warning("Using fallback Groq client (missing GROQ_API_KEY in development/local)")
             return FallbackGroqClient()
         raise
+
+
+def _build_openrouter_client(settings: Settings) -> OpenRouterClient:
+    return OpenRouterClient(
+        api_key=settings.openrouter_api_key,
+        model_name=settings.openrouter_chat_model,
+        base_url=settings.openrouter_base_url,
+        fallback_models=[],
+        site_url=settings.openrouter_site_url,
+        app_name=settings.openrouter_app_name,
+        timeout_seconds=settings.request_timeout_seconds,
+    )
 
 
 @lru_cache(maxsize=1)
@@ -165,10 +174,39 @@ def get_nutri_chat_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
 ) -> NutriChatService:
-    return NutriChatService(
+    calculator_service = CalculatorService(repository=repository)
+    groq_client = _build_groq_client(settings)
+    recipe_service = RecipeService(
         repository=repository,
-        together_client=_build_together_client(settings),
+        groq_client=groq_client,  # type: ignore[arg-type]
+        affiliate_code=settings.affiliate_code,
     )
+    recommendation_service = RecommendationService(
+        repository=repository,
+        groq_client=groq_client,  # type: ignore[arg-type]
+    )
+
+    if settings.agent_chat_provider == "openrouter":
+        agent_model = OpenRouterAgentModel(_build_openrouter_client(settings))
+    else:
+        agent_model = GroqAgentModel(groq_client)
+
+    service: NutriChatService | None = None
+
+    async def tool_executor(tool_name: str, tool_input: dict, clerk_user_id: str = "") -> dict:  # type: ignore[misc]
+        if service is None:
+            raise RuntimeError("Nutri chat service is not initialized")
+        return await service.execute_tool(tool_name, tool_input, clerk_user_id)
+
+    runtime = NutriChatAgentRuntime(agent_model=agent_model, tool_executor=tool_executor)  # type: ignore[arg-type]
+    service = NutriChatService(
+        repository=repository,
+        agent_runtime=runtime,
+        calculator_service=calculator_service,
+        recipe_service=recipe_service,
+        recommendation_service=recommendation_service,
+    )
+    return service
 
 
 def get_calculator_service(

@@ -16,7 +16,7 @@ class RecipeService:
         self.groq_client = groq_client
         self.affiliate_code = affiliate_code
 
-    async def generate(self, clerk_user_id: str, payload: RecipeGenerateRequest) -> RecipeResponse:
+    async def preview(self, payload: RecipeGenerateRequest) -> RecipeResponse:
         raw = await self.groq_client.generate_text(
             recipe_prompt(payload.dish_name, payload.recipe_type),
             system_prompt="You are a helpful culinary assistant specialized in healthy cooking.",
@@ -25,15 +25,35 @@ class RecipeService:
         parsed = parse_recipe(raw)
         shopping_links = build_shopping_links(parsed.get("ingredient_list", []), self.affiliate_code)
 
-        record = await self.repository.create_record(
+        return RecipeResponse.model_validate(
+            {
+                "id": "preview",
+                "created_at": "1970-01-01T00:00:00+00:00",
+                **parsed,
+                "shopping_links": shopping_links,
+                "raw_response": raw,
+            }
+        )
+
+    async def save_preview(self, clerk_user_id: str, payload: RecipeGenerateRequest, response: RecipeResponse) -> dict:
+        return await self.repository.create_record(
             "recipes",
             clerk_user_id,
             {
-                **parsed,
-                "shopping_links": shopping_links,
+                "recipe_name": response.recipe_name,
+                "ingredients": [item.model_dump() for item in response.ingredients],
+                "steps": response.steps,
+                "ingredient_list": response.ingredient_list,
+                "shopping_links": response.shopping_links,
+                "explanation": response.explanation,
+                "raw_response": response.raw_response,
                 "input": payload.model_dump(),
             },
         )
+
+    async def generate(self, clerk_user_id: str, payload: RecipeGenerateRequest) -> RecipeResponse:
+        preview = await self.preview(payload)
+        record = await self.save_preview(clerk_user_id, payload, preview)
         return RecipeResponse.model_validate(record)
 
     async def get_history(self, clerk_user_id: str, limit: int = 20) -> list[RecipeResponse]:

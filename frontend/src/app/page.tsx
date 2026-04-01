@@ -66,25 +66,15 @@ const item: Variants = {
 export default function HomePage() {
   return (
     <div className="relative bg-background">
-      <div className="mx-auto w-full max-w-[1440px] px-6 sm:px-10 lg:px-16 pt-40 pb-16">
+      <div className="mx-auto w-full max-w-[1560px] px-8 sm:px-10 lg:px-14 pt-24 pb-16">
         {/* Editorial Hero */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-32">
+        <section className="mb-28 grid grid-cols-1 gap-10 md:grid-cols-12 lg:gap-12">
           <div className="md:col-span-7 flex flex-col justify-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="mb-6 flex items-center gap-3 text-vibrant font-semibold tracking-widest uppercase text-[10px]"
-            >
-              <div className="h-[1px] w-12 bg-vibrant/30" />
-              NutriAI — High Precision Nutrition
-            </motion.div>
-
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.2, ease: [0.19, 1, 0.22, 1] }}
-              className="text-7xl sm:text-8xl lg:text-9xl font-display mb-10 leading-[0.9] text-foreground"
+              className="mb-8 text-7xl font-display leading-[0.95] text-foreground sm:text-8xl"
             >
               Fuel <span className="italic text-vibrant">your</span> <br />
               Potential.
@@ -94,7 +84,7 @@ export default function HomePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1.2, delay: 0.4 }}
-              className="text-foreground/70 text-xl mb-12 max-w-xl leading-relaxed"
+              className="mb-10 max-w-xl text-xl leading-relaxed text-foreground/70"
             >
               Experience the pinnacle of nutrition technology. Our AI platform crafts a personalized narrative
               for your health, focused on data-driven insights and biological harmony.
@@ -120,12 +110,12 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          <div className="md:col-span-5 relative mt-16 md:mt-0">
+          <div className="relative md:col-span-5 md:mt-0">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.5, ease: [0.19, 1, 0.22, 1] }}
-              className="aspect-[4/5] rounded-editorial overflow-hidden shadow-elegant border border-black/[0.03] relative"
+              className="relative aspect-[4/5] overflow-hidden rounded-editorial border border-black/[0.03] shadow-elegant"
             >
               <Image
                 src="/images/hero_food_1.png"

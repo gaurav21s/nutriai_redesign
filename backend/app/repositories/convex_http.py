@@ -77,6 +77,13 @@ class ConvexHttpRepository(CompositeRepository):
             {"clerkUserId": clerk_user_id, "title": title},
         )
 
+    async def update_chat_session(self, clerk_user_id: str, session_id: str, payload: dict) -> dict | None:
+        result = await self._post(
+            "/backend/chat/sessions/update",
+            {"clerkUserId": clerk_user_id, "sessionId": session_id, "payload": payload},
+        )
+        return result or None
+
     async def list_chat_sessions(self, clerk_user_id: str, limit: int = 30) -> list[dict]:
         result = await self._post(
             "/backend/chat/sessions/list",
@@ -84,7 +91,14 @@ class ConvexHttpRepository(CompositeRepository):
         )
         return result.get("items", [])
 
-    async def add_chat_message(self, clerk_user_id: str, session_id: str, role: str, content: str) -> dict:
+    async def add_chat_message(
+        self,
+        clerk_user_id: str,
+        session_id: str,
+        role: str,
+        content: str,
+        metadata: dict | None = None,
+    ) -> dict:
         return await self._post(
             "/backend/chat/messages/add",
             {
@@ -92,6 +106,7 @@ class ConvexHttpRepository(CompositeRepository):
                 "sessionId": session_id,
                 "role": role,
                 "content": content,
+                "metadata": metadata,
             },
         )
 
@@ -105,6 +120,39 @@ class ConvexHttpRepository(CompositeRepository):
             },
         )
         return result.get("items", [])
+
+    async def create_chat_action(self, clerk_user_id: str, session_id: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/chat/actions/create",
+            {
+                "clerkUserId": clerk_user_id,
+                "sessionId": session_id,
+                "payload": payload,
+            },
+        )
+
+    async def get_chat_action(self, clerk_user_id: str, session_id: str, action_id: str) -> dict | None:
+        result = await self._post(
+            "/backend/chat/actions/get",
+            {
+                "clerkUserId": clerk_user_id,
+                "sessionId": session_id,
+                "actionId": action_id,
+            },
+        )
+        return result or None
+
+    async def update_chat_action(self, clerk_user_id: str, session_id: str, action_id: str, payload: dict) -> dict | None:
+        result = await self._post(
+            "/backend/chat/actions/update",
+            {
+                "clerkUserId": clerk_user_id,
+                "sessionId": session_id,
+                "actionId": action_id,
+                "payload": payload,
+            },
+        )
+        return result or None
 
     async def create_quiz_session(self, clerk_user_id: str, payload: dict) -> dict:
         return await self._post(

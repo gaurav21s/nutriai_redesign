@@ -14,7 +14,7 @@ class RecommendationService:
         self.repository = repository
         self.groq_client = groq_client
 
-    async def generate(self, clerk_user_id: str, payload: RecommendationGenerateRequest) -> RecommendationResponse:
+    async def preview(self, payload: RecommendationGenerateRequest) -> RecommendationResponse:
         raw = await self.groq_client.generate_text(
             recommendation_prompt(payload.query, payload.recommendation_type),
             system_prompt="You are a nutrition recommendation assistant.",
@@ -22,16 +22,31 @@ class RecommendationService:
         )
         recommendations = parse_bullet_recommendations(raw)
 
-        record = await self.repository.create_record(
-            "recommendations",
-            clerk_user_id,
+        return RecommendationResponse.model_validate(
             {
+                "id": "preview",
+                "created_at": "1970-01-01T00:00:00+00:00",
                 "title": f"Recommendations for {payload.query}",
                 "recommendations": recommendations,
                 "raw_response": raw,
+            }
+        )
+
+    async def save_preview(self, clerk_user_id: str, payload: RecommendationGenerateRequest, response: RecommendationResponse) -> dict:
+        return await self.repository.create_record(
+            "recommendations",
+            clerk_user_id,
+            {
+                "title": response.title,
+                "recommendations": response.recommendations,
+                "raw_response": response.raw_response,
                 "input": payload.model_dump(),
             },
         )
+
+    async def generate(self, clerk_user_id: str, payload: RecommendationGenerateRequest) -> RecommendationResponse:
+        preview = await self.preview(payload)
+        record = await self.save_preview(clerk_user_id, payload, preview)
         return RecommendationResponse.model_validate(record)
 
     async def get_history(self, clerk_user_id: str, limit: int = 20) -> list[RecommendationResponse]:

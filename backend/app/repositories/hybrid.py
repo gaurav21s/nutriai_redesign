@@ -49,22 +49,53 @@ class HybridRepository(CompositeRepository):
             lambda: self.fallback.create_chat_session(clerk_user_id, title),
         )
 
+    async def update_chat_session(self, clerk_user_id: str, session_id: str, payload: dict) -> dict | None:
+        return await self._run(
+            lambda: self.primary.update_chat_session(clerk_user_id, session_id, payload),
+            lambda: self.fallback.update_chat_session(clerk_user_id, session_id, payload),
+        )
+
     async def list_chat_sessions(self, clerk_user_id: str, limit: int = 30) -> list[dict]:
         return await self._run(
             lambda: self.primary.list_chat_sessions(clerk_user_id, limit),
             lambda: self.fallback.list_chat_sessions(clerk_user_id, limit),
         )
 
-    async def add_chat_message(self, clerk_user_id: str, session_id: str, role: str, content: str) -> dict:
+    async def add_chat_message(
+        self,
+        clerk_user_id: str,
+        session_id: str,
+        role: str,
+        content: str,
+        metadata: dict | None = None,
+    ) -> dict:
         return await self._run(
-            lambda: self.primary.add_chat_message(clerk_user_id, session_id, role, content),
-            lambda: self.fallback.add_chat_message(clerk_user_id, session_id, role, content),
+            lambda: self.primary.add_chat_message(clerk_user_id, session_id, role, content, metadata),
+            lambda: self.fallback.add_chat_message(clerk_user_id, session_id, role, content, metadata),
         )
 
     async def list_chat_messages(self, clerk_user_id: str, session_id: str, limit: int = 100) -> list[dict]:
         return await self._run(
             lambda: self.primary.list_chat_messages(clerk_user_id, session_id, limit),
             lambda: self.fallback.list_chat_messages(clerk_user_id, session_id, limit),
+        )
+
+    async def create_chat_action(self, clerk_user_id: str, session_id: str, payload: dict) -> dict:
+        return await self._run(
+            lambda: self.primary.create_chat_action(clerk_user_id, session_id, payload),
+            lambda: self.fallback.create_chat_action(clerk_user_id, session_id, payload),
+        )
+
+    async def get_chat_action(self, clerk_user_id: str, session_id: str, action_id: str) -> dict | None:
+        return await self._run(
+            lambda: self.primary.get_chat_action(clerk_user_id, session_id, action_id),
+            lambda: self.fallback.get_chat_action(clerk_user_id, session_id, action_id),
+        )
+
+    async def update_chat_action(self, clerk_user_id: str, session_id: str, action_id: str, payload: dict) -> dict | None:
+        return await self._run(
+            lambda: self.primary.update_chat_action(clerk_user_id, session_id, action_id, payload),
+            lambda: self.fallback.update_chat_action(clerk_user_id, session_id, action_id, payload),
         )
 
     async def create_quiz_session(self, clerk_user_id: str, payload: dict) -> dict:

@@ -112,3 +112,71 @@ Explanation: Higher fiber and protein profile with lower saturated fat."""
         return """- Swap sugary drinks with water infused with lemon.
 - Replace refined snacks with nuts and fruit.
 - Build meals around vegetables, lean protein, and whole grains."""
+
+
+class FallbackOpenRouterClient:
+    """Deterministic fallback client for agent planning in local development/testing."""
+
+    async def generate_text(
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        temperature: float = 0.2,
+    ) -> str:
+        _ = (system_prompt, temperature)
+        lowered = prompt.lower()
+
+        if '"next_action"' in prompt:
+            if "tool results:" in lowered:
+                return """{
+  "thinking_title": "Drafting the answer",
+  "thinking_detail": "I have the tool output I need, so I can answer directly and offer a save action when relevant.",
+  "next_action": "reply",
+  "tool_name": "",
+  "tool_input": {},
+  "reply": "Here is the result I worked out from your NutriAI data and the tool preview. If you want, you can save it to your history from the action card below."
+}"""
+
+            if "bmi" in lowered and "weight_kg" in lowered and "height_cm" in lowered:
+                return """{
+  "thinking_title": "Running a BMI check",
+  "thinking_detail": "The user gave enough information for a BMI preview, so I should calculate it before answering.",
+  "next_action": "tool",
+  "tool_name": "preview_bmi",
+  "tool_input": {"weight_kg": 72, "height_cm": 175},
+  "reply": ""
+}"""
+
+            if "calorie" in lowered and "activity_multiplier" in lowered:
+                return """{
+  "thinking_title": "Estimating calorie needs",
+  "thinking_detail": "The user appears to want calorie guidance and the required profile fields are available.",
+  "next_action": "tool",
+  "tool_name": "preview_calories",
+  "tool_input": {"gender": "Male", "weight_kg": 72, "height_cm": 175, "age": 30, "activity_multiplier": 1.55},
+  "reply": ""
+}"""
+
+            if "recommend" in lowered or "alternative" in lowered:
+                return """{
+  "thinking_title": "Generating recommendations",
+  "thinking_detail": "A recommendation preview will make the reply more concrete for the user.",
+  "next_action": "tool",
+  "tool_name": "preview_recommendations",
+  "tool_input": {"query": "healthy dinner ideas", "recommendation_type": "both"},
+  "reply": ""
+}"""
+
+            return """{
+  "thinking_title": "Using saved NutriAI context",
+  "thinking_detail": "I can answer directly from the user's message and the recent history summary without running a tool.",
+  "next_action": "reply",
+  "tool_name": "",
+  "tool_input": {},
+  "reply": "Based on your recent NutriAI activity, focus on consistent protein, more fiber-rich foods, and a breakfast you can repeat on busy days. If you want a more specific calculation or recommendation, I can work one out here."
+}"""
+
+        return (
+            "Based on your recent NutriAI data, I would keep the plan practical: anchor meals around "
+            "protein, use your latest calculator results as a baseline, and adjust one habit at a time."
+        )

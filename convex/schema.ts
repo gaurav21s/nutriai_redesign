@@ -134,8 +134,25 @@ export default defineSchema({
     clerk_user_id: v.string(),
     role: v.string(),
     content: v.string(),
+    metadata: v.optional(v.any()),
     created_at: v.string(),
   }).index("by_user_session_created", ["clerk_user_id", "session_id", "created_at"]),
+
+  chatActions: defineTable({
+    action_id: v.string(),
+    session_id: v.string(),
+    clerk_user_id: v.string(),
+    kind: v.string(),
+    title: v.string(),
+    summary: v.string(),
+    status: v.string(),
+    preview_payload: v.any(),
+    created_at: v.string(),
+    resolved_at: v.optional(v.string()),
+    saved_record_id: v.optional(v.string()),
+  })
+    .index("by_user_session_action", ["clerk_user_id", "session_id", "action_id"])
+    .index("by_user_session_created", ["clerk_user_id", "session_id", "created_at"]),
 
   calculations: defineTable({
     record_id: v.string(),

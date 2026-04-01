@@ -6,10 +6,12 @@ import os
 
 import pytest
 from fastapi.testclient import TestClient
+from langchain_core.messages import AIMessage
 
 from app.core.config import get_settings
 from app.dependencies import get_in_memory_repository, get_rate_limiter
 from app.main import create_app
+from app.services.nutri_chat_agent import OpenRouterAgentModel
 
 
 @pytest.fixture(autouse=True)
@@ -26,6 +28,7 @@ def test_full_api_smoke(monkeypatch) -> None:
         "ENABLE_CONVEX_PERSISTENCE": "false",
         "ALLOW_MOCK_AI_FALLBACK": "true",
         "FORCE_MOCK_AI_FALLBACK": "true",
+        "OPENROUTER_API_KEY": "test-openrouter-key",
         "GOOGLE_API_KEY": "",
         "TOGETHER_API_KEY": "",
         "GROQ_API_KEY": "",
@@ -39,6 +42,12 @@ def test_full_api_smoke(monkeypatch) -> None:
     get_settings.cache_clear()
     get_rate_limiter.cache_clear()
     get_in_memory_repository.cache_clear()
+
+    async def fake_agent_invoke(self, messages):  # type: ignore[no-untyped-def]
+        _ = (self, messages)
+        return AIMessage(content="Agent response from smoke test.")
+
+    monkeypatch.setattr(OpenRouterAgentModel, "invoke", fake_agent_invoke)
 
     client = TestClient(create_app())
 

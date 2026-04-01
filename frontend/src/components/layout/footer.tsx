@@ -1,7 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Leaf } from "lucide-react";
 
+const MARKETING_PATHS = ["/", "/pricing", "/about", "/articles", "/docs"];
+
 export function Footer() {
+  const pathname = usePathname();
+  const isMarketing = MARKETING_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+
+  if (!isMarketing) return null;
+
   return (
     <footer className="mt-20 border-t border-black/[0.08] bg-background pb-16 pt-14">
       <div className="mx-auto max-w-[1440px] px-6 sm:px-10 lg:px-16">

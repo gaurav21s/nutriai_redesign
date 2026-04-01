@@ -3,8 +3,11 @@ import type {
   BMIResponse,
   CaloriesResponse,
   CalculationHistoryItem,
+  ChatContextSection,
   ChatMessage,
+  ChatPendingAction,
   ChatSession,
+  ChatStreamEvent,
   CreateCheckoutSessionResponse,
   CurrencyCode,
   DemoUserRecord,
@@ -496,6 +499,11 @@ export class APIClient {
     return payload.items;
   }
 
+  async getChatContext(): Promise<ChatContextSection[]> {
+    const payload = await this.request<{ items: ChatContextSection[] }>("/api/v1/nutri-chat/context");
+    return payload.items;
+  }
+
   async sendChatMessage(sessionId: string, content: string): Promise<ChatMessage> {
     return this.requestWithAnalytics(
       `/api/v1/nutri-chat/sessions/${sessionId}/messages`,
@@ -519,6 +527,109 @@ export class APIClient {
       `/api/v1/nutri-chat/sessions/${sessionId}/messages?limit=${limit}`
     );
     return payload.messages;
+  }
+
+  async streamChatTurn(
+    sessionId: string,
+    content: string,
+    handlers: {
+      onEvent: (event: ChatStreamEvent) => void;
+    }
+  ): Promise<void> {
+    const path = `/api/v1/nutri-chat/sessions/${sessionId}/turns/stream`;
+    const startedAt = performance.now();
+    const method = "POST";
+    const analytics = {
+      category: "llm" as const,
+      feature: "nutri_chat",
+      properties: {
+        content_length: content.trim().length,
+        stream: true,
+      },
+    };
+
+    const response = await this.fetchWithFallback(path, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(await this.getAuthHeader()),
+        ...(await this.getDevUserHeader()),
+      },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) {
+      let payload: ApiErrorPayload = {};
+      try {
+        payload = await response.json();
+      } catch {
+        payload = {};
+      }
+      const message = payload.error?.message ?? `Request failed with status ${response.status}`;
+      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), analytics, {
+        status_code: response.status,
+        error_code: payload.error?.code ?? "REQUEST_FAILED",
+        error_message: message,
+      });
+      throw new ApiError(message, response.status, payload.error?.code, payload.error?.details);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), analytics, {
+        status_code: response.status,
+        error_code: "NO_STREAM",
+        error_message: "Streaming response body was not available",
+      });
+      throw new ApiError("Streaming response was not available", response.status, "NO_STREAM");
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex = buffer.indexOf("\n");
+      while (newlineIndex !== -1) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+        if (line) {
+          handlers.onEvent(JSON.parse(line) as ChatStreamEvent);
+        }
+        newlineIndex = buffer.indexOf("\n");
+      }
+    }
+
+    if (buffer.trim()) {
+      handlers.onEvent(JSON.parse(buffer.trim()) as ChatStreamEvent);
+    }
+
+    this.captureRequestEvent("completed", path, method, Math.round(performance.now() - startedAt), analytics, {
+      status_code: response.status,
+    });
+  }
+
+  async confirmChatAction(sessionId: string, actionId: string): Promise<ChatPendingAction> {
+    const payload = await this.request<{ action: ChatPendingAction }>(
+      `/api/v1/nutri-chat/sessions/${sessionId}/actions/${actionId}/confirm`,
+      {
+        method: "POST",
+      }
+    );
+    return payload.action;
+  }
+
+  async rejectChatAction(sessionId: string, actionId: string): Promise<ChatPendingAction> {
+    const payload = await this.request<{ action: ChatPendingAction }>(
+      `/api/v1/nutri-chat/sessions/${sessionId}/actions/${actionId}/reject`,
+      {
+        method: "POST",
+      }
+    );
+    return payload.action;
   }
 
   async calculateBMI(weightKg: number, heightCm: number): Promise<BMIResponse> {
