@@ -77,7 +77,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="sticky top-[76px] flex h-[calc(100vh-92px)] flex-col overflow-hidden rounded-[30px] border border-black/[0.08] bg-white/92 shadow-[0_18px_60px_rgba(15,23,42,0.06)] backdrop-blur">
+    <aside className="sticky top-[76px] flex h-[calc(100vh-92px)] flex-col overflow-hidden rounded-editorial border border-black/[0.08] bg-white">
       <div className={cn("relative border-b border-black/[0.08] py-4", collapsed ? "px-3" : "px-4")}>
         <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between gap-3")}>
           <Link
@@ -100,7 +100,7 @@ export function Sidebar({
                   <span>Nutri</span>
                   <span className="text-vibrant italic">AI</span>
                 </div>
-                <div className="text-xs text-foreground/55">Dashboard</div>
+                <div className="text-xs text-foreground/55">Workspace</div>
               </div>
             ) : null}
           </Link>
@@ -109,7 +109,7 @@ export function Sidebar({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/[0.08] bg-background text-foreground/70 hover:text-foreground"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-editorial border border-black/[0.08] bg-background text-foreground/70 hover:bg-muted hover:text-foreground"
               aria-label="Collapse sidebar"
             >
               <PanelLeftClose className="h-4 w-4" />
@@ -119,7 +119,7 @@ export function Sidebar({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="absolute inset-x-0 top-4 mx-auto inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/[0.08] bg-background text-foreground/70 hover:text-foreground"
+              className="absolute inset-x-0 top-4 mx-auto inline-flex h-9 w-9 items-center justify-center rounded-editorial border border-black/[0.08] bg-background text-foreground/70 hover:bg-muted hover:text-foreground"
               aria-label="Expand sidebar"
             >
               <PanelLeftOpen className="h-4 w-4" />
@@ -128,12 +128,12 @@ export function Sidebar({
         </div>
       </div>
 
-      <nav className={cn("flex-1 overflow-y-auto py-5", collapsed ? "px-2 pt-16" : "px-3")}>
-        <div className="space-y-6">
+      <nav className={cn("flex-1 overflow-y-auto py-4", collapsed ? "px-2 pt-16" : "px-3")}>
+        <div className="space-y-5">
           {sections.map((section) => (
             <div key={section.title}>
               {!collapsed ? (
-                <div className="px-3 pb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-foreground/40">{section.title}</div>
+                <div className="px-2 pb-2 text-xs font-medium text-foreground/45">{section.title}</div>
               ) : null}
               <div className="space-y-1">
                 {section.items.map((item) => {
@@ -148,13 +148,15 @@ export function Sidebar({
                       onClick={onNavigate}
                       title={item.label}
                       className={cn(
-                        "flex items-center rounded-2xl py-2.5 text-sm transition-colors",
+                        "flex items-center rounded-editorial border py-2.5 text-sm transition-colors",
                         collapsed ? "justify-center px-2" : "gap-3 px-3",
-                        active ? "bg-[rgb(255,247,237)] text-foreground" : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                        active
+                          ? "border-black/[0.08] bg-stone-50 text-foreground"
+                          : "border-transparent text-foreground/70 hover:bg-muted hover:text-foreground",
                         locked && "opacity-70"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0 text-vibrant", active && "text-vibrant")} />
+                      <Icon className={cn("h-4 w-4 flex-shrink-0", active ? "text-vibrant" : "text-foreground/55")} />
                       {!collapsed ? <span className="flex-1">{item.label}</span> : null}
                       {!collapsed && locked ? <Lock className="h-3.5 w-3.5 text-foreground/40" /> : null}
                     </Link>

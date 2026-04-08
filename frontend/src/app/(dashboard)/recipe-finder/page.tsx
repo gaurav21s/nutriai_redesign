@@ -63,7 +63,7 @@ function StoreAction({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] bg-white/95 transition-all hover:-translate-y-0.5 hover:border-vibrant/30 hover:shadow-soft-glow"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-editorial border border-black/[0.08] bg-white transition-colors hover:border-vibrant/30 hover:bg-muted"
       aria-label={`Buy ${label}`}
       title={label}
     >
@@ -174,13 +174,13 @@ export default function RecipeFinderPage() {
         </HistoryPanel>
       }
     >
-      <form className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-[minmax(0,1.35fr)_minmax(260px,0.75fr)_auto] xl:items-end" onSubmit={onSubmit}>
+      <form className="grid gap-6 sm:grid-cols-[1fr_180px_auto]" onSubmit={onSubmit}>
         <div className="space-y-2">
           <FieldLabel htmlFor="recipe-dish">Dish or cuisine</FieldLabel>
           <Input
             id="recipe-dish"
             placeholder="e.g., Mediterranean Salmon or Thai Green Curry"
-            className="h-16 bg-white/50 border-black/[0.05] px-5 text-lg focus:border-vibrant transition-all"
+            className="bg-white/50 border-black/[0.05] focus:border-vibrant transition-all"
             value={dishName}
             onChange={(event) => setDishName(event.target.value)}
           />
@@ -190,7 +190,7 @@ export default function RecipeFinderPage() {
           <Select
             id="recipe-type"
             value={recipeType}
-            className="h-16 bg-white/50 border-black/[0.05] px-5 text-lg focus:border-vibrant transition-all"
+            className="bg-white/50 border-black/[0.05] focus:border-vibrant transition-all"
             onChange={(event) => setRecipeType(event.target.value as RecipeType)}
           >
             <option value="normal">Standard</option>
@@ -198,11 +198,11 @@ export default function RecipeFinderPage() {
             <option value="new_healthy">New healthy recipe</option>
           </Select>
         </div>
-        <div className="md:col-span-2 xl:col-span-1">
+        <div className="pt-[22px]">
           <Button
             type="submit"
             size="lg"
-            className="h-16 w-full rounded-full bg-vibrant px-8 text-lg text-white shadow-soft-glow hover:bg-vibrant/90 xl:min-w-[260px]"
+            className="rounded-full bg-vibrant px-10 text-white shadow-soft-glow hover:bg-vibrant/90"
             disabled={loading}
           >
             {loading ? "Generating..." : "Generate Recipe"}
@@ -226,12 +226,12 @@ export default function RecipeFinderPage() {
                     {recipe.ingredients.map((item, index) => (
                       <li
                         key={`${item.raw}-${index}`}
-                        className="rounded-2xl border border-black/[0.04] bg-white/55 px-4 py-4 shadow-soft-glow"
+                        className="rounded-editorial border border-black/[0.04] bg-white/55 px-4 py-3 shadow-soft-glow"
                       >
                         <div className="flex items-start gap-3">
                           <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-vibrant/30 flex-shrink-0" />
                           <div className="min-w-0 flex-1 space-y-3">
-                            <p className="text-base leading-8 text-foreground/82 xl:text-[15px] xl:leading-8">{item.raw}</p>
+                            <p className="text-sm leading-6 text-foreground/82">{item.raw}</p>
                             {(() => {
                               const ingredientLinks = getIngredientLinks(recipe, item.raw, fallbackLinks);
                               if (!ingredientLinks) {
@@ -268,10 +268,10 @@ export default function RecipeFinderPage() {
               <div className="space-y-6">
                 <div>
                   <p className="mb-4 text-xs font-bold uppercase tracking-widest text-foreground/40 border-b border-black/[0.03] pb-2">Steps</p>
-                  <ol className="space-y-4 text-base text-foreground/80 font-medium leading-9">
+                  <ol className="space-y-4 text-sm text-foreground/80 font-medium leading-7">
                     {recipe.steps.map((step, index) => (
                       <li key={`${step}-${index}`} className="flex gap-4">
-                        <span className="mt-0.5 text-vibrant font-display italic text-2xl leading-none">{index + 1}.</span>
+                        <span className="mt-0.5 text-vibrant font-display italic text-xl leading-none">{index + 1}.</span>
                         <span>{step}</span>
                       </li>
                     ))}

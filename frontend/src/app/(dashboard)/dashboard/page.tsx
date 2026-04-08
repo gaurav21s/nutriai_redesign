@@ -10,8 +10,8 @@ import {
   Calculator,
   Leaf,
   MessageSquare,
+  MessageSquareMore,
   Microscope,
-  Plus,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -101,97 +101,150 @@ const features: FeatureCard[] = [
 
 const flow = ["Analyze", "Plan", "Refine", "Track"] as const;
 
+const groupDescriptions: Record<(typeof flow)[number], string> = {
+  Analyze: "Inspect meals, ingredients, and nutrition questions.",
+  Plan: "Build meals, recipes, and next-step guidance.",
+  Refine: "Turn answers into recommendations and follow-up support.",
+  Track: "Review progress, saved work, and account details.",
+};
+
 export default function DashboardOverview() {
   const { user } = useUser();
   const firstName = user?.firstName?.trim();
   const primaryActions = features.slice(0, 4);
+  const groupedFeatures = flow.map((group) => ({
+    group,
+    description: groupDescriptions[group],
+    cards: features.filter((item) => item.group === group),
+  }));
 
   return (
-    <div className="relative overflow-hidden rounded-[34px] border border-black/[0.06] bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.96))] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-150px)] w-full max-w-[1120px] flex-col justify-center pb-8 pt-4">
-        <section className="mx-auto w-full max-w-[840px] text-center">
-          <p className="text-sm font-medium text-foreground/45">NutriAI workspace</p>
-          <h1 className="mt-5 text-4xl font-display leading-tight text-foreground sm:text-5xl lg:text-6xl">
-            Ready when you are{firstName ? `, ${firstName}` : ""}.
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-foreground/60 sm:text-lg">
-            Start with a nutrition task, jump into a saved workflow, or pick a tool below to keep momentum going.
-          </p>
-        </section>
+    <div className="mx-auto w-full max-w-[1200px] pb-10">
+      <section className="rounded-editorial border border-black/[0.08] bg-white px-5 py-6 sm:px-7">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+          <div>
+            <p className="text-sm font-medium text-foreground/50">Dashboard</p>
+            <h1 className="mt-2 text-3xl text-foreground sm:text-4xl">
+              Welcome back{firstName ? `, ${firstName}` : ""}.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/65 sm:text-base">
+              Choose a tool to analyze, plan, refine, or track your nutrition work. The most-used actions are surfaced first.
+            </p>
+          </div>
 
-        <section className="mx-auto mt-10 w-full max-w-[920px]">
-          <div className="rounded-[32px] border border-black/[0.06] bg-white/92 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgb(255,247,237)] text-vibrant">
-                <Plus className="h-5 w-5" />
+          <div className="rounded-editorial border border-black/[0.08] bg-stone-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-editorial border border-black/[0.08] bg-white text-vibrant">
+                <MessageSquareMore className="h-4 w-4" />
               </div>
-              <div className="min-w-0 flex-1 text-left">
-                <p className="text-base font-medium text-foreground/80 sm:text-lg">What would you like to do today?</p>
-                <p className="text-sm text-foreground/45">Choose a tool and jump straight into analysis, planning, or tracking.</p>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-foreground">Need a quick answer?</h2>
+                <p className="mt-1 text-sm leading-6 text-foreground/60">
+                  Open Nutri Chat for ingredient questions, meal ideas, or fast nutrition guidance.
+                </p>
               </div>
-              <Link
-                href="/nutri-chat"
-                className="hidden h-11 items-center rounded-full bg-vibrant px-5 text-sm font-medium text-white transition hover:bg-vibrant/90 sm:inline-flex"
-              >
-                Open Nutri Chat
-              </Link>
+            </div>
+            <Link
+              href="/nutri-chat"
+              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-editorial bg-foreground px-4 text-sm font-medium text-white transition hover:bg-foreground/90"
+            >
+              Open Nutri Chat
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.9fr)]">
+        <div className="rounded-editorial border border-black/[0.08] bg-white p-5 sm:p-6">
+          <div className="border-b border-black/[0.08] pb-4">
+            <h2 className="text-lg font-semibold text-foreground">Start a task</h2>
+            <p className="mt-1 text-sm text-foreground/60">
+              Jump directly into the tools people usually open first.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {primaryActions.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <Link
+                  key={feature.href}
+                  href={feature.href}
+                  className="group rounded-editorial border border-black/[0.08] bg-stone-50 px-4 py-4 transition hover:border-vibrant/25 hover:bg-white"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-editorial border border-black/[0.08] bg-white text-vibrant">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold text-foreground">{feature.title}</p>
+                        <ArrowRight className="h-4 w-4 flex-shrink-0 text-foreground/35 transition-colors group-hover:text-vibrant" />
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-foreground/58">{feature.description}</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-editorial border border-black/[0.08] bg-[#fcfbf8] p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-foreground">Workspace structure</h2>
+          <p className="mt-1 text-sm leading-6 text-foreground/60">
+            The dashboard is organized by what you are trying to do, not by visual category.
+          </p>
+
+          <div className="mt-5 space-y-3">
+            {groupedFeatures.map(({ group, description, cards }) => (
+              <div key={group} className="rounded-editorial border border-black/[0.08] bg-white px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-foreground">{group}</p>
+                  <span className="text-xs text-foreground/45">{cards.length} tools</span>
+                </div>
+                <p className="mt-1 text-sm leading-6 text-foreground/58">{description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6 grid gap-4 xl:grid-cols-2">
+        {groupedFeatures.map(({ group, cards, description }) => (
+          <div key={group} className="rounded-editorial border border-black/[0.08] bg-white p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4 border-b border-black/[0.08] pb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">{group}</h2>
+                <p className="mt-1 text-sm text-foreground/58">{description}</p>
+              </div>
+              <span className="text-sm text-foreground/40">{cards.length}</span>
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {primaryActions.map((feature) => {
+            <div className="mt-2 divide-y divide-black/[0.06]">
+              {cards.map((feature) => {
                 const Icon = feature.icon;
                 return (
                   <Link
                     key={feature.href}
                     href={feature.href}
-                    className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-background px-4 py-2.5 text-sm text-foreground/75 transition hover:border-vibrant/25 hover:text-foreground"
+                    className="group flex items-start gap-4 py-4 transition-colors hover:text-foreground"
                   >
-                    <Icon className="h-4 w-4 text-vibrant" />
-                    {feature.title}
+                    <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-editorial border border-black/[0.08] bg-stone-50 text-vibrant">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">{feature.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-foreground/58">{feature.description}</p>
+                    </div>
+                    <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-foreground/30 transition-colors group-hover:text-vibrant" />
                   </Link>
                 );
               })}
             </div>
           </div>
-        </section>
-
-        <section className="mt-8">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {flow.map((group) => {
-              const cards = features.filter((item) => item.group === group);
-              return (
-                <div key={group} className="rounded-[28px] border border-black/[0.06] bg-white/78 p-4 backdrop-blur">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-black/[0.08]" />
-                    <h2 className="text-sm font-display text-foreground">{group}</h2>
-                  </div>
-                  <div className="space-y-2">
-                    {cards.map((feature) => {
-                      const Icon = feature.icon;
-                      return (
-                        <Link
-                          key={feature.href}
-                          href={feature.href}
-                          className="group flex items-center gap-3 rounded-2xl px-3 py-3 transition hover:bg-[rgb(255,247,237)]"
-                        >
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgb(255,247,237)] text-vibrant">
-                            <Icon className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0 flex-1 text-left">
-                            <p className="text-sm font-medium text-foreground">{feature.title}</p>
-                            <p className="truncate text-xs text-foreground/50">{feature.description}</p>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-foreground/25 transition group-hover:translate-x-0.5 group-hover:text-vibrant" />
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      </div>
+        ))}
+      </section>
     </div>
   );
 }

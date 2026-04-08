@@ -49,6 +49,8 @@ def _is_simple_greeting(content: str) -> str | None:
             return _BYE_RESPONSE
         return _GREETING_RESPONSE
     return None
+
+
 from app.repositories.base import CompositeRepository
 from app.schemas.nutri_chat import (
     ChatActionResponse,
@@ -383,7 +385,7 @@ class NutriChatService:
         greeting_reply = _is_simple_greeting(content)
         if greeting_reply:
             recent = await self.repository.list_chat_messages(clerk_user_id, session_id, limit=12)
-            metadata = ChatMessageMetadata(
+            fast_metadata = ChatMessageMetadata(
                 reasoning_steps=[],
                 source_references=[],
                 pending_action=None,
@@ -392,7 +394,7 @@ class NutriChatService:
             )
             saved = await self.repository.add_chat_message(
                 clerk_user_id, session_id, "assistant", greeting_reply,
-                metadata=metadata.model_dump(mode="json"),
+                metadata=fast_metadata.model_dump(mode="json"),
             )
             await self._maybe_update_session_title(clerk_user_id, session_id, content, recent)
             message = ChatMessage.model_validate(saved)

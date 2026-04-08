@@ -109,7 +109,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <button
             type="button"
             onClick={() => setSidebarOpen((prev) => !prev)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-black/[0.10] bg-white text-foreground shadow-sm hover:bg-muted"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-editorial border border-black/[0.10] bg-white text-foreground shadow-sm hover:bg-muted"
             aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -123,7 +123,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           />
         ) : null}
 
-        <div className={cn("grid gap-4 lg:gap-5", sidebarCollapsed ? "xl:grid-cols-[88px_minmax(0,1fr)]" : "xl:grid-cols-[280px_minmax(0,1fr)]")}>
+        <div
+          className={cn(
+            "grid gap-4 lg:gap-5",
+            sidebarCollapsed ? "xl:grid-cols-[88px_minmax(0,1fr)]" : "xl:grid-cols-[256px_minmax(0,1fr)]"
+          )}
+        >
           <div className="hidden xl:block">
             <Sidebar
               permissions={permissions}
@@ -133,7 +138,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
 
           {sidebarOpen ? (
-            <div className="fixed left-0 top-0 z-50 h-screen w-[280px] overflow-y-auto bg-white xl:hidden">
+            <div className="fixed left-0 top-0 z-50 h-screen w-[256px] overflow-y-auto border-r border-black/[0.08] bg-background xl:hidden">
               <div className="flex h-14 items-center justify-end border-b border-black/[0.08] px-4">
                 <button onClick={() => setSidebarOpen(false)} className="text-foreground/55 hover:text-foreground">
                   <X className="h-6 w-6" />
