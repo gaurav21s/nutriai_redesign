@@ -30,6 +30,7 @@ class QuizSessionResponse(BaseModel):
     difficulty: QuizDifficulty
     created_at: datetime
     questions: list[QuizQuestion]
+    operation_id: str | None = None
 
 
 class QuizAnswer(BaseModel):
@@ -39,6 +40,7 @@ class QuizAnswer(BaseModel):
 
 class QuizSubmitRequest(BaseModel):
     answers: list[QuizAnswer]
+    idempotency_key: str | None = Field(default=None, min_length=8, max_length=200)
 
 
 class QuizAnswerResult(BaseModel):
@@ -50,11 +52,13 @@ class QuizAnswerResult(BaseModel):
 
 
 class QuizSubmitResponse(BaseModel):
+    attempt_id: str
     session_id: str
     total_questions: int
     correct_answers: int
     score_percentage: float
     results: list[QuizAnswerResult]
+    operation_id: str | None = None
 
 
 class QuizHistoryItem(BaseModel):

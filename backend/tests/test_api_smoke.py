@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage
 
 from app.core.config import get_settings
-from app.dependencies import get_in_memory_repository, get_rate_limiter
+from app.dependencies import get_in_memory_repository, get_rate_limiter, get_shared_coordinator
 from app.main import create_app
 from app.services.nutri_chat_agent import OpenRouterAgentModel
 
@@ -19,6 +19,7 @@ def _clear_dependency_caches():
     yield
     get_settings.cache_clear()
     get_rate_limiter.cache_clear()
+    get_shared_coordinator.cache_clear()
     get_in_memory_repository.cache_clear()
 
 
@@ -41,6 +42,7 @@ def test_full_api_smoke(monkeypatch) -> None:
 
     get_settings.cache_clear()
     get_rate_limiter.cache_clear()
+    get_shared_coordinator.cache_clear()
     get_in_memory_repository.cache_clear()
 
     async def fake_agent_invoke(self, messages):  # type: ignore[no-untyped-def]
@@ -98,6 +100,13 @@ def test_full_api_smoke(monkeypatch) -> None:
     )
     assert meal_pdf.status_code == 200
     assert meal_pdf.headers["content-type"].startswith("application/pdf")
+    exports = client.get(f"/api/v1/meal-plans/{meal_id}/exports")
+    assert exports.status_code == 200
+    export_items = exports.json()["items"]
+    assert len(export_items) >= 1
+    saved_pdf = client.get(f"/api/v1/meal-plans/exports/{export_items[0]['id']}/download")
+    assert saved_pdf.status_code == 200
+    assert saved_pdf.headers["content-type"].startswith("application/pdf")
 
     # Recipes + shopping links
     recipe = client.post(
@@ -157,11 +166,21 @@ def test_full_api_smoke(monkeypatch) -> None:
     assert session.status_code == 200
     chat_session_id = session.json()["session_id"]
     assert client.get("/api/v1/nutri-chat/sessions").status_code == 200
+    renamed = client.patch(
+        f"/api/v1/nutri-chat/sessions/{chat_session_id}",
+        json={"title": "Breakfast Questions"},
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["title"] == "Breakfast Questions"
     message = client.post(
         f"/api/v1/nutri-chat/sessions/{chat_session_id}/messages",
         json={"content": "How can I improve my breakfast?"},
     )
     assert message.status_code == 200
+    assert client.get(f"/api/v1/nutri-chat/sessions/{chat_session_id}/messages").status_code == 200
+    deleted = client.delete(f"/api/v1/nutri-chat/sessions/{chat_session_id}")
+    assert deleted.status_code == 200
+    assert deleted.json() == {"session_id": chat_session_id, "deleted": True}
     assert client.get(f"/api/v1/nutri-chat/sessions/{chat_session_id}/messages").status_code == 200
 
     # Calculators

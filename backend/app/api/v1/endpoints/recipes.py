@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.exceptions import NotFoundException
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import ai_rate_limit, default_rate_limit, get_recipe_service
+from app.dependencies import ai_rate_limit, default_rate_limit, get_operations_service, get_recipe_service
+from app.schemas.operations import OperationSubmitRequest
 from app.schemas.recipes import (
     RecipeGenerateRequest,
     RecipeHistoryResponse,
@@ -28,8 +29,17 @@ async def generate_recipe(
     payload: RecipeGenerateRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: RecipeService = Depends(get_recipe_service),
+    operations_service=Depends(get_operations_service),
 ) -> RecipeResponse:
-    return await service.generate(auth.clerk_user_id, payload)
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(
+            feature="recipe_generate",
+            payload=payload.model_dump(mode="json"),
+            idempotency_key=getattr(payload, "idempotency_key", None),
+        ),
+    )
+    return RecipeResponse.model_validate(operation.response_payload)
 
 
 @router.post(

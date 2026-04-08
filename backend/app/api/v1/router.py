@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     ingredient_checks,
     meal_plans,
     nutri_chat,
+    operations,
     quizzes,
     recipes,
     recommendations,
@@ -19,6 +20,7 @@ from app.dependencies import require_permission
 
 router = APIRouter()
 router.include_router(health.router)
+router.include_router(operations.router)
 router.include_router(food_insights.router, dependencies=[Depends(require_permission("food_insight"))])
 router.include_router(ingredient_checks.router, dependencies=[Depends(require_permission("ingredient_checker"))])
 router.include_router(meal_plans.router, dependencies=[Depends(require_permission("meal_planner"))])

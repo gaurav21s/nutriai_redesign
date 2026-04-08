@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import chat_rate_limit, default_rate_limit, get_nutri_chat_service
+from app.dependencies import chat_rate_limit, default_rate_limit, get_nutri_chat_service, get_operations_service
 from app.schemas.nutri_chat import (
     ChatActionResponse,
     ChatContextResponse,
@@ -12,9 +12,13 @@ from app.schemas.nutri_chat import (
     ChatMessageCreateRequest,
     ChatMessagesResponse,
     ChatSessionCreateRequest,
+    ChatSessionDeleteResponse,
     ChatSessionResponse,
     ChatSessionsResponse,
+    ChatSessionUpdateRequest,
 )
+from app.schemas.operations import OperationSubmitRequest
+from app.services.operations_service import OperationsService
 from app.services.nutri_chat_service import NutriChatService
 
 router = APIRouter(prefix="/nutri-chat", tags=["Nutri Chat"])
@@ -51,6 +55,37 @@ async def list_chat_sessions(
     return ChatSessionsResponse(items=items)
 
 
+@router.patch(
+    "/sessions/{session_id}",
+    response_model=ChatSessionResponse,
+    summary="Rename chat session",
+    description="Updates the title for one chat session.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def rename_chat_session(
+    session_id: str,
+    payload: ChatSessionUpdateRequest,
+    auth: AuthContext = Depends(get_auth_context),
+    service: NutriChatService = Depends(get_nutri_chat_service),
+) -> ChatSessionResponse:
+    return await service.rename_session(auth.clerk_user_id, session_id, payload.title)
+
+
+@router.delete(
+    "/sessions/{session_id}",
+    response_model=ChatSessionDeleteResponse,
+    summary="Delete chat session",
+    description="Deletes one chat session and its message history.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def delete_chat_session(
+    session_id: str,
+    auth: AuthContext = Depends(get_auth_context),
+    service: NutriChatService = Depends(get_nutri_chat_service),
+) -> ChatSessionDeleteResponse:
+    return await service.delete_session(auth.clerk_user_id, session_id)
+
+
 @router.get(
     "/context",
     response_model=ChatContextResponse,
@@ -77,8 +112,18 @@ async def send_chat_message(
     payload: ChatMessageCreateRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: NutriChatService = Depends(get_nutri_chat_service),
+    operations_service: OperationsService = Depends(get_operations_service),
 ) -> ChatMessage:
-    return await service.send_message(auth.clerk_user_id, session_id, payload.content)
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(
+            feature="chat_turn",
+            payload={"session_id": session_id, "content": payload.content},
+            idempotency_key=payload.idempotency_key,
+            resource_scope={"session_id": session_id},
+        ),
+    )
+    return ChatMessage.model_validate(operation.response_payload)
 
 
 @router.post(

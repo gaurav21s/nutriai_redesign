@@ -9,6 +9,7 @@ from typing import Callable, Literal
 from fastapi import Depends, Request
 
 from app.core.config import Settings, get_settings
+from app.core.coordination import SharedCoordinator, validate_shared_coordination
 from app.core.exceptions import AuthorizationException, ConfigurationException, RateLimitException
 from app.core.logging import get_logger
 from app.core.rate_limit import InMemoryRateLimiter
@@ -28,16 +29,29 @@ from app.services.calculator_service import CalculatorService
 from app.services.food_insights_service import FoodInsightsService
 from app.services.ingredient_checks_service import IngredientChecksService
 from app.services.meal_plan_service import MealPlanService
-from app.services.nutri_chat_agent import GroqAgentModel, NutriChatAgentRuntime, OpenRouterAgentModel
+from app.services.nutri_chat_agent import FallbackAgentModel, GroqAgentModel, NutriChatAgentRuntime, OpenRouterAgentModel
 from app.services.nutri_chat_service import NutriChatService
+from app.services.operations_service import OperationsService
 from app.services.quiz_service import QuizService
 from app.services.recipe_service import RecipeService
 from app.services.recommendation_service import RecommendationService
 from app.services.subscription_service import SubscriptionService
 from app.utils.ai_clients import GeminiClient, GroqClient, OpenRouterClient, TogetherClient
-from app.utils.fallback_ai_clients import FallbackGeminiClient, FallbackGroqClient, FallbackTogetherClient
+from app.utils.fallback_ai_clients import (
+    FallbackGeminiClient,
+    FallbackGroqClient,
+    FallbackOpenRouterClient,
+    FallbackTogetherClient,
+)
 
 logger = get_logger("app.dependencies")
+
+
+def _looks_like_placeholder_secret(value: str) -> bool:
+    normalized = value.strip().lower()
+    return normalized in {"", "replace_with_shared_secret", "changeme", "your_secret_here"} or normalized.startswith(
+        "replace_with_"
+    )
 
 
 def _can_use_fallback_ai(settings: Settings) -> bool:
@@ -105,89 +119,144 @@ def get_in_memory_repository() -> InMemoryRepository:
     return InMemoryRepository()
 
 
+@lru_cache(maxsize=1)
+def _get_cached_convex_repository(base_url: str, backend_secret: str, timeout_seconds: int) -> HybridRepository:
+    primary = ConvexHttpRepository(
+        base_url=base_url,
+        backend_secret=backend_secret,
+        timeout_seconds=timeout_seconds,
+    )
+    return HybridRepository(primary=primary, fallback=get_in_memory_repository())
+
+
 def get_repository(settings: Settings = Depends(get_settings)) -> CompositeRepository:
     if settings.enable_convex_persistence and settings.convex_http_actions_url and settings.convex_backend_secret:
-        primary = ConvexHttpRepository(
-            base_url=settings.convex_http_actions_url,
-            backend_secret=settings.convex_backend_secret,
-            timeout_seconds=settings.request_timeout_seconds,
+        if _looks_like_placeholder_secret(settings.convex_backend_secret):
+            message = (
+                "CONVEX_BACKEND_SECRET looks like a placeholder value; "
+                "Convex HTTP actions will reject requests unless BACKEND_CONVEX_SHARED_SECRET matches it exactly"
+            )
+            if settings.environment == "production":
+                raise ConfigurationException(message)
+            logger.warning(message)
+        return _get_cached_convex_repository(
+            settings.convex_http_actions_url,
+            settings.convex_backend_secret,
+            settings.request_timeout_seconds,
         )
-        return HybridRepository(primary=primary, fallback=get_in_memory_repository())
 
     logger.warning("Using in-memory repository; Convex persistence is disabled or not configured")
     return get_in_memory_repository()
 
 
+@lru_cache(maxsize=1)
+def get_shared_coordinator() -> SharedCoordinator:
+    resolved_settings = get_settings()
+    validate_shared_coordination(resolved_settings)
+    return SharedCoordinator(resolved_settings)
+
+
+def get_subscription_service(
+    repository: CompositeRepository = Depends(get_repository),
+    settings: Settings = Depends(get_settings),
+) -> SubscriptionService:
+    demo_users_file = Path(__file__).resolve().parent / "data" / "demo_users.json"
+    return SubscriptionService(
+        repository=repository,
+        stripe_secret_key=settings.stripe_secret_key,
+        stripe_publishable_key=settings.stripe_publishable_key,
+        demo_users_file=demo_users_file,
+        environment=settings.environment,
+        dev_user_id=settings.dev_user_id,
+    )
+
+
 def get_food_insights_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> FoodInsightsService:
     return FoodInsightsService(
         repository=repository,
         gemini_client=_build_gemini_client(settings),
         cache_ttl_seconds=settings.cache_ttl_seconds,
+        subscription_service=subscription_service,
     )
 
 
 def get_ingredient_checks_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> IngredientChecksService:
     return IngredientChecksService(
         repository=repository,
         gemini_client=_build_gemini_client(settings),
+        subscription_service=subscription_service,
     )
 
 
 def get_meal_plan_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> MealPlanService:
     return MealPlanService(
         repository=repository,
         together_client=_build_together_client(settings),
+        subscription_service=subscription_service,
     )
 
 
 def get_recipe_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> RecipeService:
     return RecipeService(
         repository=repository,
         groq_client=_build_groq_client(settings),
         affiliate_code=settings.affiliate_code,
+        subscription_service=subscription_service,
     )
 
 
 def get_quiz_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> QuizService:
     return QuizService(
         repository=repository,
         groq_client=_build_groq_client(settings),
+        subscription_service=subscription_service,
     )
 
 
 def get_nutri_chat_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> NutriChatService:
-    calculator_service = CalculatorService(repository=repository)
+    calculator_service = CalculatorService(repository=repository, subscription_service=subscription_service)
     groq_client = _build_groq_client(settings)
     recipe_service = RecipeService(
         repository=repository,
         groq_client=groq_client,  # type: ignore[arg-type]
         affiliate_code=settings.affiliate_code,
+        subscription_service=subscription_service,
     )
     recommendation_service = RecommendationService(
         repository=repository,
         groq_client=groq_client,  # type: ignore[arg-type]
+        subscription_service=subscription_service,
     )
 
     if settings.agent_chat_provider == "openrouter":
         agent_model = OpenRouterAgentModel(_build_openrouter_client(settings))
+    elif isinstance(groq_client, FallbackGroqClient):
+        logger.warning("Using fallback Nutri Chat agent model")
+        agent_model = FallbackAgentModel(FallbackOpenRouterClient())
     else:
         agent_model = GroqAgentModel(groq_client)
 
@@ -205,14 +274,81 @@ def get_nutri_chat_service(
         calculator_service=calculator_service,
         recipe_service=recipe_service,
         recommendation_service=recommendation_service,
+        subscription_service=subscription_service,
     )
     return service
 
 
+def get_operations_service(
+    repository: CompositeRepository = Depends(get_repository),
+    settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
+) -> OperationsService:
+    calculator_service = CalculatorService(repository=repository, subscription_service=subscription_service)
+    groq_client = _build_groq_client(settings)
+    recipe_service = RecipeService(
+        repository=repository,
+        groq_client=groq_client,  # type: ignore[arg-type]
+        affiliate_code=settings.affiliate_code,
+        subscription_service=subscription_service,
+    )
+    recommendation_service = RecommendationService(
+        repository=repository,
+        groq_client=groq_client,  # type: ignore[arg-type]
+        subscription_service=subscription_service,
+    )
+    try:
+        gemini_client = _build_gemini_client(settings)
+        food_insights_service = FoodInsightsService(
+            repository=repository,
+            gemini_client=gemini_client,
+            cache_ttl_seconds=settings.cache_ttl_seconds,
+            subscription_service=subscription_service,
+        )
+        ingredient_checks_service = IngredientChecksService(
+            repository=repository,
+            gemini_client=gemini_client,
+            subscription_service=subscription_service,
+        )
+    except ConfigurationException:
+        food_insights_service = None
+        ingredient_checks_service = None
+
+    try:
+        meal_plan_service = MealPlanService(
+            repository=repository,
+            together_client=_build_together_client(settings),
+            subscription_service=subscription_service,
+        )
+    except ConfigurationException:
+        meal_plan_service = None
+    quiz_service = QuizService(
+        repository=repository,
+        groq_client=groq_client,  # type: ignore[arg-type]
+        subscription_service=subscription_service,
+    )
+    nutri_chat_service = get_nutri_chat_service(repository, settings, subscription_service)
+    return OperationsService(
+        repository=repository,
+        settings=settings,
+        coordinator=get_shared_coordinator(),
+        subscription_service=subscription_service,
+        calculator_service=calculator_service,
+        recipe_service=recipe_service,
+        recommendation_service=recommendation_service,
+        food_insights_service=food_insights_service,
+        ingredient_checks_service=ingredient_checks_service,
+        meal_plan_service=meal_plan_service,
+        quiz_service=quiz_service,
+        nutri_chat_service=nutri_chat_service,
+    )
+
+
 def get_calculator_service(
     repository: CompositeRepository = Depends(get_repository),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> CalculatorService:
-    return CalculatorService(repository=repository)
+    return CalculatorService(repository=repository, subscription_service=subscription_service)
 
 
 def get_article_service(
@@ -225,25 +361,12 @@ def get_article_service(
 def get_recommendation_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
+    subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> RecommendationService:
     return RecommendationService(
         repository=repository,
         groq_client=_build_groq_client(settings),
-    )
-
-
-def get_subscription_service(
-    repository: CompositeRepository = Depends(get_repository),
-    settings: Settings = Depends(get_settings),
-) -> SubscriptionService:
-    demo_users_file = Path(__file__).resolve().parent / "data" / "demo_users.json"
-    return SubscriptionService(
-        repository=repository,
-        stripe_secret_key=settings.stripe_secret_key,
-        stripe_publishable_key=settings.stripe_publishable_key,
-        demo_users_file=demo_users_file,
-        environment=settings.environment,
-        dev_user_id=settings.dev_user_id,
+        subscription_service=subscription_service,
     )
 
 
@@ -295,6 +418,13 @@ def require_permission(permission_key: str) -> Callable:
 
 
 def rate_limit_dependency(kind: Literal["ai", "chat", "default"]) -> Callable:
+    def _rate_limit_path(request: Request) -> str:
+        route = request.scope.get("route")
+        path = getattr(route, "path_format", None) or getattr(route, "path", None)
+        if isinstance(path, str) and path:
+            return path
+        return request.url.path
+
     async def dependency(
         request: Request,
         settings: Settings = Depends(get_settings),
@@ -309,9 +439,10 @@ def rate_limit_dependency(kind: Literal["ai", "chat", "default"]) -> Callable:
         limit = limit_map[kind]
 
         identity = auth.clerk_user_id if auth else (request.client.host if request.client else "anonymous")
-        key = f"{kind}:{request.url.path}:{identity}"
+        key = f"{kind}:{_rate_limit_path(request)}:{identity}"
 
-        allowed = await limiter.hit(key=key, limit=limit, window_seconds=60)
+        coordinator = get_shared_coordinator()
+        allowed = await coordinator.hit_rate_limit(key=key, limit=limit, window_seconds=60)
         if not allowed:
             raise RateLimitException(details={"limit": limit, "window_seconds": 60})
 

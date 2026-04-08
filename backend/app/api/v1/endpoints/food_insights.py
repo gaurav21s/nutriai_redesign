@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, Query, Request, UploadFile
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppException, NotFoundException
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import ai_rate_limit, default_rate_limit, get_food_insights_service
+from app.dependencies import ai_rate_limit, default_rate_limit, get_food_insights_service, get_operations_service
 from app.schemas.food_insights import (
     FoodInsightAnalyzeRequest,
     FoodInsightHistoryResponse,
     FoodInsightResponse,
 )
+from app.schemas.operations import OperationSubmitRequest
 from app.services.food_insights_service import FoodInsightsService
 
 router = APIRouter(prefix="/food-insights", tags=["Food Insights"])
@@ -28,6 +29,7 @@ async def analyze_food(
     auth: AuthContext = Depends(get_auth_context),
     settings: Settings = Depends(get_settings),
     service: FoodInsightsService = Depends(get_food_insights_service),
+    operations_service=Depends(get_operations_service),
 ) -> FoodInsightResponse:
     content_type = request.headers.get("content-type", "")
 
@@ -41,7 +43,15 @@ async def analyze_food(
         content = await image.read()
         if len(content) > settings.max_upload_size_mb * 1024 * 1024:
             raise AppException("PAYLOAD_TOO_LARGE", "Uploaded image exceeds maximum size", status_code=413)
-        return await service.analyze_image(auth.clerk_user_id, content, image.content_type or "image/png")
+        operation = await operations_service.submit_and_wait(
+            auth.clerk_user_id,
+            OperationSubmitRequest(
+                feature="food_insight_analyze",
+                payload={"input_mode": "image", "image_mime_type": image.content_type or "image/png"},
+            ),
+            runtime_payload={"image_bytes": content},
+        )
+        return FoodInsightResponse.model_validate(operation.response_payload)
 
     try:
         payload = FoodInsightAnalyzeRequest.model_validate(await request.json())
@@ -54,9 +64,21 @@ async def analyze_food(
         from app.utils.ai_clients import decode_base64_payload
 
         image_bytes = decode_base64_payload(payload.image_base64)
-        return await service.analyze_image(auth.clerk_user_id, image_bytes, payload.image_mime_type)
+        operation = await operations_service.submit_and_wait(
+            auth.clerk_user_id,
+            OperationSubmitRequest(
+                feature="food_insight_analyze",
+                payload=payload.model_dump(mode="json"),
+            ),
+            runtime_payload={"image_bytes": image_bytes},
+        )
+        return FoodInsightResponse.model_validate(operation.response_payload)
 
-    return await service.analyze_text(auth.clerk_user_id, payload.text or "")
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(feature="food_insight_analyze", payload=payload.model_dump(mode="json")),
+    )
+    return FoodInsightResponse.model_validate(operation.response_payload)
 
 
 @router.get(

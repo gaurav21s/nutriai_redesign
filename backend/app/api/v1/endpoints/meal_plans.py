@@ -5,13 +5,16 @@ from fastapi.responses import StreamingResponse
 
 from app.core.exceptions import NotFoundException
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import ai_rate_limit, default_rate_limit, get_meal_plan_service
+from app.dependencies import ai_rate_limit, default_rate_limit, get_meal_plan_service, get_operations_service
 from app.schemas.meal_plans import (
     MealPlanGenerateRequest,
     MealPlanHistoryResponse,
+    MealPlanPdfExportHistoryResponse,
+    MealPlanPdfExportResponse,
     MealPlanPdfRequest,
     MealPlanResponse,
 )
+from app.schemas.operations import OperationSubmitRequest
 from app.services.meal_plan_service import MealPlanService
 
 router = APIRouter(prefix="/meal-plans", tags=["Meal Plans"])
@@ -28,8 +31,13 @@ async def generate_meal_plan(
     payload: MealPlanGenerateRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: MealPlanService = Depends(get_meal_plan_service),
+    operations_service=Depends(get_operations_service),
 ) -> MealPlanResponse:
-    return await service.generate(auth.clerk_user_id, payload)
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(feature="meal_plan_generate", payload=payload.model_dump(mode="json")),
+    )
+    return MealPlanResponse.model_validate(operation.response_payload)
 
 
 @router.get(
@@ -77,9 +85,20 @@ async def export_meal_plan_pdf(
     payload: MealPlanPdfRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: MealPlanService = Depends(get_meal_plan_service),
+    operations_service=Depends(get_operations_service),
 ) -> StreamingResponse:
     try:
-        pdf_bytes = await service.export_pdf(auth.clerk_user_id, record_id, payload.full_name, payload.age)
+        operation = await operations_service.submit_and_wait(
+            auth.clerk_user_id,
+            OperationSubmitRequest(
+                feature="meal_plan_export_pdf",
+                payload={"full_name": payload.full_name, "age": payload.age, "record_id": record_id},
+                resource_scope={"record_id": record_id},
+            ),
+        )
+        pdf_bytes = await operations_service.get_artifact_bytes(auth.clerk_user_id, operation.operation_id)
+        if pdf_bytes is None:
+            raise ValueError("Meal plan export not found")
     except ValueError as exc:
         raise NotFoundException(str(exc)) from exc
 
@@ -89,4 +108,65 @@ async def export_meal_plan_pdf(
         content=iter([pdf_bytes]),
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get(
+    "/{record_id}/exports",
+    response_model=MealPlanPdfExportHistoryResponse,
+    summary="List saved meal plan PDFs",
+    description="Returns saved PDF exports for one meal plan so Plus/Pro users can re-download them later.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def list_meal_plan_pdf_exports(
+    record_id: str,
+    limit: int = Query(default=20, ge=1, le=100),
+    auth: AuthContext = Depends(get_auth_context),
+    service: MealPlanService = Depends(get_meal_plan_service),
+) -> MealPlanPdfExportHistoryResponse:
+    items = await service.list_pdf_exports(auth.clerk_user_id, record_id, limit)
+    return MealPlanPdfExportHistoryResponse(items=items)
+
+
+@router.get(
+    "/exports/{export_id}",
+    response_model=MealPlanPdfExportResponse,
+    summary="Get saved meal plan PDF metadata",
+    description="Returns metadata for one saved meal plan PDF export.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def get_meal_plan_pdf_export(
+    export_id: str,
+    auth: AuthContext = Depends(get_auth_context),
+    service: MealPlanService = Depends(get_meal_plan_service),
+) -> MealPlanPdfExportResponse:
+    record = await service.get_pdf_export(auth.clerk_user_id, export_id)
+    if record is None:
+        raise NotFoundException("Saved PDF export not found")
+    return record
+
+
+@router.get(
+    "/exports/{export_id}/download",
+    summary="Download saved meal plan PDF",
+    description="Downloads a previously saved meal plan PDF export without consuming another export.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def download_meal_plan_pdf_export(
+    export_id: str,
+    auth: AuthContext = Depends(get_auth_context),
+    service: MealPlanService = Depends(get_meal_plan_service),
+) -> StreamingResponse:
+    try:
+        export = await service.get_pdf_export(auth.clerk_user_id, export_id)
+        if export is None:
+            raise ValueError("Saved PDF export not found")
+        pdf_bytes = await service.get_pdf_export_bytes(auth.clerk_user_id, export_id)
+    except ValueError as exc:
+        raise NotFoundException(str(exc)) from exc
+
+    return StreamingResponse(
+        content=iter([pdf_bytes]),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={export.file_name}"},
     )

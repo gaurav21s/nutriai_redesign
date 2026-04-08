@@ -49,10 +49,28 @@ class HybridRepository(CompositeRepository):
             lambda: self.fallback.create_chat_session(clerk_user_id, title),
         )
 
+    async def get_chat_session(self, clerk_user_id: str, session_id: str) -> dict | None:
+        return await self._run(
+            lambda: self.primary.get_chat_session(clerk_user_id, session_id),
+            lambda: self.fallback.get_chat_session(clerk_user_id, session_id),
+        )
+
     async def update_chat_session(self, clerk_user_id: str, session_id: str, payload: dict) -> dict | None:
         return await self._run(
             lambda: self.primary.update_chat_session(clerk_user_id, session_id, payload),
             lambda: self.fallback.update_chat_session(clerk_user_id, session_id, payload),
+        )
+
+    async def delete_chat_session(self, clerk_user_id: str, session_id: str) -> dict | None:
+        return await self._run(
+            lambda: self.primary.delete_chat_session(clerk_user_id, session_id),
+            lambda: self.fallback.delete_chat_session(clerk_user_id, session_id),
+        )
+
+    async def reserve_chat_sequence(self, clerk_user_id: str, session_id: str) -> int:
+        return await self._run(
+            lambda: self.primary.reserve_chat_sequence(clerk_user_id, session_id),
+            lambda: self.fallback.reserve_chat_sequence(clerk_user_id, session_id),
         )
 
     async def list_chat_sessions(self, clerk_user_id: str, limit: int = 30) -> list[dict]:
@@ -168,4 +186,46 @@ class HybridRepository(CompositeRepository):
         return await self._run(
             lambda: self.primary.list_subscription_events(clerk_user_id, limit),
             lambda: self.fallback.list_subscription_events(clerk_user_id, limit),
+        )
+
+    async def get_subscription_usage(self, clerk_user_id: str, period_key: str) -> dict | None:
+        return await self._run(
+            lambda: self.primary.get_subscription_usage(clerk_user_id, period_key),
+            lambda: self.fallback.get_subscription_usage(clerk_user_id, period_key),
+        )
+
+    async def upsert_subscription_usage(self, clerk_user_id: str, period_key: str, payload: dict) -> dict:
+        return await self._run(
+            lambda: self.primary.upsert_subscription_usage(clerk_user_id, period_key, payload),
+            lambda: self.fallback.upsert_subscription_usage(clerk_user_id, period_key, payload),
+        )
+
+    async def increment_subscription_usage(self, clerk_user_id: str, period_key: str, payload: dict) -> dict:
+        return await self._run(
+            lambda: self.primary.increment_subscription_usage(clerk_user_id, period_key, payload),
+            lambda: self.fallback.increment_subscription_usage(clerk_user_id, period_key, payload),
+        )
+
+    async def create_operation(self, clerk_user_id: str, payload: dict) -> dict:
+        return await self._run(
+            lambda: self.primary.create_operation(clerk_user_id, payload),
+            lambda: self.fallback.create_operation(clerk_user_id, payload),
+        )
+
+    async def get_operation(self, clerk_user_id: str, operation_id: str) -> dict | None:
+        return await self._run(
+            lambda: self.primary.get_operation(clerk_user_id, operation_id),
+            lambda: self.fallback.get_operation(clerk_user_id, operation_id),
+        )
+
+    async def get_operation_by_idempotency(self, clerk_user_id: str, feature: str, idempotency_key: str) -> dict | None:
+        return await self._run(
+            lambda: self.primary.get_operation_by_idempotency(clerk_user_id, feature, idempotency_key),
+            lambda: self.fallback.get_operation_by_idempotency(clerk_user_id, feature, idempotency_key),
+        )
+
+    async def update_operation(self, clerk_user_id: str, operation_id: str, payload: dict) -> dict | None:
+        return await self._run(
+            lambda: self.primary.update_operation(clerk_user_id, operation_id, payload),
+            lambda: self.fallback.update_operation(clerk_user_id, operation_id, payload),
         )

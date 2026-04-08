@@ -19,12 +19,22 @@ class PlanPrice(BaseModel):
     interval: Literal["month"] = "month"
 
 
+class PlanLimits(BaseModel):
+    monthly_nutrition_credits: int = Field(..., ge=0)
+    monthly_chat_messages: int = Field(..., ge=0)
+    history_days: int | None = Field(default=None, ge=1)
+    pdf_exports_per_month: int = Field(..., ge=0)
+    max_chat_context_items: int = Field(..., ge=0)
+    priority_processing: bool = False
+
+
 class PlanSummary(BaseModel):
     tier: PlanTier
     label: str
     description: str
     recommended: bool = False
     features: list[str]
+    limits: PlanLimits
     price_usd: PlanPrice
     price_inr: PlanPrice
 
@@ -42,6 +52,7 @@ class SubscriptionRecord(BaseModel):
     amount: float = Field(..., ge=0)
     interval: Literal["month"] = "month"
     permissions: dict[str, bool]
+    limits: PlanLimits
     is_demo: bool = False
     stripe_customer_id: str | None = None
     stripe_subscription_id: str | None = None
@@ -64,6 +75,33 @@ class SubscriptionEvent(BaseModel):
 
 class SubscriptionHistoryResponse(BaseModel):
     items: list[SubscriptionEvent]
+
+
+class UsageAllowance(BaseModel):
+    used: int = Field(..., ge=0)
+    limit: int | None = Field(default=None, ge=0)
+    remaining: int | None = Field(default=None, ge=0)
+
+
+class SubscriptionUsagePeriod(BaseModel):
+    period_key: str
+    period_start: datetime
+    period_end: datetime
+    next_reset_at: datetime
+
+
+class SubscriptionUsage(BaseModel):
+    clerk_user_id: str
+    tier: PlanTier
+    period: SubscriptionUsagePeriod
+    nutrition_credits: UsageAllowance
+    chat_messages: UsageAllowance
+    pdf_exports: UsageAllowance
+    feature_breakdown: dict[str, int]
+
+
+class SubscriptionUsageResponse(BaseModel):
+    usage: SubscriptionUsage
 
 
 class SelectPlanRequest(BaseModel):

@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import ai_rate_limit, default_rate_limit, get_recommendation_service
+from app.dependencies import ai_rate_limit, default_rate_limit, get_operations_service, get_recommendation_service
+from app.schemas.operations import OperationSubmitRequest
 from app.schemas.recommendations import (
     RecommendationGenerateRequest,
     RecommendationHistoryResponse,
@@ -25,8 +26,16 @@ async def generate_recommendations(
     payload: RecommendationGenerateRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: RecommendationService = Depends(get_recommendation_service),
+    operations_service=Depends(get_operations_service),
 ) -> RecommendationResponse:
-    return await service.generate(auth.clerk_user_id, payload)
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(
+            feature="recommendation_generate",
+            payload=payload.model_dump(mode="json"),
+        ),
+    )
+    return RecommendationResponse.model_validate(operation.response_payload)
 
 
 @router.get(

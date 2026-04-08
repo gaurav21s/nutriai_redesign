@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 
 import { APIClient } from "@/lib/api";
 
 export function useApiClient(): APIClient {
   const { getToken, userId } = useAuth();
+  const { user } = useUser();
 
   return useMemo(() => {
     return new APIClient({
@@ -15,6 +16,7 @@ export function useApiClient(): APIClient {
         return token ?? null;
       },
       devUserIdProvider: async () => userId ?? null,
+      emailProvider: async () => user?.primaryEmailAddress?.emailAddress ?? null,
     });
-  }, [getToken, userId]);
+  }, [getToken, user, userId]);
 }

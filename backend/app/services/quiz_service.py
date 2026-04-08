@@ -14,21 +14,37 @@ from app.schemas.quizzes import (
     QuizSubmitRequest,
     QuizSubmitResponse,
 )
+from app.services.subscription_service import SubscriptionService
 from app.utils.ai_clients import GroqClient
 from app.utils.parsers import parse_quiz
 from app.utils.prompt_builders import quiz_prompt
 
 
 class QuizService:
-    def __init__(self, repository: CompositeRepository, groq_client: GroqClient) -> None:
+    def __init__(
+        self,
+        repository: CompositeRepository,
+        groq_client: GroqClient,
+        subscription_service: SubscriptionService | None = None,
+    ) -> None:
         self.repository = repository
         self.groq_client = groq_client
+        self.subscription_service = subscription_service
 
     @staticmethod
     def _parse_iso_datetime(value: str) -> datetime:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
-    async def generate(self, clerk_user_id: str, payload: QuizGenerateRequest) -> QuizSessionResponse:
+    async def generate(
+        self,
+        clerk_user_id: str,
+        payload: QuizGenerateRequest,
+        *,
+        session_metadata: dict | None = None,
+    ) -> QuizSessionResponse:
+        if self.subscription_service is None:
+            raise RuntimeError("Subscription service is required for quiz generation")
+        await self.subscription_service.consume_nutrition_credits(clerk_user_id, 1, "nutri_quiz")
         raw = await self.groq_client.generate_text(
             quiz_prompt(payload.topic, payload.difficulty, payload.question_count),
             system_prompt="You are a quiz creator specializing in engaging nutrition quizzes.",
@@ -48,6 +64,7 @@ class QuizService:
                 "questions": questions,
                 "raw_response": raw,
                 "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                **(session_metadata or {}),
             },
         )
 
@@ -57,9 +74,17 @@ class QuizService:
             difficulty=session["difficulty"],
             created_at=self._parse_iso_datetime(session["created_at"]),
             questions=[QuizQuestion.model_validate(item) for item in session["questions"]],
+            operation_id=session.get("operation_id"),
         )
 
-    async def submit(self, clerk_user_id: str, session_id: str, payload: QuizSubmitRequest) -> QuizSubmitResponse:
+    async def submit(
+        self,
+        clerk_user_id: str,
+        session_id: str,
+        payload: QuizSubmitRequest,
+        *,
+        attempt_metadata: dict | None = None,
+    ) -> QuizSubmitResponse:
         session = await self.repository.get_quiz_session(clerk_user_id, session_id)
         if session is None:
             raise NotFoundException("Quiz session not found")
@@ -96,18 +121,25 @@ class QuizService:
             "results": results,
         }
 
-        await self.repository.store_quiz_submission(clerk_user_id, session_id, submission)
+        stored = await self.repository.store_quiz_submission(
+            clerk_user_id,
+            session_id,
+            {**submission, **(attempt_metadata or {})},
+        )
 
         return QuizSubmitResponse(
+            attempt_id=str(stored.get("attempt_id", "")),
             session_id=session_id,
             total_questions=total_questions,
             correct_answers=correct_answers,
             score_percentage=score_percentage,
             results=results,
+            operation_id=stored.get("operation_id"),
         )
 
     async def get_history(self, clerk_user_id: str, limit: int = 20) -> list[QuizHistoryItem]:
         rows = await self.repository.list_quiz_history(clerk_user_id, limit)
+        rows = await self.subscription_service.filter_history_rows(clerk_user_id, rows)
         items = []
         for row in rows:
             items.append(
@@ -123,7 +155,7 @@ class QuizService:
 
     async def get_session(self, clerk_user_id: str, session_id: str) -> QuizSessionResponse | None:
         session = await self.repository.get_quiz_session(clerk_user_id, session_id)
-        if session is None:
+        if not await self.subscription_service.can_access_history_row(clerk_user_id, session):
             return None
         return QuizSessionResponse(
             session_id=session["session_id"],
@@ -131,4 +163,5 @@ class QuizService:
             difficulty=session["difficulty"],
             created_at=self._parse_iso_datetime(session["created_at"]),
             questions=[QuizQuestion.model_validate(item) for item in session.get("questions", [])],
+            operation_id=session.get("operation_id"),
         )

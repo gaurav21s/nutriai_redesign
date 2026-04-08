@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import default_rate_limit, get_calculator_service
+from app.dependencies import default_rate_limit, get_calculator_service, get_operations_service
 from app.schemas.calculators import (
     BMIRequest,
     BMIResponse,
@@ -27,8 +27,9 @@ async def calculate_bmi(
     payload: BMIRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: CalculatorService = Depends(get_calculator_service),
+    operations_service=Depends(get_operations_service),
 ) -> BMIResponse:
-    return await service.calculate_bmi(auth.clerk_user_id, payload)
+    return BMIResponse.model_validate(await operations_service.calculate_bmi_with_operation(auth.clerk_user_id, payload))
 
 
 @router.post(
@@ -42,8 +43,11 @@ async def calculate_calories(
     payload: CaloriesRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: CalculatorService = Depends(get_calculator_service),
+    operations_service=Depends(get_operations_service),
 ) -> CaloriesResponse:
-    return await service.calculate_calories(auth.clerk_user_id, payload)
+    return CaloriesResponse.model_validate(
+        await operations_service.calculate_calories_with_operation(auth.clerk_user_id, payload)
+    )
 
 
 @router.get(

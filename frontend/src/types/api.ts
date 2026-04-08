@@ -61,6 +61,18 @@ export interface MealPlanResponse {
   raw_response: string;
 }
 
+export interface MealPlanPdfExportResponse {
+  id: string;
+  created_at: string;
+  meal_plan_record_id: string;
+  full_name: string;
+  age: number;
+  file_name: string;
+  mime_type: string;
+  byte_size: number;
+  operation_id?: string | null;
+}
+
 export type RecipeType = "normal" | "healthier" | "new_healthy";
 
 export interface RecipeIngredient {
@@ -132,6 +144,11 @@ export interface ChatSession {
   title: string;
   created_at: string;
   last_message_at?: string | null;
+}
+
+export interface ChatSessionDeleteResult {
+  session_id: string;
+  deleted: boolean;
 }
 
 export interface ChatReasoningStep {
@@ -241,12 +258,22 @@ export interface PlanPrice {
   interval: "month";
 }
 
+export interface PlanLimits {
+  monthly_nutrition_credits: number;
+  monthly_chat_messages: number;
+  history_days: number | null;
+  pdf_exports_per_month: number;
+  max_chat_context_items: number;
+  priority_processing: boolean;
+}
+
 export interface PlanSummary {
   tier: PlanTier;
   label: string;
   description: string;
   recommended: boolean;
   features: string[];
+  limits: PlanLimits;
   price_usd: PlanPrice;
   price_inr: PlanPrice;
 }
@@ -264,6 +291,7 @@ export interface SubscriptionRecord {
   amount: number;
   interval: "month";
   permissions: Record<string, boolean>;
+  limits: PlanLimits;
   is_demo: boolean;
   stripe_customer_id?: string | null;
   stripe_subscription_id?: string | null;
@@ -282,6 +310,33 @@ export interface SubscriptionEvent {
   event_type: string;
   payload: Record<string, unknown>;
   created_at: string;
+}
+
+export interface UsageAllowance {
+  used: number;
+  limit: number | null;
+  remaining: number | null;
+}
+
+export interface SubscriptionUsagePeriod {
+  period_key: string;
+  period_start: string;
+  period_end: string;
+  next_reset_at: string;
+}
+
+export interface SubscriptionUsage {
+  clerk_user_id: string;
+  tier: PlanTier;
+  period: SubscriptionUsagePeriod;
+  nutrition_credits: UsageAllowance;
+  chat_messages: UsageAllowance;
+  pdf_exports: UsageAllowance;
+  feature_breakdown: Record<string, number>;
+}
+
+export interface SubscriptionUsageResponse {
+  usage: SubscriptionUsage;
 }
 
 export interface CreateCheckoutSessionResponse {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Sparkles, CreditCard, ShieldCheck, Activity, ArrowRight } from "lucide-react";
+import { Sparkles, ShieldCheck, Activity } from "lucide-react";
 
 import { FeatureShell } from "@/components/features/feature-shell";
 import { HistoryPanel } from "@/components/features/history-panel";
@@ -17,6 +17,7 @@ import type {
   PlanTier,
   SubscriptionEvent,
   SubscriptionRecord,
+  SubscriptionUsage,
 } from "@/types/api";
 
 function priceValue(plan: PlanSummary, currency: CurrencyCode): string {
@@ -31,18 +32,20 @@ export default function SubscriptionPage() {
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [current, setCurrent] = useState<SubscriptionRecord | null>(null);
+  const [usage, setUsage] = useState<SubscriptionUsage | null>(null);
   const [events, setEvents] = useState<SubscriptionEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
 
   const loadAction = useAsyncAction(async () => {
-    const [catalog, active, history] = await Promise.all([
+    const [catalog, active, history, usageResult] = await Promise.all([
       api.getPricingPlans(),
       api.getCurrentSubscription(),
       api.getSubscriptionHistory(60),
+      api.getCurrentSubscriptionUsage(),
     ]);
-    return { plans: catalog.plans, subscription: active.subscription, history };
+    return { plans: catalog.plans, subscription: active.subscription, history, usage: usageResult.usage };
   });
 
   const chooseAction = useAsyncAction(async (tier: PlanTier) => {
@@ -73,6 +76,7 @@ export default function SubscriptionPage() {
 
     setPlans(result.plans);
     setCurrent(result.subscription);
+    setUsage(result.usage);
     setEvents(result.history);
     setLoading(false);
   }
@@ -125,6 +129,27 @@ export default function SubscriptionPage() {
     const permissions = current?.permissions ?? {};
     return Object.entries(permissions).sort(([a], [b]) => a.localeCompare(b));
   }, [current]);
+
+  const usageCards = useMemo(() => {
+    if (!usage) return [];
+    return [
+      {
+        label: "Nutrition Credits",
+        value: `${usage.nutrition_credits.remaining ?? 0} left`,
+        meta: `${usage.nutrition_credits.used} used of ${usage.nutrition_credits.limit ?? "unlimited"}`,
+      },
+      {
+        label: "Chat Messages",
+        value: `${usage.chat_messages.remaining ?? 0} left`,
+        meta: `${usage.chat_messages.used} used of ${usage.chat_messages.limit ?? "unlimited"}`,
+      },
+      {
+        label: "PDF Exports",
+        value: `${usage.pdf_exports.remaining ?? 0} left`,
+        meta: `${usage.pdf_exports.used} used of ${usage.pdf_exports.limit ?? "unlimited"}`,
+      },
+    ];
+  }, [usage]);
 
   return (
     <FeatureShell
@@ -186,6 +211,25 @@ export default function SubscriptionPage() {
               </div>
             </CardHeader>
             <CardContent className="p-10 space-y-10">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {usageCards.map((card) => (
+                  <div key={card.label} className="rounded-[24px] border border-black/[0.04] bg-white/80 p-6 shadow-sm">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-foreground/30 mb-2">{card.label}</p>
+                    <p className="text-2xl font-display text-foreground">{card.value}</p>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/35">{card.meta}</p>
+                  </div>
+                ))}
+                <div className="rounded-[24px] border border-black/[0.04] bg-black/[0.02] p-6">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-foreground/30 mb-2">Next Reset</p>
+                  <p className="text-lg font-display text-foreground">
+                    {usage ? new Date(usage.period.next_reset_at).toLocaleDateString() : "Pending"}
+                  </p>
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/35">
+                    UTC billing month
+                  </p>
+                </div>
+              </div>
+
               <div>
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground/30 mb-6 border-b border-black/[0.02] pb-3">Available Permissions</h4>
                 <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
@@ -255,6 +299,20 @@ export default function SubscriptionPage() {
                             </li>
                           ))}
                         </ul>
+
+                        <div className="rounded-[20px] border border-black/[0.04] bg-black/[0.02] p-4 mb-8">
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-foreground/30 mb-3">Included Limits</p>
+                          <div className="space-y-2 text-[10px] font-bold uppercase tracking-widest text-foreground/55">
+                            <p>{plan.limits.monthly_nutrition_credits} nutrition credits / month</p>
+                            <p>{plan.limits.monthly_chat_messages} chat messages / month</p>
+                            <p>{plan.limits.history_days == null ? "Unlimited history" : `${plan.limits.history_days}-day history`}</p>
+                            <p>
+                              {plan.limits.pdf_exports_per_month > 0
+                                ? `${plan.limits.pdf_exports_per_month} PDF exports / month`
+                                : "No PDF exports included"}
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
                       <Button

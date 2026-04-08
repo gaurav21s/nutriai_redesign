@@ -18,6 +18,7 @@ from app.schemas.subscriptions import (
     SelectPlanRequest,
     SubscriptionHistoryResponse,
     SubscriptionResponse,
+    SubscriptionUsageResponse,
 )
 from app.services.subscription_service import SubscriptionService
 
@@ -49,6 +50,20 @@ async def get_current_subscription(
     service: SubscriptionService = Depends(get_subscription_service),
 ) -> SubscriptionResponse:
     return await service.get_current_subscription(auth.clerk_user_id)
+
+
+@router.get(
+    "/usage",
+    response_model=SubscriptionUsageResponse,
+    summary="Get current subscription usage",
+    description="Returns current billing-period usage against the authenticated user's plan limits.",
+    dependencies=[Depends(default_rate_limit)],
+)
+async def get_current_subscription_usage(
+    auth: AuthContext = Depends(get_auth_context),
+    service: SubscriptionService = Depends(get_subscription_service),
+) -> SubscriptionUsageResponse:
+    return await service.get_current_usage(auth.clerk_user_id)
 
 
 @router.get(

@@ -1,7 +1,7 @@
 import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
 
-const makeId = () => `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+const makeId = () => crypto.randomUUID().replace(/-/g, "");
 
 export const createSession = mutation({
   args: { clerk_user_id: v.string(), title: v.string() },
@@ -14,6 +14,7 @@ export const createSession = mutation({
       title: args.title,
       created_at: now,
       last_message_at: now,
+      next_sequence_no: 0,
     };
     await ctx.db.insert("chatSessions", doc);
     return doc;
@@ -34,6 +35,68 @@ export const updateSession = mutation({
     await ctx.db.patch(session._id, patch);
     const { _id, _creationTime, ...rest } = { ...session, ...patch };
     return rest;
+  },
+});
+
+export const deleteSession = mutation({
+  args: { clerk_user_id: v.string(), session_id: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_user_session", (q) => q.eq("clerk_user_id", args.clerk_user_id).eq("session_id", args.session_id))
+      .first();
+    if (!session) return null;
+
+    const messages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_user_session_created", (q) =>
+        q.eq("clerk_user_id", args.clerk_user_id).eq("session_id", args.session_id)
+      )
+      .collect();
+    for (const message of messages) {
+      await ctx.db.delete(message._id);
+    }
+
+    const actions = await ctx.db
+      .query("chatActions")
+      .withIndex("by_user_session_created", (q) =>
+        q.eq("clerk_user_id", args.clerk_user_id).eq("session_id", args.session_id)
+      )
+      .collect();
+    for (const action of actions) {
+      await ctx.db.delete(action._id);
+    }
+
+    await ctx.db.delete(session._id);
+    return { session_id: args.session_id, deleted: true };
+  },
+});
+
+export const getSession = query({
+  args: { clerk_user_id: v.string(), session_id: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_user_session", (q) => q.eq("clerk_user_id", args.clerk_user_id).eq("session_id", args.session_id))
+      .first();
+
+    if (!session) return null;
+    const { _id, _creationTime, ...rest } = session;
+    return rest;
+  },
+});
+
+export const reserveSequence = mutation({
+  args: { clerk_user_id: v.string(), session_id: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("chatSessions")
+      .withIndex("by_user_session", (q) => q.eq("clerk_user_id", args.clerk_user_id).eq("session_id", args.session_id))
+      .first();
+    if (!session) throw new Error("session not found");
+    const sequence_no = Number(session.next_sequence_no ?? 0) + 1;
+    await ctx.db.patch(session._id, { next_sequence_no: sequence_no });
+    return { sequence_no };
   },
 });
 
@@ -71,6 +134,8 @@ export const addMessage = mutation({
       message_id,
       session_id: args.session_id,
       clerk_user_id: args.clerk_user_id,
+      operation_id: typeof args.metadata?.operation_id === "string" ? args.metadata.operation_id : undefined,
+      sequence_no: typeof args.metadata?.sequence_no === "number" ? args.metadata.sequence_no : undefined,
       role: args.role,
       content: args.content,
       metadata: args.metadata,
@@ -159,8 +224,10 @@ export const updateAction = mutation({
 
     if (!row) return null;
 
-    const patch: Record<string, unknown> = { ...args.payload };
-    if (args.payload.status && !row.resolved_at && String(args.payload.status) !== "pending") {
+    const patch: Record<string, unknown> = {};
+    if (args.payload.status !== undefined) patch.status = String(args.payload.status);
+    if (args.payload.saved_record_id !== undefined) patch.saved_record_id = args.payload.saved_record_id;
+    if (patch.status && !row.resolved_at && String(patch.status) !== "pending") {
       patch.resolved_at = new Date().toISOString();
     }
     await ctx.db.patch(row._id, patch);

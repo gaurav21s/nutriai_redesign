@@ -136,6 +136,10 @@ npm run typecheck
 npm run lint
 ```
 
+## Observability
+
+- Axiom/OTel setup and query examples: `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/docs/observability-axiom.md`
+
 ## Notes
 
 - All frontend API requests go through `/Users/Admin/Desktop/Project/nutriaiv2/nutriai/nutriai_main/frontend/src/lib/api.ts`.

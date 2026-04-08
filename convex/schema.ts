@@ -40,9 +40,26 @@ export default defineSchema({
     created_at: v.string(),
   }).index("by_user_created", ["clerk_user_id", "created_at"]),
 
+  subscriptionUsage: defineTable({
+    usage_id: v.string(),
+    clerk_user_id: v.string(),
+    period_key: v.string(),
+    period_start: v.string(),
+    period_end: v.string(),
+    nutrition_credits_used: v.number(),
+    chat_messages_used: v.number(),
+    pdf_exports_used: v.number(),
+    feature_breakdown: v.any(),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_user_period", ["clerk_user_id", "period_key"])
+    .index("by_user_updated", ["clerk_user_id", "updated_at"]),
+
   foodInsights: defineTable({
     record_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     created_at: v.string(),
     input: v.any(),
     items: v.array(v.any()),
@@ -57,6 +74,7 @@ export default defineSchema({
   ingredientChecks: defineTable({
     record_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     created_at: v.string(),
     input: v.any(),
     healthy_ingredients: v.array(v.string()),
@@ -70,6 +88,7 @@ export default defineSchema({
   mealPlans: defineTable({
     record_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     created_at: v.string(),
     profile: v.any(),
     sections: v.array(v.any()),
@@ -78,9 +97,26 @@ export default defineSchema({
     .index("by_user_created", ["clerk_user_id", "created_at"])
     .index("by_user_record", ["clerk_user_id", "record_id"]),
 
+  mealPlanPdfExports: defineTable({
+    record_id: v.string(),
+    clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
+    meal_plan_record_id: v.string(),
+    full_name: v.string(),
+    age: v.number(),
+    file_name: v.string(),
+    mime_type: v.string(),
+    byte_size: v.number(),
+    pdf_base64: v.string(),
+    created_at: v.string(),
+  })
+    .index("by_user_created", ["clerk_user_id", "created_at"])
+    .index("by_user_record", ["clerk_user_id", "record_id"]),
+
   recipes: defineTable({
     record_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     created_at: v.string(),
     input: v.any(),
     recipe_name: v.string(),
@@ -96,6 +132,7 @@ export default defineSchema({
   quizSessions: defineTable({
     session_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     topic: v.string(),
     difficulty: v.string(),
     questions: v.array(v.any()),
@@ -109,6 +146,7 @@ export default defineSchema({
     attempt_id: v.string(),
     session_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     total_questions: v.number(),
     correct_answers: v.number(),
     score_percentage: v.number(),
@@ -124,6 +162,7 @@ export default defineSchema({
     title: v.string(),
     created_at: v.string(),
     last_message_at: v.optional(v.string()),
+    next_sequence_no: v.optional(v.number()),
   })
     .index("by_user_created", ["clerk_user_id", "created_at"])
     .index("by_user_session", ["clerk_user_id", "session_id"]),
@@ -132,6 +171,8 @@ export default defineSchema({
     message_id: v.string(),
     session_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
+    sequence_no: v.optional(v.number()),
     role: v.string(),
     content: v.string(),
     metadata: v.optional(v.any()),
@@ -142,6 +183,7 @@ export default defineSchema({
     action_id: v.string(),
     session_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     kind: v.string(),
     title: v.string(),
     summary: v.string(),
@@ -157,6 +199,8 @@ export default defineSchema({
   calculations: defineTable({
     record_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
+    idempotency_key: v.optional(v.string()),
     calculator_type: v.string(),
     payload: v.any(),
     result: v.any(),
@@ -178,6 +222,7 @@ export default defineSchema({
   recommendations: defineTable({
     record_id: v.string(),
     clerk_user_id: v.string(),
+    operation_id: v.optional(v.string()),
     title: v.string(),
     recommendations: v.array(v.string()),
     raw_response: v.string(),
@@ -186,4 +231,30 @@ export default defineSchema({
   })
     .index("by_user_created", ["clerk_user_id", "created_at"])
     .index("by_user_record", ["clerk_user_id", "record_id"]),
+
+  operations: defineTable({
+    operation_id: v.string(),
+    clerk_user_id: v.string(),
+    feature: v.string(),
+    status: v.string(),
+    queue_tier: v.string(),
+    workload_pool: v.string(),
+    resource_scope: v.any(),
+    idempotency_key: v.optional(v.string()),
+    request_payload: v.any(),
+    response_payload: v.optional(v.any()),
+    result_ref: v.optional(v.any()),
+    sequence_no: v.optional(v.number()),
+    request_id: v.optional(v.string()),
+    error_code: v.optional(v.string()),
+    error_message: v.optional(v.string()),
+    enqueued_at: v.string(),
+    started_at: v.optional(v.string()),
+    finished_at: v.optional(v.string()),
+    created_at: v.string(),
+    updated_at: v.string(),
+  })
+    .index("by_user_operation", ["clerk_user_id", "operation_id"])
+    .index("by_user_feature_idempotency", ["clerk_user_id", "feature", "idempotency_key"])
+    .index("by_user_created", ["clerk_user_id", "created_at"]),
 });

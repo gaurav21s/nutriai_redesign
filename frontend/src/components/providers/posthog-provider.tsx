@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { APIClient } from "@/lib/api";
 import { useOptionalConvexClient } from "@/lib/convex";
 import { initPostHog, isPostHogEnabled, posthog, resolveConvexDeploymentKey } from "@/lib/posthog";
+import { emitFrontendTelemetry } from "@/lib/telemetry";
 
 interface ConvexUserRecord {
   id: string;
@@ -37,12 +38,82 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
         return token ?? null;
       },
       devUserIdProvider: async () => userId ?? null,
+      emailProvider: async () => user?.primaryEmailAddress?.emailAddress ?? null,
     });
-  }, [getToken, userId]);
+  }, [getToken, user, userId]);
 
   useEffect(() => {
     initPostHog();
   }, []);
+
+  useEffect(() => {
+    void emitFrontendTelemetry(
+      {
+        event_type: "frontend_route_view",
+        category: "navigation",
+        feature: "page_view",
+        status: "completed",
+        path: pathname,
+        properties: {
+          pathname,
+        },
+      },
+      {
+        clerk_user_id: userId ?? undefined,
+        email: user?.primaryEmailAddress?.emailAddress ?? undefined,
+      }
+    );
+  }, [pathname, user, userId]);
+
+  useEffect(() => {
+    function handleError(event: ErrorEvent) {
+      void emitFrontendTelemetry(
+        {
+          event_type: "frontend_window_error",
+          category: "error",
+          feature: "window",
+          status: "failed",
+          properties: {
+            message: event.message,
+            source: event.filename,
+            line: event.lineno,
+            column: event.colno,
+          },
+        },
+        {
+          clerk_user_id: userId ?? undefined,
+          email: user?.primaryEmailAddress?.emailAddress ?? undefined,
+        }
+      );
+    }
+
+    function handleUnhandledRejection(event: PromiseRejectionEvent) {
+      const reason = event.reason instanceof Error ? event.reason.message : String(event.reason ?? "unknown");
+      void emitFrontendTelemetry(
+        {
+          event_type: "frontend_unhandled_rejection",
+          category: "error",
+          feature: "promise",
+          status: "failed",
+          properties: {
+            reason,
+          },
+        },
+        {
+          clerk_user_id: userId ?? undefined,
+          email: user?.primaryEmailAddress?.emailAddress ?? undefined,
+        }
+      );
+    }
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+    };
+  }, [user, userId]);
 
   useEffect(() => {
     if (!isPostHogEnabled() || !isLoaded) {

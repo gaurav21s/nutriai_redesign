@@ -11,6 +11,7 @@ export const create = mutation({
     const doc = {
       record_id,
       clerk_user_id: args.clerk_user_id,
+      operation_id: typeof args.payload.operation_id === "string" ? args.payload.operation_id : undefined,
       created_at,
       input: args.payload.input ?? {},
       items: args.payload.items ?? [],

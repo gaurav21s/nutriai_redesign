@@ -47,8 +47,8 @@ def capture_posthog_event(
 
     try:
         client.capture(
-            event,
             distinct_id=distinct_id,
+            event=event,
             properties=properties or {},
         )
     except Exception:

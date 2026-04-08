@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   ChatPendingAction,
   ChatSession,
+  ChatSessionDeleteResult,
   ChatStreamEvent,
   CreateCheckoutSessionResponse,
   CurrencyCode,
@@ -14,6 +15,7 @@ import type {
   FoodInsightResponse,
   IngredientCheckResponse,
   MealPlanGenerateRequest,
+  MealPlanPdfExportResponse,
   MealPlanResponse,
   PlanTier,
   PricingCatalogResponse,
@@ -24,11 +26,18 @@ import type {
   RecommendationResponse,
   SubscriptionEvent,
   SubscriptionResponse,
+  SubscriptionUsageResponse,
   RecommendationType,
   RecipeType,
   ShoppingLinksResponse,
 } from "@/types/api";
 import { captureEvent } from "@/lib/posthog";
+import {
+  buildClientCorrelationHeaders,
+  createRequestCorrelation,
+  emitFrontendTelemetry,
+  type FrontendTelemetryIdentity,
+} from "@/lib/telemetry";
 
 interface ApiErrorPayload {
   error?: {
@@ -61,14 +70,17 @@ export class APIClient {
   private baseUrl: string;
   private tokenProvider?: () => Promise<string | null>;
   private devUserIdProvider?: () => Promise<string | null>;
+  private emailProvider?: () => Promise<string | null>;
 
   constructor(options?: {
     tokenProvider?: () => Promise<string | null>;
     devUserIdProvider?: () => Promise<string | null>;
+    emailProvider?: () => Promise<string | null>;
   }) {
     this.baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8008";
     this.tokenProvider = options?.tokenProvider;
     this.devUserIdProvider = options?.devUserIdProvider;
+    this.emailProvider = options?.emailProvider;
   }
 
   private resolveFallbackBaseUrl(): string | null {
@@ -124,6 +136,18 @@ export class APIClient {
     return { "x-dev-user-id": userId };
   }
 
+  private async getIdentity(): Promise<FrontendTelemetryIdentity> {
+    const [clerkUserId, email] = await Promise.all([
+      this.devUserIdProvider ? this.devUserIdProvider() : Promise.resolve(null),
+      this.emailProvider ? this.emailProvider() : Promise.resolve(null),
+    ]);
+
+    return {
+      clerk_user_id: clerkUserId ?? undefined,
+      email: email ?? undefined,
+    };
+  }
+
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     return this.requestWithAnalytics(path, init);
   }
@@ -162,7 +186,8 @@ export class APIClient {
     method: string,
     latencyMs: number,
     analytics: RequestAnalyticsOptions,
-    extra: Record<string, unknown>
+    extra: Record<string, unknown>,
+    identity: FrontendTelemetryIdentity
   ): void {
     const properties = {
       category: analytics.category ?? "api",
@@ -175,6 +200,20 @@ export class APIClient {
     };
 
     captureEvent(`frontend_api_request_${phase}`, properties);
+    void emitFrontendTelemetry(
+      {
+        event_type: `frontend_api_request_${phase}`,
+        category: analytics.category ?? "api",
+        feature: analytics.feature ?? "general",
+        status: phase,
+        path,
+        request_id: typeof extra.request_id === "string" ? extra.request_id : undefined,
+        backend_request_id:
+          typeof extra.backend_request_id === "string" ? extra.backend_request_id : undefined,
+        properties,
+      },
+      identity
+    );
 
     if (analytics.category === "llm") {
       captureEvent(`frontend_llm_request_${phase}`, properties);
@@ -186,10 +225,13 @@ export class APIClient {
     init: RequestInit = {},
     analytics?: RequestAnalyticsOptions
   ): Promise<T> {
+    const correlation = createRequestCorrelation();
+    const identity = await this.getIdentity();
     const headers: HeadersInit = {
       ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
       ...(await this.getAuthHeader()),
       ...(await this.getDevUserHeader()),
+      ...buildClientCorrelationHeaders(correlation, identity),
       ...(init.headers ?? {}),
     };
     const startedAt = performance.now();
@@ -204,13 +246,25 @@ export class APIClient {
         headers,
       });
     } catch (error) {
-      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), resolvedAnalytics, {
-        status_code: 0,
-        error_code: error instanceof ApiError ? error.code ?? "NETWORK_ERROR" : "NETWORK_ERROR",
-        error_message: error instanceof Error ? error.message : "Network error",
-      });
+      this.captureRequestEvent(
+        "failed",
+        path,
+        method,
+        Math.round(performance.now() - startedAt),
+        resolvedAnalytics,
+        {
+          status_code: 0,
+          request_id: correlation.requestId,
+          backend_request_id: null,
+          error_code: error instanceof ApiError ? error.code ?? "NETWORK_ERROR" : "NETWORK_ERROR",
+          error_message: error instanceof Error ? error.message : "Network error",
+        },
+        identity
+      );
       throw error;
     }
+
+    const backendRequestId = response.headers.get("x-request-id");
 
     if (!response.ok) {
       let payload: ApiErrorPayload = {};
@@ -220,17 +274,37 @@ export class APIClient {
         payload = {};
       }
       const message = payload.error?.message ?? `Request failed with status ${response.status}`;
-      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), resolvedAnalytics, {
-        status_code: response.status,
-        error_code: payload.error?.code ?? "REQUEST_FAILED",
-        error_message: message,
-      });
+      this.captureRequestEvent(
+        "failed",
+        path,
+        method,
+        Math.round(performance.now() - startedAt),
+        resolvedAnalytics,
+        {
+          status_code: response.status,
+          request_id: correlation.requestId,
+          backend_request_id: backendRequestId,
+          error_code: payload.error?.code ?? "REQUEST_FAILED",
+          error_message: message,
+        },
+        identity
+      );
       throw new ApiError(message, response.status, payload.error?.code, payload.error?.details);
     }
 
-    this.captureRequestEvent("completed", path, method, Math.round(performance.now() - startedAt), resolvedAnalytics, {
-      status_code: response.status,
-    });
+    this.captureRequestEvent(
+      "completed",
+      path,
+      method,
+      Math.round(performance.now() - startedAt),
+      resolvedAnalytics,
+      {
+        status_code: response.status,
+        request_id: correlation.requestId,
+        backend_request_id: backendRequestId,
+      },
+      identity
+    );
 
     if (response.status === 204) {
       return {} as T;
@@ -363,38 +437,103 @@ export class APIClient {
 
   async exportMealPlanPdf(recordId: string, fullName: string, age: number): Promise<Blob> {
     const startedAt = performance.now();
+    const correlation = createRequestCorrelation();
+    const identity = await this.getIdentity();
     const response = await this.fetchWithFallback(`/api/v1/meal-plans/${recordId}/export/pdf`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(await this.getAuthHeader()),
         ...(await this.getDevUserHeader()),
+        ...buildClientCorrelationHeaders(correlation, identity),
       },
       body: JSON.stringify({ full_name: fullName, age }),
     });
 
     if (!response.ok) {
-      this.captureRequestEvent("failed", `/api/v1/meal-plans/${recordId}/export/pdf`, "POST", Math.round(performance.now() - startedAt), {
+      let payload: ApiErrorPayload = {};
+      try {
+        payload = await response.json();
+      } catch {
+        payload = {};
+      }
+      const message = payload.error?.message ?? `Failed to export PDF (${response.status})`;
+      this.captureRequestEvent(
+        "failed",
+        `/api/v1/meal-plans/${recordId}/export/pdf`,
+        "POST",
+        Math.round(performance.now() - startedAt),
+        {
+          category: "workflow",
+          feature: "meal_planner",
+          properties: {
+            export_format: "pdf",
+          },
+        },
+        {
+          status_code: response.status,
+          request_id: correlation.requestId,
+          backend_request_id: response.headers.get("x-request-id"),
+          error_code: payload.error?.code ?? "REQUEST_FAILED",
+          error_message: message,
+        },
+        identity
+      );
+      throw new ApiError(message, response.status, payload.error?.code, payload.error?.details);
+    }
+
+    this.captureRequestEvent(
+      "completed",
+      `/api/v1/meal-plans/${recordId}/export/pdf`,
+      "POST",
+      Math.round(performance.now() - startedAt),
+      {
         category: "workflow",
         feature: "meal_planner",
         properties: {
           export_format: "pdf",
         },
-      }, {
-        status_code: response.status,
-      });
-      throw new ApiError(`Failed to export PDF (${response.status})`, response.status);
-    }
-
-    this.captureRequestEvent("completed", `/api/v1/meal-plans/${recordId}/export/pdf`, "POST", Math.round(performance.now() - startedAt), {
-      category: "workflow",
-      feature: "meal_planner",
-      properties: {
-        export_format: "pdf",
       },
-    }, {
-      status_code: response.status,
+      {
+        status_code: response.status,
+        request_id: correlation.requestId,
+        backend_request_id: response.headers.get("x-request-id"),
+      },
+      identity
+    );
+
+    return response.blob();
+  }
+
+  async getMealPlanPdfExports(recordId: string, limit = 20): Promise<MealPlanPdfExportResponse[]> {
+    const payload = await this.request<{ items: MealPlanPdfExportResponse[] }>(
+      `/api/v1/meal-plans/${recordId}/exports?limit=${limit}`
+    );
+    return payload.items;
+  }
+
+  async downloadSavedMealPlanPdf(exportId: string): Promise<Blob> {
+    const correlation = createRequestCorrelation();
+    const identity = await this.getIdentity();
+    const response = await this.fetchWithFallback(`/api/v1/meal-plans/exports/${exportId}/download`, {
+      method: "GET",
+      headers: {
+        ...(await this.getAuthHeader()),
+        ...(await this.getDevUserHeader()),
+        ...buildClientCorrelationHeaders(correlation, identity),
+      },
     });
+
+    if (!response.ok) {
+      let payload: ApiErrorPayload = {};
+      try {
+        payload = await response.json();
+      } catch {
+        payload = {};
+      }
+      const message = payload.error?.message ?? `Failed to download saved PDF (${response.status})`;
+      throw new ApiError(message, response.status, payload.error?.code, payload.error?.details);
+    }
 
     return response.blob();
   }
@@ -499,6 +638,41 @@ export class APIClient {
     return payload.items;
   }
 
+  async renameChatSession(sessionId: string, title: string): Promise<ChatSession> {
+    return this.requestWithAnalytics(
+      `/api/v1/nutri-chat/sessions/${sessionId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ title }),
+      },
+      {
+        category: "workflow",
+        feature: "nutri_chat",
+        properties: {
+          action: "rename_session",
+          session_id_present: Boolean(sessionId),
+        },
+      }
+    );
+  }
+
+  async deleteChatSession(sessionId: string): Promise<ChatSessionDeleteResult> {
+    return this.requestWithAnalytics(
+      `/api/v1/nutri-chat/sessions/${sessionId}`,
+      {
+        method: "DELETE",
+      },
+      {
+        category: "workflow",
+        feature: "nutri_chat",
+        properties: {
+          action: "delete_session",
+          session_id_present: Boolean(sessionId),
+        },
+      }
+    );
+  }
+
   async getChatContext(): Promise<ChatContextSection[]> {
     const payload = await this.request<{ items: ChatContextSection[] }>("/api/v1/nutri-chat/context");
     return payload.items;
@@ -539,6 +713,8 @@ export class APIClient {
     const path = `/api/v1/nutri-chat/sessions/${sessionId}/turns/stream`;
     const startedAt = performance.now();
     const method = "POST";
+    const correlation = createRequestCorrelation();
+    const identity = await this.getIdentity();
     const analytics = {
       category: "llm" as const,
       feature: "nutri_chat",
@@ -554,6 +730,7 @@ export class APIClient {
         "Content-Type": "application/json",
         ...(await this.getAuthHeader()),
         ...(await this.getDevUserHeader()),
+        ...buildClientCorrelationHeaders(correlation, identity),
       },
       body: JSON.stringify({ content }),
     });
@@ -566,21 +743,41 @@ export class APIClient {
         payload = {};
       }
       const message = payload.error?.message ?? `Request failed with status ${response.status}`;
-      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), analytics, {
-        status_code: response.status,
-        error_code: payload.error?.code ?? "REQUEST_FAILED",
-        error_message: message,
-      });
+      this.captureRequestEvent(
+        "failed",
+        path,
+        method,
+        Math.round(performance.now() - startedAt),
+        analytics,
+        {
+          status_code: response.status,
+          request_id: correlation.requestId,
+          backend_request_id: response.headers.get("x-request-id"),
+          error_code: payload.error?.code ?? "REQUEST_FAILED",
+          error_message: message,
+        },
+        identity
+      );
       throw new ApiError(message, response.status, payload.error?.code, payload.error?.details);
     }
 
     const reader = response.body?.getReader();
     if (!reader) {
-      this.captureRequestEvent("failed", path, method, Math.round(performance.now() - startedAt), analytics, {
-        status_code: response.status,
-        error_code: "NO_STREAM",
-        error_message: "Streaming response body was not available",
-      });
+      this.captureRequestEvent(
+        "failed",
+        path,
+        method,
+        Math.round(performance.now() - startedAt),
+        analytics,
+        {
+          status_code: response.status,
+          request_id: correlation.requestId,
+          backend_request_id: response.headers.get("x-request-id"),
+          error_code: "NO_STREAM",
+          error_message: "Streaming response body was not available",
+        },
+        identity
+      );
       throw new ApiError("Streaming response was not available", response.status, "NO_STREAM");
     }
 
@@ -607,9 +804,19 @@ export class APIClient {
       handlers.onEvent(JSON.parse(buffer.trim()) as ChatStreamEvent);
     }
 
-    this.captureRequestEvent("completed", path, method, Math.round(performance.now() - startedAt), analytics, {
-      status_code: response.status,
-    });
+    this.captureRequestEvent(
+      "completed",
+      path,
+      method,
+      Math.round(performance.now() - startedAt),
+      analytics,
+      {
+        status_code: response.status,
+        request_id: correlation.requestId,
+        backend_request_id: response.headers.get("x-request-id"),
+      },
+      identity
+    );
   }
 
   async confirmChatAction(sessionId: string, actionId: string): Promise<ChatPendingAction> {
@@ -701,6 +908,10 @@ export class APIClient {
 
   async getCurrentSubscription(): Promise<SubscriptionResponse> {
     return this.request("/api/v1/subscriptions/current");
+  }
+
+  async getCurrentSubscriptionUsage(): Promise<SubscriptionUsageResponse> {
+    return this.request("/api/v1/subscriptions/usage");
   }
 
   async getSubscriptionHistory(limit = 50): Promise<SubscriptionEvent[]> {

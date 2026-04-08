@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.exceptions import NotFoundException
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import ai_rate_limit, default_rate_limit, get_quiz_service
+from app.dependencies import ai_rate_limit, default_rate_limit, get_operations_service, get_quiz_service
+from app.schemas.operations import OperationSubmitRequest
 from app.schemas.quizzes import (
     QuizGenerateRequest,
     QuizHistoryResponse,
@@ -28,8 +29,13 @@ async def generate_quiz(
     payload: QuizGenerateRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: QuizService = Depends(get_quiz_service),
+    operations_service=Depends(get_operations_service),
 ) -> QuizSessionResponse:
-    return await service.generate(auth.clerk_user_id, payload)
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(feature="quiz_generate", payload=payload.model_dump(mode="json")),
+    )
+    return QuizSessionResponse.model_validate(operation.response_payload)
 
 
 @router.post(
@@ -44,8 +50,18 @@ async def submit_quiz(
     payload: QuizSubmitRequest,
     auth: AuthContext = Depends(get_auth_context),
     service: QuizService = Depends(get_quiz_service),
+    operations_service=Depends(get_operations_service),
 ) -> QuizSubmitResponse:
-    return await service.submit(auth.clerk_user_id, session_id, payload)
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(
+            feature="quiz_submit",
+            payload=payload.model_dump(mode="json"),
+            idempotency_key=payload.idempotency_key,
+            resource_scope={"session_id": session_id},
+        ),
+    )
+    return QuizSubmitResponse.model_validate(operation.response_payload)
 
 
 @router.get(

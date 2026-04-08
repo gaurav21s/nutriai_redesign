@@ -10,7 +10,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
+from app.core.logging import get_logger, update_request_context
 from app.utils.posthog_client import capture_posthog_event
+
+logger = get_logger("app.core.exceptions")
 
 
 class AppException(Exception):
@@ -84,6 +87,15 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppException)
     async def handle_app_exception(request: Request, exc: AppException) -> JSONResponse:
         request_id = getattr(request.state, "request_id", None)
+        request.state.error_code = exc.code
+        request.state.error_message = exc.message
+        request.state.response_status_code = exc.status_code
+        update_request_context(
+            status_code=exc.status_code,
+            error_code=exc.code,
+            error_message=exc.message,
+            outcome="error",
+        )
         return JSONResponse(
             status_code=exc.status_code,
             content=_error_payload(exc.code, exc.message, request_id=request_id, details=exc.details),
@@ -92,6 +104,15 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
         request_id = getattr(request.state, "request_id", None)
+        request.state.error_code = "VALIDATION_ERROR"
+        request.state.error_message = "Request validation failed"
+        request.state.response_status_code = HTTPStatus.UNPROCESSABLE_ENTITY
+        update_request_context(
+            status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+            error_code="VALIDATION_ERROR",
+            error_message="Request validation failed",
+            outcome="error",
+        )
         return JSONResponse(
             status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
             content=_error_payload(
@@ -107,6 +128,15 @@ def register_exception_handlers(app: FastAPI) -> None:
         request_id = getattr(request.state, "request_id", None)
         settings = get_settings()
         distinct_id = getattr(request.state, "posthog_distinct_id", None) or request_id or "anonymous_backend"
+        request.state.error_code = "INTERNAL_ERROR"
+        request.state.error_message = str(exc)
+        request.state.response_status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+        update_request_context(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            error_code="INTERNAL_ERROR",
+            error_message=str(exc),
+            outcome="error",
+        )
 
         capture_posthog_event(
             "backend_exception",
@@ -120,6 +150,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "error_message": str(exc),
             },
         )
+        logger.exception("backend_unexpected_exception")
 
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

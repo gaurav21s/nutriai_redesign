@@ -7,6 +7,7 @@ type FeatureName =
   | "foodInsights"
   | "ingredientChecks"
   | "mealPlans"
+  | "mealPlanPdfExports"
   | "recipes"
   | "calculations"
   | "recommendations";
@@ -33,6 +34,11 @@ const featureFunctions: Record<
     create: "mealPlans:create",
     list: "mealPlans:listByUser",
     get: "mealPlans:getById",
+  },
+  mealPlanPdfExports: {
+    create: "mealPlanPdfExports:create",
+    list: "mealPlanPdfExports:listByUser",
+    get: "mealPlanPdfExports:getById",
   },
   recipes: {
     create: "recipes:create",
@@ -82,9 +88,14 @@ function normalizeSubscription(row: Record<string, unknown>) {
   return rest;
 }
 
+function normalizeOperation(row: Record<string, unknown>) {
+  const { _id, _creationTime, ...rest } = row;
+  return rest;
+}
+
 function ensureBackendSecret(req: Request): boolean {
   const expected = process.env.BACKEND_CONVEX_SHARED_SECRET;
-  if (!expected) return true;
+  if (!expected) return false;
   const provided = req.headers.get("x-backend-secret");
   return provided === expected;
 }
@@ -189,6 +200,23 @@ http.route({
 });
 
 http.route({
+  path: "/backend/chat/sessions/get",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId } = (await req.json()) as { clerkUserId: string; sessionId: string };
+
+    const session = (await ctx.runQuery("chat:getSession" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+    })) as Record<string, unknown> | null;
+
+    return json({ ok: true, data: session ? normalizeChatSession(session) : null });
+  }),
+});
+
+http.route({
   path: "/backend/chat/sessions/update",
   method: "POST",
   handler: httpAction(async (ctx, req) => {
@@ -207,6 +235,38 @@ http.route({
     });
 
     return json({ ok: true, data: updated ?? null });
+  }),
+});
+
+http.route({
+  path: "/backend/chat/sessions/delete",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId } = (await req.json()) as { clerkUserId: string; sessionId: string };
+
+    const deleted = await ctx.runMutation("chat:deleteSession" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+    });
+
+    return json({ ok: true, data: deleted ?? null });
+  }),
+});
+
+http.route({
+  path: "/backend/chat/sessions/reserve-sequence",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, sessionId } = (await req.json()) as { clerkUserId: string; sessionId: string };
+    const result = await ctx.runMutation("chat:reserveSequence" as any, {
+      clerk_user_id: clerkUserId,
+      session_id: sessionId,
+    });
+    return json({ ok: true, data: result });
   }),
 });
 
@@ -565,6 +625,146 @@ http.route({
     });
 
     return json({ ok: true, data: { items } });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/usage/get",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, periodKey } = (await req.json()) as {
+      clerkUserId: string;
+      periodKey: string;
+    };
+
+    const row = (await ctx.runQuery("subscriptions:getUsageByUserPeriod" as any, {
+      clerk_user_id: clerkUserId,
+      period_key: periodKey,
+    })) as Record<string, unknown> | null;
+
+    return json({ ok: true, data: row ? normalizeSubscription(row) : null });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/usage/upsert",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, periodKey, payload } = (await req.json()) as {
+      clerkUserId: string;
+      periodKey: string;
+      payload: Record<string, unknown>;
+    };
+
+    const row = (await ctx.runMutation("subscriptions:upsertUsage" as any, {
+      clerk_user_id: clerkUserId,
+      period_key: periodKey,
+      payload,
+    })) as Record<string, unknown>;
+
+    return json({ ok: true, data: normalizeSubscription(row) });
+  }),
+});
+
+http.route({
+  path: "/backend/subscriptions/usage/increment",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, periodKey, payload } = (await req.json()) as {
+      clerkUserId: string;
+      periodKey: string;
+      payload: Record<string, unknown>;
+    };
+
+    try {
+      const usage = await ctx.runMutation("subscriptions:incrementUsage" as any, {
+        clerk_user_id: clerkUserId,
+        period_key: periodKey,
+        payload,
+      });
+      return json({ ok: true, data: usage });
+    } catch (error) {
+      return json({ ok: false, error: String(error) }, 400);
+    }
+  }),
+});
+
+http.route({
+  path: "/backend/operations/create",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      payload: Record<string, unknown>;
+    };
+    const operation = await ctx.runMutation("operations:create" as any, {
+      clerk_user_id: clerkUserId,
+      payload,
+    });
+    return json({ ok: true, data: normalizeOperation(operation as Record<string, unknown>) });
+  }),
+});
+
+http.route({
+  path: "/backend/operations/get",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, operationId } = (await req.json()) as { clerkUserId: string; operationId: string };
+    const operation = await ctx.runQuery("operations:get" as any, {
+      clerk_user_id: clerkUserId,
+      operation_id: operationId,
+    });
+    return json({ ok: true, data: operation ? normalizeOperation(operation as Record<string, unknown>) : null });
+  }),
+});
+
+http.route({
+  path: "/backend/operations/by-idempotency",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, feature, idempotencyKey } = (await req.json()) as {
+      clerkUserId: string;
+      feature: string;
+      idempotencyKey: string;
+    };
+    const operation = await ctx.runQuery("operations:getByIdempotency" as any, {
+      clerk_user_id: clerkUserId,
+      feature,
+      idempotency_key: idempotencyKey,
+    });
+    return json({ ok: true, data: operation ? normalizeOperation(operation as Record<string, unknown>) : null });
+  }),
+});
+
+http.route({
+  path: "/backend/operations/update",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    if (!ensureBackendSecret(req)) return json({ ok: false, error: "unauthorized" }, 401);
+
+    const { clerkUserId, operationId, payload } = (await req.json()) as {
+      clerkUserId: string;
+      operationId: string;
+      payload: Record<string, unknown>;
+    };
+    const operation = await ctx.runMutation("operations:update" as any, {
+      clerk_user_id: clerkUserId,
+      operation_id: operationId,
+      payload,
+    });
+    return json({ ok: true, data: operation ? normalizeOperation(operation as Record<string, unknown>) : null });
   }),
 });
 

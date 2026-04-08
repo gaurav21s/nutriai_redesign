@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.core.exceptions import AuthorizationException
-from app.dependencies import get_in_memory_repository, get_rate_limiter
+from app.dependencies import get_in_memory_repository, get_rate_limiter, get_shared_coordinator
 from app.main import create_app
 from app.repositories.in_memory import InMemoryRepository
 from app.schemas.subscriptions import ConfirmCheckoutRequest
@@ -20,6 +20,7 @@ def _clear_dependency_caches():
     yield
     get_settings.cache_clear()
     get_rate_limiter.cache_clear()
+    get_shared_coordinator.cache_clear()
     get_in_memory_repository.cache_clear()
 
 
@@ -41,6 +42,7 @@ def test_non_demo_user_cannot_self_assign_paid_tier(monkeypatch: pytest.MonkeyPa
 
     get_settings.cache_clear()
     get_rate_limiter.cache_clear()
+    get_shared_coordinator.cache_clear()
     get_in_memory_repository.cache_clear()
 
     client = TestClient(create_app())
@@ -68,6 +70,7 @@ def test_dev_user_gets_demo_pro_subscription_by_default(monkeypatch: pytest.Monk
 
     get_settings.cache_clear()
     get_rate_limiter.cache_clear()
+    get_shared_coordinator.cache_clear()
     get_in_memory_repository.cache_clear()
 
     client = TestClient(create_app())

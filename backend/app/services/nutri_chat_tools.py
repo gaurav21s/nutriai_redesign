@@ -17,11 +17,17 @@ from langchain_core.tools import tool
 
 @tool("lookup_calculation_history")
 def lookup_calculation_history_tool(limit: int = 5) -> str:
-    """Look up the user's saved BMI and calorie calculations.
+    """Look up the user's saved BMI and calorie calculations from their history.
 
-    Use this when the user asks about their past calculations, BMI history,
-    calorie history, or wants to review previously saved numbers.
-    Returns a compact summary of their most recent saved calculations.
+    ALWAYS use this tool when the user:
+    - asks about their BMI, past BMI, BMI history, or "my BMI"
+    - asks about their calorie calculations, TDEE, or BMR history
+    - says "check my history", "get my data", "show my calculations"
+    - references any previously saved calculation numbers
+
+    Returns a compact summary of their most recent saved calculations including
+    BMI values, categories, calorie estimates, and dates.
+    limit: number of records to fetch (1-10, default 5)
     """
 
 

@@ -37,3 +37,19 @@ class MealPlanHistoryResponse(BaseModel):
 class MealPlanPdfRequest(BaseModel):
     full_name: str
     age: int
+
+
+class MealPlanPdfExportResponse(BaseModel):
+    id: str
+    created_at: datetime
+    meal_plan_record_id: str
+    full_name: str
+    age: int
+    file_name: str
+    mime_type: str = "application/pdf"
+    byte_size: int
+    operation_id: str | None = None
+
+
+class MealPlanPdfExportHistoryResponse(BaseModel):
+    items: list[MealPlanPdfExportResponse]

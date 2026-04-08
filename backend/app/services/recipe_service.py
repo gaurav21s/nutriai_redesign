@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from app.repositories.base import CompositeRepository
 from app.schemas.recipes import RecipeGenerateRequest, RecipeResponse
+from app.services.subscription_service import SubscriptionService
 from app.utils.ai_clients import GroqClient
 from app.utils.parsers import parse_recipe
 from app.utils.prompt_builders import recipe_prompt
@@ -11,10 +12,17 @@ from app.utils.shopping_links import build_shopping_links
 
 
 class RecipeService:
-    def __init__(self, repository: CompositeRepository, groq_client: GroqClient, affiliate_code: str) -> None:
+    def __init__(
+        self,
+        repository: CompositeRepository,
+        groq_client: GroqClient,
+        affiliate_code: str,
+        subscription_service: SubscriptionService,
+    ) -> None:
         self.repository = repository
         self.groq_client = groq_client
         self.affiliate_code = affiliate_code
+        self.subscription_service = subscription_service
 
     async def preview(self, payload: RecipeGenerateRequest) -> RecipeResponse:
         raw = await self.groq_client.generate_text(
@@ -35,7 +43,14 @@ class RecipeService:
             }
         )
 
-    async def save_preview(self, clerk_user_id: str, payload: RecipeGenerateRequest, response: RecipeResponse) -> dict:
+    async def save_preview(
+        self,
+        clerk_user_id: str,
+        payload: RecipeGenerateRequest,
+        response: RecipeResponse,
+        *,
+        record_metadata: dict | None = None,
+    ) -> dict:
         return await self.repository.create_record(
             "recipes",
             clerk_user_id,
@@ -48,21 +63,30 @@ class RecipeService:
                 "explanation": response.explanation,
                 "raw_response": response.raw_response,
                 "input": payload.model_dump(),
+                **(record_metadata or {}),
             },
         )
 
-    async def generate(self, clerk_user_id: str, payload: RecipeGenerateRequest) -> RecipeResponse:
+    async def generate(
+        self,
+        clerk_user_id: str,
+        payload: RecipeGenerateRequest,
+        *,
+        record_metadata: dict | None = None,
+    ) -> RecipeResponse:
+        await self.subscription_service.consume_nutrition_credits(clerk_user_id, 2, "recipe_finder")
         preview = await self.preview(payload)
-        record = await self.save_preview(clerk_user_id, payload, preview)
+        record = await self.save_preview(clerk_user_id, payload, preview, record_metadata=record_metadata)
         return RecipeResponse.model_validate(record)
 
     async def get_history(self, clerk_user_id: str, limit: int = 20) -> list[RecipeResponse]:
         records = await self.repository.list_records("recipes", clerk_user_id, limit)
+        records = await self.subscription_service.filter_history_rows(clerk_user_id, records)
         return [RecipeResponse.model_validate(item) for item in records]
 
     async def get_by_id(self, clerk_user_id: str, record_id: str) -> RecipeResponse | None:
         record = await self.repository.get_record("recipes", clerk_user_id, record_id)
-        if record is None:
+        if not await self.subscription_service.can_access_history_row(clerk_user_id, record):
             return None
         return RecipeResponse.model_validate(record)
 

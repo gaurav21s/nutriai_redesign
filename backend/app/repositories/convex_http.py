@@ -15,6 +15,7 @@ class ConvexHttpRepository(CompositeRepository):
         self.base_url = base_url.rstrip("/")
         self.backend_secret = backend_secret
         self.timeout_seconds = timeout_seconds
+        self._client = httpx.AsyncClient(timeout=timeout_seconds)
 
     @property
     def _headers(self) -> dict[str, str]:
@@ -27,10 +28,19 @@ class ConvexHttpRepository(CompositeRepository):
         url = f"{self.base_url}{path}"
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                response = await client.post(url, json=payload, headers=self._headers)
+            response = await self._client.post(url, json=payload, headers=self._headers)
         except Exception as exc:
             raise ExternalServiceException("Unable to reach Convex HTTP actions", details={"reason": str(exc)}) from exc
+
+        if response.status_code == 401:
+            raise ExternalServiceException(
+                "Convex HTTP action unauthorized",
+                details={
+                    "status_code": response.status_code,
+                    "body": response.text,
+                    "hint": "Check CONVEX_BACKEND_SECRET against Convex BACKEND_CONVEX_SHARED_SECRET",
+                },
+            )
 
         if response.status_code >= 400:
             raise ExternalServiceException(
@@ -77,12 +87,43 @@ class ConvexHttpRepository(CompositeRepository):
             {"clerkUserId": clerk_user_id, "title": title},
         )
 
+    async def get_chat_session(self, clerk_user_id: str, session_id: str) -> dict | None:
+        try:
+            result = await self._post(
+                "/backend/chat/sessions/get",
+                {"clerkUserId": clerk_user_id, "sessionId": session_id},
+            )
+            return result or None
+        except ExternalServiceException:
+            # The dedicated get endpoint may not exist in the deployed Convex version;
+            # fall back to scanning the session list.
+            result = await self._post(
+                "/backend/chat/sessions/list",
+                {"clerkUserId": clerk_user_id, "limit": 100},
+            )
+            items = result.get("items", [])
+            return next((item for item in items if item.get("session_id") == session_id), None)
+
     async def update_chat_session(self, clerk_user_id: str, session_id: str, payload: dict) -> dict | None:
         result = await self._post(
             "/backend/chat/sessions/update",
             {"clerkUserId": clerk_user_id, "sessionId": session_id, "payload": payload},
         )
         return result or None
+
+    async def delete_chat_session(self, clerk_user_id: str, session_id: str) -> dict | None:
+        result = await self._post(
+            "/backend/chat/sessions/delete",
+            {"clerkUserId": clerk_user_id, "sessionId": session_id},
+        )
+        return result or None
+
+    async def reserve_chat_sequence(self, clerk_user_id: str, session_id: str) -> int:
+        result = await self._post(
+            "/backend/chat/sessions/reserve-sequence",
+            {"clerkUserId": clerk_user_id, "sessionId": session_id},
+        )
+        return int(result.get("sequence_no") or 0)
 
     async def list_chat_sessions(self, clerk_user_id: str, limit: int = 30) -> list[dict]:
         result = await self._post(
@@ -234,3 +275,49 @@ class ConvexHttpRepository(CompositeRepository):
             {"clerkUserId": clerk_user_id, "limit": limit},
         )
         return result.get("items", [])
+
+    async def get_subscription_usage(self, clerk_user_id: str, period_key: str) -> dict | None:
+        result = await self._post(
+            "/backend/subscriptions/usage/get",
+            {"clerkUserId": clerk_user_id, "periodKey": period_key},
+        )
+        return result or None
+
+    async def upsert_subscription_usage(self, clerk_user_id: str, period_key: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/subscriptions/usage/upsert",
+            {"clerkUserId": clerk_user_id, "periodKey": period_key, "payload": payload},
+        )
+
+    async def increment_subscription_usage(self, clerk_user_id: str, period_key: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/subscriptions/usage/increment",
+            {"clerkUserId": clerk_user_id, "periodKey": period_key, "payload": payload},
+        )
+
+    async def create_operation(self, clerk_user_id: str, payload: dict) -> dict:
+        return await self._post(
+            "/backend/operations/create",
+            {"clerkUserId": clerk_user_id, "payload": payload},
+        )
+
+    async def get_operation(self, clerk_user_id: str, operation_id: str) -> dict | None:
+        result = await self._post(
+            "/backend/operations/get",
+            {"clerkUserId": clerk_user_id, "operationId": operation_id},
+        )
+        return result or None
+
+    async def get_operation_by_idempotency(self, clerk_user_id: str, feature: str, idempotency_key: str) -> dict | None:
+        result = await self._post(
+            "/backend/operations/by-idempotency",
+            {"clerkUserId": clerk_user_id, "feature": feature, "idempotencyKey": idempotency_key},
+        )
+        return result or None
+
+    async def update_operation(self, clerk_user_id: str, operation_id: str, payload: dict) -> dict | None:
+        result = await self._post(
+            "/backend/operations/update",
+            {"clerkUserId": clerk_user_id, "operationId": operation_id, "payload": payload},
+        )
+        return result or None

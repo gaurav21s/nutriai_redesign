@@ -17,6 +17,10 @@ class ChatSessionCreateRequest(BaseModel):
     title: str | None = Field(default=None, max_length=120)
 
 
+class ChatSessionUpdateRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+
+
 class ChatSessionResponse(BaseModel):
     session_id: str
     title: str
@@ -28,8 +32,14 @@ class ChatSessionsResponse(BaseModel):
     items: list[ChatSessionResponse]
 
 
+class ChatSessionDeleteResponse(BaseModel):
+    session_id: str
+    deleted: bool
+
+
 class ChatMessageCreateRequest(BaseModel):
     content: str = Field(..., min_length=1, max_length=4000)
+    idempotency_key: str | None = Field(default=None, min_length=8, max_length=200)
 
 
 class ChatReasoningStep(BaseModel):
@@ -64,6 +74,8 @@ class ChatMessageMetadata(BaseModel):
     reasoning_steps: list[ChatReasoningStep] = Field(default_factory=list)
     source_references: list[ChatSourceReference] = Field(default_factory=list)
     pending_action: ChatPendingAction | None = None
+    operation_id: str | None = None
+    sequence_no: int | None = None
 
 
 class ChatMessage(BaseModel):

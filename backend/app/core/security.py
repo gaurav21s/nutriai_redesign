@@ -20,6 +20,29 @@ class AuthContext:
 
     clerk_user_id: str
     token: str | None = None
+    email: str | None = None
+
+
+def _extract_email(claims: dict[str, object], request: Request) -> str | None:
+    for key in ("email", "email_address", "primary_email_address"):
+        value = claims.get(key)
+        if isinstance(value, str) and value:
+            return value
+
+    header_value = request.headers.get("x-user-email")
+    return header_value or None
+
+
+def _build_auth_context(claims: dict[str, object], *, token: str, request: Request) -> AuthContext:
+    subject = claims.get("sub")
+    if not isinstance(subject, str) or not subject:
+        raise AuthenticationException("Token does not contain a valid subject")
+
+    return AuthContext(
+        clerk_user_id=subject,
+        token=token,
+        email=_extract_email(claims, request),
+    )
 
 
 def _decode_clerk_jwt(token: str, settings: Settings) -> dict[str, object]:
@@ -57,9 +80,19 @@ async def get_auth_context(
     settings: Settings = Depends(get_settings),
 ) -> AuthContext:
     """Resolve authenticated user from Clerk bearer token."""
+    cached = getattr(request.state, "auth_context", None)
+    if isinstance(cached, AuthContext):
+        return cached
+
     if settings.auth_disabled:
         user_id = request.headers.get("x-dev-user-id", settings.dev_user_id)
-        return AuthContext(clerk_user_id=user_id, token=None)
+        context = AuthContext(
+            clerk_user_id=user_id,
+            token=None,
+            email=request.headers.get("x-user-email") or None,
+        )
+        request.state.auth_context = context
+        return context
 
     if credentials is None or not credentials.credentials:
         raise AuthenticationException("Missing bearer token")
@@ -72,11 +105,9 @@ async def get_auth_context(
             raise
         raise AuthenticationException("Invalid or expired token", details={"reason": str(exc)}) from exc
 
-    subject = claims.get("sub")
-    if not isinstance(subject, str) or not subject:
-        raise AuthenticationException("Token does not contain a valid subject")
-
-    return AuthContext(clerk_user_id=subject, token=token)
+    context = _build_auth_context(claims, token=token, request=request)
+    request.state.auth_context = context
+    return context
 
 
 async def get_optional_auth_context(
@@ -85,8 +116,18 @@ async def get_optional_auth_context(
     settings: Settings = Depends(get_settings),
 ) -> AuthContext | None:
     """Best-effort auth context for routes that can work anonymously."""
+    cached = getattr(request.state, "auth_context", None)
+    if isinstance(cached, AuthContext):
+        return cached
+
     if settings.auth_disabled:
-        return AuthContext(clerk_user_id=request.headers.get("x-dev-user-id", settings.dev_user_id), token=None)
+        context = AuthContext(
+            clerk_user_id=request.headers.get("x-dev-user-id", settings.dev_user_id),
+            token=None,
+            email=request.headers.get("x-user-email") or None,
+        )
+        request.state.auth_context = context
+        return context
 
     if credentials is None or not credentials.credentials:
         return None
@@ -96,8 +137,6 @@ async def get_optional_auth_context(
     except Exception:
         return None
 
-    subject = claims.get("sub")
-    if not isinstance(subject, str) or not subject:
-        return None
-
-    return AuthContext(clerk_user_id=subject, token=credentials.credentials)
+    context = _build_auth_context(claims, token=credentials.credentials, request=request)
+    request.state.auth_context = context
+    return context

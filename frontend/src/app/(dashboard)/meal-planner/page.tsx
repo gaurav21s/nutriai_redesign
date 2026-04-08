@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 
 import { FeatureShell } from "@/components/features/feature-shell";
@@ -14,7 +14,7 @@ import { Select } from "@/components/ui/select";
 import { useApiClient } from "@/hooks/useApiClient";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useConvexHistory } from "@/hooks/useConvexHistory";
-import type { MealPlanGenerateRequest, MealPlanResponse } from "@/types/api";
+import type { MealPlanGenerateRequest, MealPlanPdfExportResponse, MealPlanResponse } from "@/types/api";
 
 const defaults: MealPlanGenerateRequest = {
   gender: "Male",
@@ -35,6 +35,8 @@ export default function MealPlannerPage() {
   const [result, setResult] = useState<MealPlanResponse | null>(null);
   const [pdfName, setPdfName] = useState("");
   const [pdfAge, setPdfAge] = useState<number>(28);
+  const [savedExports, setSavedExports] = useState<MealPlanPdfExportResponse[]>([]);
+  const [loadingExports, setLoadingExports] = useState(false);
 
   const { data: history, loading: historyLoading, refreshInBackground } = useConvexHistory<MealPlanResponse>({
     functionName: "mealPlans:listByUser",
@@ -63,7 +65,37 @@ export default function MealPlannerPage() {
     anchor.download = `nutriai_meal_plan_${(pdfName || "user").toLowerCase().replace(/\s+/g, "_")}.pdf`;
     anchor.click();
     URL.revokeObjectURL(url);
+    const exports = await api.getMealPlanPdfExports(result.id, 20);
+    setSavedExports(exports);
   }
+
+  async function downloadSavedPdf(item: MealPlanPdfExportResponse) {
+    const blob = await api.downloadSavedMealPlanPdf(item.id);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = item.file_name;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  useEffect(() => {
+    async function loadSavedExports() {
+      if (!result?.id) {
+        setSavedExports([]);
+        return;
+      }
+      setLoadingExports(true);
+      try {
+        const exports = await api.getMealPlanPdfExports(result.id, 20);
+        setSavedExports(exports);
+      } finally {
+        setLoadingExports(false);
+      }
+    }
+
+    void loadSavedExports();
+  }, [api, result?.id]);
 
   return (
     <FeatureShell
@@ -214,6 +246,39 @@ export default function MealPlannerPage() {
                   Download PDF
                 </Button>
               </div>
+            </div>
+
+            <div className="mt-6 border-t border-vibrant/10 pt-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-vibrant/70">Saved PDFs</p>
+              {loadingExports ? (
+                <p className="mt-3 text-sm text-foreground/40">Loading saved exports...</p>
+              ) : savedExports.length ? (
+                <div className="mt-4 space-y-3">
+                  {savedExports.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-3 rounded-editorial border border-black/[0.03] bg-white/60 p-4 shadow-soft-glow md:flex-row md:items-center md:justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{item.full_name} · Age {item.age}</p>
+                        <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-foreground/35">
+                          {new Date(item.created_at).toLocaleString()} · {Math.max(1, Math.round(item.byte_size / 1024))} KB
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => void downloadSavedPdf(item)}
+                      >
+                        Re-download
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-foreground/40">No saved PDFs yet for this meal plan.</p>
+              )}
             </div>
           </ResultBlock>
         </div>

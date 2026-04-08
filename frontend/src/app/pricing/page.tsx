@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Check, Sparkles, ArrowRight } from "lucide-react";
 import { motion, type Variants } from "framer-motion";
 
@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select } from "@/components/ui/select";
 import { useApiClient } from "@/hooks/useApiClient";
 import { useAsyncAction } from "@/hooks/useAsyncAction";
-import type { CurrencyCode, PlanSummary, PlanTier, SubscriptionRecord } from "@/types/api";
+import type { CurrencyCode, PlanLimits, PlanSummary, PlanTier, SubscriptionRecord } from "@/types/api";
 
 function formatPrice(plan: PlanSummary, currency: CurrencyCode): string {
   const amount = currency === "USD" ? plan.price_usd.amount : plan.price_inr.amount;
@@ -43,9 +43,22 @@ const item: Variants = {
   },
 };
 
+function formatHistory(historyDays: number | null): string {
+  if (historyDays == null) return "Unlimited history";
+  return `${historyDays}-day history`;
+}
+
+function limitHighlights(limits: PlanLimits): string[] {
+  return [
+    `${limits.monthly_nutrition_credits} nutrition credits / month`,
+    `${limits.monthly_chat_messages} chat messages / month`,
+    limits.pdf_exports_per_month > 0 ? `${limits.pdf_exports_per_month} PDF exports / month` : "No PDF exports included",
+    formatHistory(limits.history_days),
+  ];
+}
+
 export default function PricingPage() {
   const api = useApiClient();
-  const { user } = useUser();
 
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [current, setCurrent] = useState<SubscriptionRecord | null>(null);
@@ -122,8 +135,8 @@ export default function PricingPage() {
               transition={{ delay: 0.2 }}
               className="text-xl text-foreground/60 leading-relaxed font-medium"
             >
-              Simple monthly pricing in USD and INR.
-              Pick the plan that fits your needs.
+              Flexible monthly pricing with clear credits, chat limits, and history windows.
+              Pick the plan that matches how often you actually use NutriAI.
             </motion.p>
           </div>
 
@@ -208,6 +221,17 @@ export default function PricingPage() {
                           </li>
                         ))}
                       </ul>
+
+                      <div className="rounded-[24px] border border-black/[0.04] bg-black/[0.02] p-5">
+                        <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-foreground/35">Plan Limits</p>
+                        <ul className="space-y-3">
+                          {limitHighlights(plan.limits).map((line) => (
+                            <li key={line} className="text-xs font-semibold uppercase tracking-widest text-foreground/55">
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
 
                       <div className="pt-8">
                         <SignedIn>

@@ -19,6 +19,7 @@ from app.schemas.recipes import RecipeGenerateRequest
 from app.schemas.recommendations import RecommendationGenerateRequest
 from app.services.nutri_chat_tools import ALL_TOOLS, LOOKUP_TOOL_NAMES, PREVIEW_TOOL_NAMES
 from app.utils.ai_clients import _response_text
+from app.utils.fallback_ai_clients import FallbackOpenRouterClient
 from app.utils.prompt_builders import agent_chat_system_prompt
 
 
@@ -246,6 +247,42 @@ class OpenRouterAgentModel:
         )
 
 
+class FallbackAgentModel:
+    """Deterministic fallback agent used in local/dev when live providers are unavailable."""
+
+    def __init__(self, model_client: Any | None = None) -> None:
+        self.model_client = model_client or FallbackOpenRouterClient()
+
+    async def invoke(self, messages: list[BaseMessage]) -> AIMessage:
+        prompt_lines: list[str] = [
+            "You are NutriAI's fallback assistant.",
+            "Answer directly and do not emit tool calls.",
+            "",
+            "Conversation:",
+        ]
+
+        for message in messages[-8:]:
+            if isinstance(message, SystemMessage):
+                role = "SYSTEM"
+            elif isinstance(message, HumanMessage):
+                role = "USER"
+            elif isinstance(message, ToolMessage):
+                role = "TOOL"
+            else:
+                role = "ASSISTANT"
+            prompt_lines.append(f"{role}: {_message_text(message)}")
+
+        try:
+            content = await self.model_client.generate_text("\n".join(prompt_lines))
+        except Exception as exc:
+            raise ExternalServiceException(
+                "Nutri Agent fallback generation failed",
+                details={"reason": str(exc)},
+            ) from exc
+
+        return AIMessage(content=str(content).strip())
+
+
 # ---------------------------------------------------------------------------
 # Agent runtime (LangGraph)
 # ---------------------------------------------------------------------------
@@ -382,6 +419,11 @@ class NutriChatAgentRuntime:
                     "final_response": "I'm having trouble connecting right now. Please try again in a moment.",
                 }
 
+        # Mark the initial review step as completed
+        start_step["status"] = "completed"
+        if emitter:
+            await emitter({"type": "reasoning_step", "data": start_step})
+
         messages = [*state.get("messages", []), model_response]
         tool_calls: list[dict[str, Any]] = list(getattr(model_response, "tool_calls", []) or [])
 
@@ -511,6 +553,7 @@ class NutriChatAgentRuntime:
         called_signatures = list(state.get("called_tool_signatures", []))
 
         # ── Emit "running" steps for all tools before gathering ──────
+        running_step_by_tool: dict[str, dict[str, Any]] = {}
         for tc in tool_calls:
             tool_name = _tool_call_name(tc)
             readable = _readable_tool_name(tool_name)
@@ -522,6 +565,7 @@ class NutriChatAgentRuntime:
                 "running",
             )
             reasoning_steps.append(step)
+            running_step_by_tool[tool_name] = step
 
         # ── Execute all tool calls concurrently ──────────────────────
         async def _execute_one(tc: dict[str, Any]) -> dict[str, Any]:
@@ -569,14 +613,15 @@ class NutriChatAgentRuntime:
             )
             new_tool_messages.append(tool_message)
 
-            completed_step = await self._emit(
-                reasoning_steps,
-                emitter,
-                f"Reviewed {readable}",
-                str(result.get("reasoning_note", "Result is ready and will be used in the answer.")),
-                "completed",
-            )
-            reasoning_steps.append(completed_step)
+            # Mark the corresponding "Running X" step as completed
+            running_step = running_step_by_tool.get(tool_name)
+            if running_step:
+                running_step["status"] = "completed"
+                running_step["detail"] = str(
+                    result.get("reasoning_note", "Result is ready and will be used in the answer.")
+                )
+                if emitter:
+                    await emitter({"type": "reasoning_step", "data": running_step})
 
             # Accumulate source references
             source_ref = result.get("source_reference")

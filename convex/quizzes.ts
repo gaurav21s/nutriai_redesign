@@ -11,6 +11,7 @@ export const createSession = mutation({
     const doc = {
       session_id,
       clerk_user_id: args.clerk_user_id,
+      operation_id: typeof args.payload.operation_id === "string" ? args.payload.operation_id : undefined,
       topic: args.payload.topic,
       difficulty: args.payload.difficulty,
       questions: args.payload.questions ?? [],
@@ -41,6 +42,7 @@ export const createSubmission = mutation({
       attempt_id,
       session_id: args.session_id,
       clerk_user_id: args.clerk_user_id,
+      operation_id: typeof args.payload.operation_id === "string" ? args.payload.operation_id : undefined,
       total_questions: args.payload.total_questions,
       correct_answers: args.payload.correct_answers,
       score_percentage: args.payload.score_percentage,

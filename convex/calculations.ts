@@ -10,6 +10,8 @@ export const create = mutation({
     const doc = {
       record_id,
       clerk_user_id: args.clerk_user_id,
+      operation_id: typeof args.payload.operation_id === "string" ? args.payload.operation_id : undefined,
+      idempotency_key: typeof args.payload.idempotency_key === "string" ? args.payload.idempotency_key : undefined,
       calculator_type: args.payload.calculator_type,
       payload: args.payload.payload,
       result: args.payload.result,

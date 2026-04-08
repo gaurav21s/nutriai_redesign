@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, Query, Request, UploadFile
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppException, NotFoundException
 from app.core.security import AuthContext, get_auth_context
-from app.dependencies import ai_rate_limit, default_rate_limit, get_ingredient_checks_service
+from app.dependencies import ai_rate_limit, default_rate_limit, get_ingredient_checks_service, get_operations_service
 from app.schemas.ingredient_checks import (
     IngredientCheckHistoryResponse,
     IngredientCheckRequest,
     IngredientCheckResponse,
 )
+from app.schemas.operations import OperationSubmitRequest
 from app.services.ingredient_checks_service import IngredientChecksService
 
 router = APIRouter(prefix="/ingredient-checks", tags=["Ingredient Checks"])
@@ -28,6 +29,7 @@ async def analyze_ingredients(
     auth: AuthContext = Depends(get_auth_context),
     settings: Settings = Depends(get_settings),
     service: IngredientChecksService = Depends(get_ingredient_checks_service),
+    operations_service=Depends(get_operations_service),
 ) -> IngredientCheckResponse:
     content_type = request.headers.get("content-type", "")
 
@@ -41,7 +43,15 @@ async def analyze_ingredients(
         content = await image.read()
         if len(content) > settings.max_upload_size_mb * 1024 * 1024:
             raise AppException("PAYLOAD_TOO_LARGE", "Uploaded image exceeds maximum size", status_code=413)
-        return await service.analyze_image(auth.clerk_user_id, content, image.content_type or "image/png")
+        operation = await operations_service.submit_and_wait(
+            auth.clerk_user_id,
+            OperationSubmitRequest(
+                feature="ingredient_check_analyze",
+                payload={"input_mode": "image", "image_mime_type": image.content_type or "image/png"},
+            ),
+            runtime_payload={"image_bytes": content},
+        )
+        return IngredientCheckResponse.model_validate(operation.response_payload)
 
     try:
         payload = IngredientCheckRequest.model_validate(await request.json())
@@ -54,9 +64,21 @@ async def analyze_ingredients(
         from app.utils.ai_clients import decode_base64_payload
 
         bytes_payload = decode_base64_payload(payload.image_base64)
-        return await service.analyze_image(auth.clerk_user_id, bytes_payload, payload.image_mime_type)
+        operation = await operations_service.submit_and_wait(
+            auth.clerk_user_id,
+            OperationSubmitRequest(
+                feature="ingredient_check_analyze",
+                payload=payload.model_dump(mode="json"),
+            ),
+            runtime_payload={"image_bytes": bytes_payload},
+        )
+        return IngredientCheckResponse.model_validate(operation.response_payload)
 
-    return await service.analyze_text(auth.clerk_user_id, payload.ingredients_text or "")
+    operation = await operations_service.submit_and_wait(
+        auth.clerk_user_id,
+        OperationSubmitRequest(feature="ingredient_check_analyze", payload=payload.model_dump(mode="json")),
+    )
+    return IngredientCheckResponse.model_validate(operation.response_payload)
 
 
 @router.get(
