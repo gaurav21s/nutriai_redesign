@@ -34,7 +34,7 @@ from app.services.nutri_chat_service import NutriChatService
 from app.services.operations_service import OperationsService
 from app.services.quiz_service import QuizService
 from app.services.recipe_service import RecipeService
-from app.services.recommendation_service import RecommendationService
+from app.services.smart_picks_service import SmartPicksService
 from app.services.subscription_service import SubscriptionService
 from app.utils.ai_clients import GeminiClient, GroqClient, OpenRouterClient, TogetherClient
 from app.utils.fallback_ai_clients import (
@@ -238,19 +238,7 @@ def get_nutri_chat_service(
     settings: Settings = Depends(get_settings),
     subscription_service: SubscriptionService = Depends(get_subscription_service),
 ) -> NutriChatService:
-    calculator_service = CalculatorService(repository=repository, subscription_service=subscription_service)
     groq_client = _build_groq_client(settings)
-    recipe_service = RecipeService(
-        repository=repository,
-        groq_client=groq_client,  # type: ignore[arg-type]
-        affiliate_code=settings.affiliate_code,
-        subscription_service=subscription_service,
-    )
-    recommendation_service = RecommendationService(
-        repository=repository,
-        groq_client=groq_client,  # type: ignore[arg-type]
-        subscription_service=subscription_service,
-    )
 
     if settings.agent_chat_provider == "openrouter":
         agent_model = OpenRouterAgentModel(_build_openrouter_client(settings))
@@ -271,9 +259,6 @@ def get_nutri_chat_service(
     service = NutriChatService(
         repository=repository,
         agent_runtime=runtime,
-        calculator_service=calculator_service,
-        recipe_service=recipe_service,
-        recommendation_service=recommendation_service,
         subscription_service=subscription_service,
     )
     return service
@@ -292,7 +277,7 @@ def get_operations_service(
         affiliate_code=settings.affiliate_code,
         subscription_service=subscription_service,
     )
-    recommendation_service = RecommendationService(
+    smart_picks_service = SmartPicksService(
         repository=repository,
         groq_client=groq_client,  # type: ignore[arg-type]
         subscription_service=subscription_service,
@@ -335,7 +320,7 @@ def get_operations_service(
         subscription_service=subscription_service,
         calculator_service=calculator_service,
         recipe_service=recipe_service,
-        recommendation_service=recommendation_service,
+        smart_picks_service=smart_picks_service,
         food_insights_service=food_insights_service,
         ingredient_checks_service=ingredient_checks_service,
         meal_plan_service=meal_plan_service,
@@ -358,12 +343,12 @@ def get_article_service(
     return ArticleService(repository=repository, project_root=project_root)
 
 
-def get_recommendation_service(
+def get_smart_picks_service(
     repository: CompositeRepository = Depends(get_repository),
     settings: Settings = Depends(get_settings),
     subscription_service: SubscriptionService = Depends(get_subscription_service),
-) -> RecommendationService:
-    return RecommendationService(
+) -> SmartPicksService:
+    return SmartPicksService(
         repository=repository,
         groq_client=_build_groq_client(settings),
         subscription_service=subscription_service,

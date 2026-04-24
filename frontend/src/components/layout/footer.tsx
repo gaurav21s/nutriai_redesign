@@ -20,7 +20,7 @@ export function Footer() {
         <div className="mb-12 grid grid-cols-1 gap-10 md:grid-cols-12">
           <div className="md:col-span-6">
             <Link href="/" className="mb-8 flex items-center gap-3 text-foreground group">
-              <div className="flex h-10 w-10 items-center justify-center bg-vibrant/10 text-vibrant">
+              <div className="flex h-10 w-10 items-center justify-center border-b-2 border-heritage/60 bg-vibrant/10 text-vibrant">
                 <Leaf className="h-6 w-6" />
               </div>
               <span className="font-display text-2xl font-bold tracking-tight">NutriAI</span>
@@ -36,6 +36,7 @@ export function Footer() {
               <li><Link href="/food-insight" className="hover:text-foreground">Food Insight</Link></li>
               <li><Link href="/meal-planner" className="hover:text-foreground">Meal Planner</Link></li>
               <li><Link href="/recipe-finder" className="hover:text-foreground">Recipe Finder</Link></li>
+              <li><Link href="/nutri-smart-picks" className="hover:text-foreground">Nutri Smart Picks</Link></li>
             </ul>
           </div>
 

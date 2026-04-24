@@ -51,7 +51,7 @@ const sections: NavSection[] = [
       { href: "/nutri-chat", label: "Nutri Chat", icon: MessageSquare, permissionKey: "nutri_chat" },
       { href: "/nutri-quiz", label: "Nutri Quiz", icon: Sparkles, permissionKey: "nutri_quiz" },
       { href: "/nutri-calc", label: "Nutri Calc", icon: Calculator, permissionKey: "nutri_calc" },
-      { href: "/recommendations", label: "Recommendations", icon: Apple, permissionKey: "recommendations" },
+      { href: "/nutri-smart-picks", label: "Nutri Smart Picks", icon: Apple, permissionKey: "recommendations" },
     ],
   },
   {
@@ -98,7 +98,7 @@ export function Sidebar({
               <div>
                 <div className="text-lg font-display font-semibold tracking-tight text-foreground">
                   <span>Nutri</span>
-                  <span className="text-vibrant italic">AI</span>
+                  <span className="text-heritage italic">AI</span>
                 </div>
                 <div className="text-xs text-foreground/55">Workspace</div>
               </div>
@@ -156,7 +156,7 @@ export function Sidebar({
                         locked && "opacity-70"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", active ? "text-vibrant" : "text-foreground/55")} />
+                      <Icon className={cn("h-4 w-4 flex-shrink-0", active ? "text-vibrant" : "text-vibrant/50")} />
                       {!collapsed ? <span className="flex-1">{item.label}</span> : null}
                       {!collapsed && locked ? <Lock className="h-3.5 w-3.5 text-foreground/40" /> : null}
                     </Link>

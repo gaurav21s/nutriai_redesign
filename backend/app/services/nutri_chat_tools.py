@@ -41,13 +41,15 @@ def lookup_recipe_history_tool(limit: int = 3) -> str:
     """
 
 
-@tool("lookup_recommendation_history")
-def lookup_recommendation_history_tool(limit: int = 3) -> str:
-    """Look up the user's saved nutrition recommendation sets.
+@tool("lookup_smart_picks_history")
+def lookup_smart_picks_history_tool(limit: int = 3) -> str:
+    """Look up the user's saved Nutri Smart Picks decision sets.
 
-    Use this when the user asks about their past recommendations, wants to
-    review previously suggested food alternatives or healthy recipes they saved.
-    Returns a compact summary of their most recent saved recommendation sets.
+    Use this when the user asks about their past smart picks, wants to
+    review previously ranked food options, or needs saved real-world choice history.
+    Nutri Smart Picks is the structured compare/rank/choose feature for
+    real-life food situations, not a meal plan, recipe, or open-ended coach.
+    Returns a compact summary of their most recent saved Nutri Smart Picks sets.
     """
 
 
@@ -82,94 +84,23 @@ def lookup_ingredient_checks_history_tool(limit: int = 3) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Preview tools (generate new content — may produce a pending save action)
-# ---------------------------------------------------------------------------
-
-
-@tool("preview_bmi")
-def preview_bmi_tool(weight_kg: float, height_cm: float) -> str:
-    """Calculate a BMI preview from weight in kilograms and height in centimeters.
-
-    Use this when the user provides their weight and height and wants to know
-    their BMI. The result is a preview — the user can choose to save it afterward.
-    weight_kg: body weight in kilograms (e.g. 70.0)
-    height_cm: height in centimeters (e.g. 175.0)
-    """
-
-
-@tool("preview_calories")
-def preview_calories_tool(
-    gender: str,
-    weight_kg: float,
-    height_cm: float,
-    age: int,
-    activity_multiplier: float,
-) -> str:
-    """Estimate daily maintenance calories (BMR × activity multiplier).
-
-    Use this when the user wants to know their calorie needs or TDEE.
-    gender: "Male" or "Female"
-    weight_kg: body weight in kilograms
-    height_cm: height in centimeters
-    age: age in years
-    activity_multiplier: sedentary=1.2, light=1.375, moderate=1.55, active=1.725, very active=1.9
-    The result is a preview — the user can choose to save it afterward.
-    """
-
-
-@tool("preview_recommendations")
-def preview_recommendations_tool(query: str, recommendation_type: str = "both") -> str:
-    """Generate nutrition recommendations for a food or meal query.
-
-    Use this when the user wants healthier food alternatives, new healthy
-    recipe ideas, or nutritional recommendations for a specific food/meal.
-    query: the food, meal, or goal the user is asking about
-    recommendation_type: "healthier_alternative", "new_healthy_recipe", or "both"
-    The result is a preview — the user can choose to save it afterward.
-    """
-
-
-@tool("preview_recipe")
-def preview_recipe_tool(dish_name: str, recipe_type: str = "new_healthy") -> str:
-    """Generate a recipe preview for a requested dish or nutritional goal.
-
-    Use this when the user asks for a specific recipe, wants to cook something
-    healthy, or needs a recipe suggestion aligned with their fitness goals.
-    dish_name: name of the dish or a description like "high protein chicken bowl"
-    recipe_type: "normal", "healthier", or "new_healthy"
-    The result is a preview — the user can choose to save it afterward.
-    """
-
-
-# ---------------------------------------------------------------------------
 # Tool registry — all tools in one list for .bind_tools()
 # ---------------------------------------------------------------------------
 
 ALL_TOOLS = [
     lookup_calculation_history_tool,
     lookup_recipe_history_tool,
-    lookup_recommendation_history_tool,
+    lookup_smart_picks_history_tool,
     lookup_meal_plan_history_tool,
     lookup_food_insights_history_tool,
     lookup_ingredient_checks_history_tool,
-    preview_bmi_tool,
-    preview_calories_tool,
-    preview_recommendations_tool,
-    preview_recipe_tool,
 ]
 
 LOOKUP_TOOL_NAMES = {
     "lookup_calculation_history",
     "lookup_recipe_history",
-    "lookup_recommendation_history",
+    "lookup_smart_picks_history",
     "lookup_meal_plan_history",
     "lookup_food_insights_history",
     "lookup_ingredient_checks_history",
-}
-
-PREVIEW_TOOL_NAMES = {
-    "preview_bmi",
-    "preview_calories",
-    "preview_recommendations",
-    "preview_recipe",
 }

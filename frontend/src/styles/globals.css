@@ -18,10 +18,14 @@
   }
 
   body {
-    @apply bg-background text-foreground selection:bg-vibrant/20 selection:text-foreground antialiased;
+    @apply bg-background text-foreground selection:bg-heritage/15 selection:text-foreground antialiased;
     font-family: "IBM Plex Sans", "Aptos", "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::marker {
+    color: rgb(var(--accent-pink));
   }
 
   h1,
@@ -42,8 +46,25 @@
   .editorial-card {
     @apply bg-white border border-black/[0.08] transition-colors duration-150;
   }
-  
+
   .app-panel {
     @apply bg-white border border-black/[0.08] rounded-editorial;
+  }
+}
+
+@layer utilities {
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out both;
   }
 }

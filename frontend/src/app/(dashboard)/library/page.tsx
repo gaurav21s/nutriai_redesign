@@ -88,7 +88,7 @@ export default function LibraryPage() {
         api.getQuizHistory(30),
         api.listChatSessions(30),
         api.getCalculationHistory(30),
-        api.getRecommendationHistory(30),
+        api.getSmartPicksHistory(30),
       ]);
 
       const rows: LibraryEntry[] = [
@@ -158,10 +158,10 @@ export default function LibraryPage() {
         ...recommendations.map((item) => ({
           id: `rec-${item.id}`,
           feature: "recommendation" as const,
-          featureLabel: "Recommendations",
+          featureLabel: "Nutri Smart Picks",
           createdAt: item.created_at,
           title: item.title,
-          summary: `${item.recommendations.length} suggestions`,
+          summary: `${item.ranked_options.length} ranked picks`,
           detail: item,
         })),
       ];
@@ -268,7 +268,7 @@ export default function LibraryPage() {
                     <option value="quiz">Nutri Quiz</option>
                     <option value="chat">Nutri Chat</option>
                     <option value="calculator">Nutri Calc</option>
-                    <option value="recommendation">Recommendations</option>
+                    <option value="recommendation">Nutri Smart Picks</option>
                   </Select>
                 </div>
                 <div className="space-y-2">

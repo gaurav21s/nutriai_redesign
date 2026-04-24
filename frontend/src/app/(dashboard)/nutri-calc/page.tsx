@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Activity, PieChart, Info, ArrowRight, History, Trash2, Check, RefreshCw } from "lucide-react";
 
@@ -72,10 +73,11 @@ function normalizeStoredDates(raw: unknown): string[] {
   return [...new Set(dates)];
 }
 
-export default function NutriCalcPage() {
+function NutriCalcPageContent() {
   const api = useApiClient();
   const { user } = useUser();
 
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("bmi");
 
   const [weightKg, setWeightKg] = useState(70);
@@ -84,6 +86,21 @@ export default function NutriCalcPage() {
   const [gender, setGender] = useState<"Male" | "Female">("Male");
   const [age, setAge] = useState(28);
   const [activityMultiplier, setActivityMultiplier] = useState(1.55);
+
+  useEffect(() => {
+    const m = searchParams.get("mode");
+    if (m === "bmi" || m === "calories") setMode(m);
+    const w = searchParams.get("weight");
+    const h = searchParams.get("height");
+    if (w) setWeightKg(Number(w));
+    if (h) setHeightCm(Number(h));
+    const g = searchParams.get("gender");
+    if (g === "Male" || g === "Female") setGender(g);
+    const a = searchParams.get("age");
+    if (a) setAge(Number(a));
+    const act = searchParams.get("activity");
+    if (act) setActivityMultiplier(Number(act));
+  }, [searchParams]);
 
   const [bmiResult, setBmiResult] = useState<BMIResponse | null>(null);
   const [caloriesResult, setCaloriesResult] = useState<CaloriesResponse | null>(null);
@@ -408,5 +425,13 @@ export default function NutriCalcPage() {
         )}
       </div>
     </FeatureShell>
+  );
+}
+
+export default function NutriCalcPage() {
+  return (
+    <Suspense fallback={null}>
+      <NutriCalcPageContent />
+    </Suspense>
   );
 }

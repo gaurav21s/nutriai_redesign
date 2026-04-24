@@ -44,9 +44,9 @@ const featureFunctions: Record<
     list: "calculations:listByUser",
   },
   recommendations: {
-    create: "recommendations:create",
-    list: "recommendations:listByUser",
-    get: "recommendations:getById",
+    create: "smartPicks:create",
+    list: "smartPicks:listByUser",
+    get: "smartPicks:getById",
   },
 };
 

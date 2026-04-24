@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Sparkles, Utensils } from "lucide-react";
 
@@ -72,12 +73,20 @@ function StoreAction({
   );
 }
 
-export default function RecipeFinderPage() {
+function RecipeFinderPageContent() {
   const api = useApiClient();
   const { user } = useUser();
 
+  const searchParams = useSearchParams();
   const [dishName, setDishName] = useState("");
   const [recipeType, setRecipeType] = useState<RecipeType>("normal");
+
+  useEffect(() => {
+    const dish = searchParams.get("dish");
+    const type = searchParams.get("type");
+    if (dish) setDishName(dish);
+    if (type && ["normal", "healthier", "new_healthy"].includes(type)) setRecipeType(type as RecipeType);
+  }, [searchParams]);
   const [recipe, setRecipe] = useState<RecipeResponse | null>(null);
   const [fallbackLinks, setFallbackLinks] = useState<Record<string, ShoppingLinkPair>>({});
   const [linksLoading, setLinksLoading] = useState(false);
@@ -289,5 +298,13 @@ export default function RecipeFinderPage() {
         </div>
       ) : null}
     </FeatureShell>
+  );
+}
+
+export default function RecipeFinderPage() {
+  return (
+    <Suspense fallback={null}>
+      <RecipeFinderPageContent />
+    </Suspense>
   );
 }

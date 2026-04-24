@@ -53,28 +53,18 @@ def _is_simple_greeting(content: str) -> str | None:
 
 from app.repositories.base import CompositeRepository
 from app.schemas.nutri_chat import (
-    ChatActionResponse,
     ChatContextResponse,
     ChatMessage,
     ChatMessageMetadata,
-    ChatPendingAction,
     ChatSessionDeleteResponse,
     ChatSessionResponse,
 )
-from app.services.calculator_service import CalculatorService
 from app.services.nutri_chat_agent import (
     NutriChatAgentRuntime,
     build_context_sections,
-    build_pending_action,
     build_tool_reference,
-    validate_bmi_input,
-    validate_calorie_input,
-    validate_recipe_input,
-    validate_recommendation_input,
 )
 from app.services.nutri_chat_tools import LOOKUP_TOOL_NAMES
-from app.services.recipe_service import RecipeService
-from app.services.recommendation_service import RecommendationService
 from app.services.subscription_service import SubscriptionService
 
 
@@ -83,16 +73,10 @@ class NutriChatService:
         self,
         repository: CompositeRepository,
         agent_runtime: NutriChatAgentRuntime,
-        calculator_service: CalculatorService,
-        recipe_service: RecipeService,
-        recommendation_service: RecommendationService,
         subscription_service: SubscriptionService,
     ) -> None:
         self.repository = repository
         self.agent_runtime = agent_runtime
-        self.calculator_service = calculator_service
-        self.recipe_service = recipe_service
-        self.recommendation_service = recommendation_service
         self.subscription_service = subscription_service
 
     async def create_session(self, clerk_user_id: str, title: str | None = None) -> ChatSessionResponse:
@@ -157,17 +141,7 @@ class NutriChatService:
     async def list_messages(self, clerk_user_id: str, session_id: str, limit: int = 100) -> list[ChatMessage]:
         rows = await self.repository.list_chat_messages(clerk_user_id, session_id, limit)
         rows = await self.subscription_service.filter_history_rows(clerk_user_id, rows)
-        hydrated: list[ChatMessage] = []
-        for row in rows:
-            metadata = row.get("metadata")
-            if isinstance(metadata, dict) and isinstance(metadata.get("pending_action"), dict):
-                action_id = str(metadata["pending_action"].get("action_id", "")).strip()
-                if action_id:
-                    latest_action = await self.repository.get_chat_action(clerk_user_id, session_id, action_id)
-                    if latest_action:
-                        metadata = {**metadata, "pending_action": latest_action}
-            hydrated.append(ChatMessage.model_validate({**row, "metadata": metadata}))
-        return hydrated
+        return [ChatMessage.model_validate(row) for row in rows]
 
     async def get_context(self, clerk_user_id: str, session_id: str | None = None) -> ChatContextResponse:
         _ = session_id
@@ -272,74 +246,6 @@ class NutriChatService:
             except (asyncio.CancelledError, Exception):
                 pass
 
-    async def confirm_action(self, clerk_user_id: str, session_id: str, action_id: str) -> ChatActionResponse:
-        action = await self.repository.get_chat_action(clerk_user_id, session_id, action_id)
-        if not action:
-            raise NotFoundException("Pending action not found")
-        if action.get("status") != "pending":
-            raise AppException("INVALID_ACTION_STATE", "Only pending actions can be confirmed")
-
-        kind = str(action.get("kind", ""))
-        preview_payload = action.get("preview_payload", {})
-        saved_record_id: str | None = None
-
-        if kind == "save_calculation":
-            calculator_type = str(preview_payload.get("calculator_type", ""))
-            input_payload = preview_payload.get("input", {})
-            result_payload = preview_payload.get("result", {})
-            _ = result_payload
-            if calculator_type == "bmi":
-                request = validate_bmi_input(input_payload)
-                response = await self.calculator_service.preview_bmi(request)
-                record = await self.calculator_service.save_bmi_preview(clerk_user_id, request, response)
-                saved_record_id = str(record.get("id", ""))
-            elif calculator_type == "calories":
-                request = validate_calorie_input(input_payload)
-                response = await self.calculator_service.preview_calories(request)
-                record = await self.calculator_service.save_calories_preview(clerk_user_id, request, response)
-                saved_record_id = str(record.get("id", ""))
-            else:
-                raise AppException("INVALID_ACTION", "Unsupported calculator action payload")
-        elif kind == "save_recommendations":
-            request = validate_recommendation_input(preview_payload.get("input", {}))
-            response = await self.recommendation_service.preview(request)
-            record = await self.recommendation_service.save_preview(clerk_user_id, request, response)
-            saved_record_id = str(record.get("id", ""))
-        elif kind == "save_recipe":
-            request = validate_recipe_input(preview_payload.get("input", {}))
-            response = await self.recipe_service.preview(request)
-            record = await self.recipe_service.save_preview(clerk_user_id, request, response)
-            saved_record_id = str(record.get("id", ""))
-        else:
-            raise AppException("INVALID_ACTION", "Unsupported pending action type")
-
-        updated = await self.repository.update_chat_action(
-            clerk_user_id, session_id, action_id,
-            {"status": "confirmed", "saved_record_id": saved_record_id},
-        )
-        if not updated:
-            raise NotFoundException("Pending action not found")
-
-        await self.repository.add_chat_message(
-            clerk_user_id, session_id, "assistant",
-            "Saved! You can find it in your history now.",
-        )
-        return ChatActionResponse(action=ChatPendingAction.model_validate(updated))
-
-    async def reject_action(self, clerk_user_id: str, session_id: str, action_id: str) -> ChatActionResponse:
-        action = await self.repository.get_chat_action(clerk_user_id, session_id, action_id)
-        if not action:
-            raise NotFoundException("Pending action not found")
-        if action.get("status") != "pending":
-            raise AppException("INVALID_ACTION_STATE", "Only pending actions can be rejected")
-
-        updated = await self.repository.update_chat_action(
-            clerk_user_id, session_id, action_id, {"status": "rejected"},
-        )
-        if not updated:
-            raise NotFoundException("Pending action not found")
-        return ChatActionResponse(action=ChatPendingAction.model_validate(updated))
-
     async def _run_turn(
         self,
         clerk_user_id: str,
@@ -432,19 +338,11 @@ class NutriChatService:
             emitter=emitter,
         )
 
-        # ── Persist pending action BEFORE saving the message ────────
-        pending_action_data: dict[str, Any] | None = agent_result.get("pending_action")
-        persisted_action: dict[str, Any] | None = None
-        if pending_action_data and isinstance(pending_action_data, dict):
-            persisted_action = await self.repository.create_chat_action(
-                clerk_user_id, session_id, pending_action_data
-            )
-
         # Build metadata
         metadata = ChatMessageMetadata(
             reasoning_steps=agent_result.get("reasoning_steps", []),
             source_references=self._dedupe_source_references(agent_result.get("source_references", [])),
-            pending_action=ChatPendingAction.model_validate(persisted_action) if persisted_action else None,
+            pending_action=None,
             operation_id=(operation_metadata or {}).get("operation_id"),
             sequence_no=(operation_metadata or {}).get("sequence_no"),
         )
@@ -468,13 +366,6 @@ class NutriChatService:
             for chunk in self._chunk_text(message.content):
                 await emitter({"type": "assistant_delta", "data": {"delta": chunk}})
                 await asyncio.sleep(0.015)
-
-            # Emit pending action card if present
-            if message.metadata and message.metadata.pending_action:
-                await emitter({
-                    "type": "pending_action",
-                    "data": message.metadata.pending_action.model_dump(mode="json"),
-                })
 
             await emitter({"type": "message", "data": message.model_dump(mode="json")})
 
@@ -515,88 +406,8 @@ class NutriChatService:
         return cleaned
 
     async def execute_tool(self, tool_name: str, tool_input: dict[str, Any], clerk_user_id: str = "") -> dict[str, Any]:
-        # ── History lookup tools ─────────────────────────────────────
         if tool_name in LOOKUP_TOOL_NAMES:
             return await self._execute_lookup_tool(tool_name, tool_input, clerk_user_id)
-
-        # ── Preview tools ────────────────────────────────────────────
-        if tool_name == "preview_bmi":
-            request = validate_bmi_input(tool_input)
-            result = await self.calculator_service.preview_bmi(request)
-            return {
-                "tool_name": tool_name,
-                "result": result.model_dump(mode="json"),
-                "reasoning_note": "The BMI preview is ready and can be translated into plain-language guidance.",
-                "source_reference": build_tool_reference("nutri_calc", "BMI preview"),
-                "pending_action": build_pending_action(
-                    kind="save_calculation",
-                    title="Save BMI result",
-                    summary="Save this BMI preview to your Nutri Calc history.",
-                    preview_payload={
-                        "calculator_type": "bmi",
-                        "input": request.model_dump(),
-                        "result": result.model_dump(mode="json"),
-                    },
-                ),
-            }
-
-        if tool_name == "preview_calories":
-            request = validate_calorie_input(tool_input)
-            result = await self.calculator_service.preview_calories(request)
-            return {
-                "tool_name": tool_name,
-                "result": result.model_dump(mode="json"),
-                "reasoning_note": "The calorie estimate is ready and can now be explained in a practical way.",
-                "source_reference": build_tool_reference("nutri_calc", "Calorie preview"),
-                "pending_action": build_pending_action(
-                    kind="save_calculation",
-                    title="Save calorie estimate",
-                    summary="Save this calorie preview to your Nutri Calc history.",
-                    preview_payload={
-                        "calculator_type": "calories",
-                        "input": request.model_dump(),
-                        "result": result.model_dump(mode="json"),
-                    },
-                ),
-            }
-
-        if tool_name == "preview_recommendations":
-            request = validate_recommendation_input(tool_input)
-            result = await self.recommendation_service.preview(request)
-            return {
-                "tool_name": tool_name,
-                "result": result.model_dump(mode="json"),
-                "reasoning_note": "The recommendation preview is ready and can now be summarized for the user.",
-                "source_reference": build_tool_reference("recommendations", "Recommendation preview"),
-                "pending_action": build_pending_action(
-                    kind="save_recommendations",
-                    title="Save recommendations",
-                    summary="Save this recommendation set to your history.",
-                    preview_payload={
-                        "input": request.model_dump(),
-                        "result": result.model_dump(mode="json"),
-                    },
-                ),
-            }
-
-        if tool_name == "preview_recipe":
-            request = validate_recipe_input(tool_input)
-            result = await self.recipe_service.preview(request)
-            return {
-                "tool_name": tool_name,
-                "result": result.model_dump(mode="json"),
-                "reasoning_note": "The recipe preview is ready and can now be matched to the user's goal.",
-                "source_reference": build_tool_reference("recipes", "Recipe preview"),
-                "pending_action": build_pending_action(
-                    kind="save_recipe",
-                    title="Save recipe",
-                    summary="Save this recipe to your recipe history.",
-                    preview_payload={
-                        "input": request.model_dump(),
-                        "result": result.model_dump(mode="json"),
-                    },
-                ),
-            }
 
         raise AppException("UNSUPPORTED_TOOL", f"Unsupported chat tool: {tool_name}")
 
@@ -609,7 +420,7 @@ class NutriChatService:
         feature_map = {
             "lookup_calculation_history": ("calculations", "nutri_calc", "Calculation history"),
             "lookup_recipe_history": ("recipes", "recipes", "Recipe history"),
-            "lookup_recommendation_history": ("recommendations", "recommendations", "Recommendation history"),
+            "lookup_smart_picks_history": ("recommendations", "recommendations", "Nutri Smart Picks history"),
             "lookup_meal_plan_history": ("mealPlans", "mealPlans", "Meal plan history"),
             "lookup_food_insights_history": ("foodInsights", "foodInsights", "Food insight history"),
             "lookup_ingredient_checks_history": ("ingredientChecks", "ingredientChecks", "Ingredient check history"),

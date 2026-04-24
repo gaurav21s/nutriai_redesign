@@ -238,13 +238,48 @@ export interface Article {
   created_at: string;
 }
 
-export type RecommendationType = "healthier_alternative" | "new_healthy_recipe" | "both";
+export type SmartPickMode = "compare_options" | "situation_pick" | "swap_current_choice";
+export type SmartPickGoal =
+  | "fat_loss"
+  | "muscle_gain"
+  | "maintenance"
+  | "energy_focus"
+  | "recovery"
+  | "healthy_lifestyle";
 
-export interface RecommendationResponse {
+export interface SmartPickRequest {
+  goal: SmartPickGoal;
+  mode: SmartPickMode;
+  situation?: string;
+  options?: string[];
+  current_choice?: string;
+  constraints?: string[];
+  diet_preference?: string;
+  budget?: string;
+  time_available?: string;
+  cooking_access?: string;
+  context?: string;
+}
+
+export interface SmartPickOption {
+  label: string;
+  rank: number;
+  verdict: string;
+  why: string;
+  tradeoff: string;
+  quick_upgrade: string;
+  good_for: string;
+  avoid_if: string;
+}
+
+export interface SmartPickResponse {
   id: string;
   created_at: string;
   title: string;
-  recommendations: string[];
+  decision_summary: string;
+  best_pick: string;
+  fallback_rule: string;
+  ranked_options: SmartPickOption[];
   raw_response: string;
 }
 

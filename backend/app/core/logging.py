@@ -248,7 +248,7 @@ def classify_feature(path: str) -> str:
         return "nutri_quiz"
     if "/nutri-chat/" in lowered:
         return "nutri_chat"
-    if "/recommendations/" in lowered:
+    if "/nutri-smart-picks/" in lowered or "/recommendations/" in lowered:
         return "recommendations"
     if "/calculators/" in lowered:
         return "nutri_calc"

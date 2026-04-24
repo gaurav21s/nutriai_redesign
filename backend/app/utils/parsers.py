@@ -268,3 +268,80 @@ def parse_bullet_recommendations(raw: str) -> list[str]:
     if not items:
         items = [chunk.strip() for chunk in raw.split("\n") if chunk.strip()]
     return items
+
+
+def parse_smart_pick_json(raw: str) -> dict:
+    try:
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start == -1 or end == -1:
+            raise ValueError("JSON object not found")
+
+        payload = json.loads(raw[start : end + 1])
+        ranked = payload.get("ranked_options", [])
+        ranked_options: list[dict] = []
+        for index, item in enumerate(ranked, start=1):
+            if not isinstance(item, dict):
+                continue
+            ranked_options.append(
+                {
+                    "label": str(item.get("label") or f"Option {index}").strip(),
+                    "rank": int(item.get("rank") or index),
+                    "verdict": str(item.get("verdict") or "Solid option").strip(),
+                    "why": str(item.get("why") or "Supports the selected goal better than the alternatives.").strip(),
+                    "tradeoff": str(item.get("tradeoff") or "May be less convenient or less indulgent.").strip(),
+                    "quick_upgrade": str(
+                        item.get("quick_upgrade") or "Pair it with water and add a protein or fiber side."
+                    ).strip(),
+                    "good_for": str(item.get("good_for") or "Everyday goal alignment.").strip(),
+                    "avoid_if": str(item.get("avoid_if") or "It does not fit your dietary restrictions.").strip(),
+                }
+            )
+
+        if not ranked_options:
+            raise ValueError("No ranked options found")
+
+        best_pick = str(payload.get("best_pick") or ranked_options[0]["label"]).strip()
+        return {
+            "created_at": _now_iso(),
+            "title": str(payload.get("title") or "Nutri Smart Picks").strip(),
+            "decision_summary": str(
+                payload.get("decision_summary")
+                or "These are the strongest real-world choices for the user's goal and situation."
+            ).strip(),
+            "best_pick": best_pick,
+            "fallback_rule": str(
+                payload.get("fallback_rule")
+                or "When unsure, choose the least fried option with visible protein and some fiber."
+            ).strip(),
+            "ranked_options": ranked_options,
+            "recommendations": [item["label"] for item in ranked_options],
+            "raw_response": raw,
+        }
+    except Exception:
+        recommendations = parse_bullet_recommendations(raw) or [
+            "Choose the option with more protein, more fiber, and fewer fried or sugary extras."
+        ]
+        ranked_options = [
+            {
+                "label": item,
+                "rank": index + 1,
+                "verdict": "Reasonable pick",
+                "why": item,
+                "tradeoff": "May still need portion control or a better side choice.",
+                "quick_upgrade": "Add a lean protein or vegetable side and skip the sweet drink.",
+                "good_for": "General goal alignment.",
+                "avoid_if": "It conflicts with your dietary restrictions or medical guidance.",
+            }
+            for index, item in enumerate(recommendations[:5])
+        ]
+        return {
+            "created_at": _now_iso(),
+            "title": "Nutri Smart Picks",
+            "decision_summary": "Here are practical choices that should keep the user closer to their goal.",
+            "best_pick": ranked_options[0]["label"],
+            "fallback_rule": "When unsure, prefer the option with clearer protein, less frying, and fewer sugary extras.",
+            "ranked_options": ranked_options,
+            "recommendations": [item["label"] for item in ranked_options],
+            "raw_response": raw,
+        }

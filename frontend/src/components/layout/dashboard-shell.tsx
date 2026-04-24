@@ -21,6 +21,7 @@ const pathPermissionMap: Array<{ prefix: string; permission: string }> = [
   { prefix: "/nutri-quiz", permission: "nutri_quiz" },
   { prefix: "/nutri-calc", permission: "nutri_calc" },
   { prefix: "/recommendations", permission: "recommendations" },
+  { prefix: "/nutri-smart-picks", permission: "recommendations" },
 ];
 
 function resolveRequiredPermission(pathname: string): string | null {

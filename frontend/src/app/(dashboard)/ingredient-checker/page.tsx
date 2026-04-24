@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Sparkles, ShieldCheck, AlertCircle } from "lucide-react";
 
@@ -17,12 +18,18 @@ import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useConvexHistory } from "@/hooks/useConvexHistory";
 import type { IngredientCheckResponse, InputMode } from "@/types/api";
 
-export default function IngredientCheckerPage() {
+function IngredientCheckerPageContent() {
   const api = useApiClient();
   const { user } = useUser();
 
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<InputMode>("text");
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    const q = searchParams.get("text");
+    if (q) { setMode("text"); setText(q); }
+  }, [searchParams]);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<IngredientCheckResponse | null>(null);
 
@@ -184,5 +191,13 @@ export default function IngredientCheckerPage() {
         ) : null}
       </div>
     </FeatureShell>
+  );
+}
+
+export default function IngredientCheckerPage() {
+  return (
+    <Suspense fallback={null}>
+      <IngredientCheckerPageContent />
+    </Suspense>
   );
 }

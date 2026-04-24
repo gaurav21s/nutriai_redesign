@@ -5,7 +5,7 @@ export function FieldLabel({ children, htmlFor, className }: { children: ReactNo
   return (
     <label
       htmlFor={htmlFor}
-      className={cn("mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-accent-600", className)}
+      className={cn("mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-heritage", className)}
     >
       {children}
     </label>

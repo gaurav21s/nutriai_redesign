@@ -23,7 +23,7 @@ export function Navbar() {
           <div className="leading-none">
             <div className="text-[28px] font-display font-semibold tracking-tight text-foreground">
               <span>Nutri</span>
-              <span className="text-vibrant italic">AI</span>
+              <span className="text-heritage italic">AI</span>
             </div>
             <div className="mt-1 text-[11px] text-foreground/55">
               Your Nutrition Companion

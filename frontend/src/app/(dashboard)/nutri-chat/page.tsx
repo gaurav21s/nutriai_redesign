@@ -1,8 +1,9 @@
 "use client";
 
-import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { KeyboardEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pencil, Plus, Send, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Loader2, MessageSquare, Pencil, Plus, Send, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,48 @@ import { captureEvent } from "@/lib/posthog";
 import { emitFrontendTelemetry } from "@/lib/telemetry";
 import type {
   ChatMessage,
-  ChatPendingAction,
   ChatReasoningStep,
   ChatSession,
   ChatStreamEvent,
 } from "@/types/api";
+
+/** Renders markdown-style links [text](/path) and **bold** as React elements. */
+function renderMessageContent(text: string): ReactNode[] {
+  // Match markdown links [label](/path) and **bold**
+  const parts = text.split(/(\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*)/g);
+  const nodes: ReactNode[] = [];
+  let i = 0;
+  while (i < parts.length) {
+    const raw = parts[i];
+    // Full match group (the entire [label](url) or **bold**)
+    const fullMatch = parts[i + 1];
+    if (fullMatch && parts[i + 2] && parts[i + 3]) {
+      // It's a markdown link
+      if (raw) nodes.push(raw);
+      const label = parts[i + 2];
+      const href = parts[i + 3];
+      nodes.push(
+        <Link
+          key={`link-${i}`}
+          href={href}
+          className="font-medium text-vibrant underline underline-offset-2 hover:text-vibrant/80"
+        >
+          {label}
+        </Link>
+      );
+      i += 5; // skip: raw, fullMatch, label, href, bold(undefined)
+    } else if (fullMatch && parts[i + 4]) {
+      // It's **bold**
+      if (raw) nodes.push(raw);
+      nodes.push(<strong key={`bold-${i}`}>{parts[i + 4]}</strong>);
+      i += 5;
+    } else {
+      if (raw) nodes.push(raw);
+      i += 1;
+    }
+  }
+  return nodes;
+}
 
 function formatWhen(value: string): string {
   return new Date(value).toLocaleString([], {
@@ -114,80 +152,14 @@ function ReasoningPanel({
   );
 }
 
-function PendingActionCard({
-  action,
-  disabled,
-  onConfirm,
-  onReject,
-}: {
-  action: ChatPendingAction;
-  disabled: boolean;
-  onConfirm: () => void;
-  onReject: () => void;
-}) {
-  const statusTone =
-    action.status === "confirmed"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : action.status === "rejected"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : "border-amber-200 bg-amber-50 text-amber-800";
-
-  return (
-    <div className="rounded-[10px] border border-stone-200 bg-stone-50 p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-stone-900">{action.title}</p>
-          <p className="mt-1 text-sm leading-6 text-stone-600">{action.summary}</p>
-        </div>
-        <span className={cn("rounded-md border px-2 py-1 text-xs font-medium", statusTone)}>
-          {action.status}
-        </span>
-      </div>
-
-      {action.status === "pending" ? (
-        <div className="mt-3 flex gap-2">
-          <Button
-            type="button"
-            size="sm"
-            className="rounded-[8px]"
-            disabled={disabled}
-            onClick={onConfirm}
-          >
-            <Check className="mr-2 h-4 w-4" />
-            Save
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="rounded-[8px]"
-            disabled={disabled}
-            onClick={onReject}
-          >
-            <X className="mr-2 h-4 w-4" />
-            Dismiss
-          </Button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function MessageItem({
   message,
   isStreaming,
-  actionBusyId,
-  onConfirmAction,
-  onRejectAction,
 }: {
   message: ChatMessage;
   isStreaming: boolean;
-  actionBusyId: string | null;
-  onConfirmAction: (action: ChatPendingAction) => void;
-  onRejectAction: (action: ChatPendingAction) => void;
 }) {
   const isAssistant = message.role === "assistant";
-  const pendingAction = message.metadata?.pending_action;
 
   return (
     <div className={cn("flex", isAssistant ? "justify-start" : "justify-end")}>
@@ -216,7 +188,7 @@ function MessageItem({
         ) : null}
 
         {message.content ? (
-          <div className="mt-3 whitespace-pre-wrap text-sm leading-7">{message.content}</div>
+          <div className="mt-3 whitespace-pre-wrap text-sm leading-7">{renderMessageContent(message.content)}</div>
         ) : null}
 
         {isAssistant && message.metadata?.source_references?.length ? (
@@ -229,17 +201,6 @@ function MessageItem({
                 {source.label}
               </span>
             ))}
-          </div>
-        ) : null}
-
-        {isAssistant && pendingAction ? (
-          <div className="mt-3">
-            <PendingActionCard
-              action={pendingAction}
-              disabled={actionBusyId === pendingAction.action_id}
-              onConfirm={() => onConfirmAction(pendingAction)}
-              onReject={() => onRejectAction(pendingAction)}
-            />
           </div>
         ) : null}
       </article>
@@ -257,7 +218,6 @@ export default function NutriChatPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [actionBusyId, setActionBusyId] = useState<string | null>(null);
   const [streamingAssistantId, setStreamingAssistantId] = useState<string | null>(null);
   const [showSessions, setShowSessions] = useState(false);
   const [sessionItems, setSessionItems] = useState<ChatSession[]>([]);
@@ -546,20 +506,6 @@ export default function NutriChatPage() {
             return;
           }
 
-          if (event.type === "pending_action") {
-            setMessages((prev) =>
-              upsertStreamingAssistant(prev, tempAssistantId, (message) => ({
-                ...message,
-                metadata: {
-                  reasoning_steps: message.metadata?.reasoning_steps ?? [],
-                  source_references: message.metadata?.source_references ?? [],
-                  pending_action: event.data,
-                },
-              }))
-            );
-            return;
-          }
-
           if (event.type === "message") {
             setMessages((prev) => prev.map((row) => (row.id === tempAssistantId ? normalizeMessage(event.data) : row)));
             return;
@@ -584,33 +530,6 @@ export default function NutriChatPage() {
     } finally {
       setStreamingAssistantId(null);
       setSending(false);
-    }
-  }
-
-  async function handleConfirmAction(action: ChatPendingAction) {
-    if (!sessionId) return;
-    setActionBusyId(action.action_id);
-    try {
-      await api.confirmChatAction(sessionId, action.action_id);
-      await loadSession(sessionId);
-      await loadSessions({ silent: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save that result.");
-    } finally {
-      setActionBusyId(null);
-    }
-  }
-
-  async function handleRejectAction(action: ChatPendingAction) {
-    if (!sessionId) return;
-    setActionBusyId(action.action_id);
-    try {
-      await api.rejectChatAction(sessionId, action.action_id);
-      await loadSession(sessionId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to dismiss that action.");
-    } finally {
-      setActionBusyId(null);
     }
   }
 
@@ -794,9 +713,6 @@ export default function NutriChatPage() {
                     key={message.id}
                     message={normalizeMessage(message)}
                     isStreaming={streamingAssistantId === message.id}
-                    actionBusyId={actionBusyId}
-                    onConfirmAction={(action) => void handleConfirmAction(action)}
-                    onRejectAction={(action) => void handleRejectAction(action)}
                   />
                 ))
               ) : (
@@ -804,7 +720,7 @@ export default function NutriChatPage() {
                   <MessageSquare className="h-10 w-10 text-stone-400" />
                   <p className="mt-4 text-base font-medium text-stone-800">Start a conversation</p>
                   <p className="mt-2 max-w-md text-sm leading-6 text-stone-500">
-                    Ask a question, request a calculator preview, or let the agent use your saved NutriAI history to answer with more context.
+                    Ask about your BMI, calories, recipes, meal plans, or any nutrition question. The agent can look up your saved NutriAI history for context.
                   </p>
                 </div>
               )}

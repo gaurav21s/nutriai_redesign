@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Sparkles, Activity, PieChart, Info, ArrowRight } from "lucide-react";
 
@@ -18,12 +19,18 @@ import { useAsyncAction } from "@/hooks/useAsyncAction";
 import { useConvexHistory } from "@/hooks/useConvexHistory";
 import type { FoodInsightResponse, InputMode } from "@/types/api";
 
-export default function FoodInsightPage() {
+function FoodInsightPageContent() {
   const api = useApiClient();
   const { user } = useUser();
 
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<InputMode>("text");
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    const q = searchParams.get("text");
+    if (q) { setMode("text"); setText(q); }
+  }, [searchParams]);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<FoodInsightResponse | null>(null);
 
@@ -176,5 +183,13 @@ export default function FoodInsightPage() {
         ) : null}
       </div>
     </FeatureShell>
+  );
+}
+
+export default function FoodInsightPage() {
+  return (
+    <Suspense fallback={null}>
+      <FoodInsightPageContent />
+    </Suspense>
   );
 }

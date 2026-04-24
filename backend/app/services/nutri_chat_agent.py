@@ -12,12 +12,9 @@ from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 
-from app.core.exceptions import AppException, ExternalServiceException
-from app.schemas.calculators import BMIRequest, CaloriesRequest
+from app.core.exceptions import ExternalServiceException
 from app.schemas.nutri_chat import ChatContextSection, ChatSourceReference
-from app.schemas.recipes import RecipeGenerateRequest
-from app.schemas.recommendations import RecommendationGenerateRequest
-from app.services.nutri_chat_tools import ALL_TOOLS, LOOKUP_TOOL_NAMES, PREVIEW_TOOL_NAMES
+from app.services.nutri_chat_tools import ALL_TOOLS, LOOKUP_TOOL_NAMES
 from app.utils.ai_clients import _response_text
 from app.utils.fallback_ai_clients import FallbackOpenRouterClient
 from app.utils.prompt_builders import agent_chat_system_prompt
@@ -145,7 +142,7 @@ def _infer_direct_context_references(
 
     feature_keywords = {
         "nutri_calc": ("bmi", "calorie", "maintenance", "bmr", "weight", "height"),
-        "recommendations": ("recommend", "alternative", "swap", "better option"),
+        "recommendations": ("recommend", "alternative", "swap", "better option", "compare", "choose", "pick"),
         "recipes": ("recipe", "meal", "dish", "cook", "muscle"),
         "mealPlans": ("meal plan", "diet plan"),
         "foodInsights": ("food", "healthy", "nutrition"),
@@ -513,7 +510,7 @@ class NutriChatAgentRuntime:
             "reasoning_steps": reasoning_steps,
             "source_references": source_references,
             "final_response": _message_text(model_response)
-            or "I can help with that. Let me know if you'd like a calculation, recipe, or recommendation.",
+            or "I can help with that. Let me know if you'd like a calculation, recipe, or a Nutri Smart Pick.",
         }
 
     # ------------------------------------------------------------------
@@ -581,7 +578,6 @@ class NutriChatAgentRuntime:
 
         # ── Process results, build ToolMessages ─────────────────────
         new_tool_messages: list[ToolMessage] = []
-        last_pending_action: dict[str, Any] | None = state.get("pending_action")
 
         for item in execution_results:
             if isinstance(item, BaseException):
@@ -628,10 +624,6 @@ class NutriChatAgentRuntime:
             if isinstance(source_ref, dict) and source_ref not in source_references:
                 source_references.append(source_ref)
 
-            # Track pending action (last preview tool wins)
-            if tool_name in PREVIEW_TOOL_NAMES and result.get("pending_action"):
-                last_pending_action = result.get("pending_action")
-
             tool_results.append(result)
             called_signatures.append(_tool_signature(tool_name, _tool_call_args(tc)))
 
@@ -641,7 +633,6 @@ class NutriChatAgentRuntime:
             "reasoning_steps": reasoning_steps,
             "source_references": source_references,
             "tool_results": tool_results,
-            "pending_action": last_pending_action,
             "loop_count": int(state.get("loop_count", 0)) + 1,
             "total_tool_calls": int(state.get("total_tool_calls", 0)) + len(tool_calls),
             "called_tool_signatures": called_signatures,
@@ -715,9 +706,9 @@ def build_context_sections(payloads: dict[str, list[dict[str, Any]]]) -> list[Ch
         sections.append(
             ChatContextSection(
                 feature="recommendations",
-                label="Recommendations",
+                label="Nutri Smart Picks",
                 item_count=len(recommendations),
-                summary=f"{len(recommendations)} saved recommendation sets. Latest: {latest.get('title', 'recommendations')}.",
+                summary=f"{len(recommendations)} saved Nutri Smart Picks sets. Latest: {latest.get('title', 'smart picks')}.",
                 last_updated=latest.get("created_at"),
             )
         )
@@ -747,37 +738,3 @@ def build_context_sections(payloads: dict[str, list[dict[str, Any]]]) -> list[Ch
 
 def build_tool_reference(feature: str, label: str) -> dict[str, Any]:
     return ChatSourceReference(source_type="tool", feature=feature, label=label).model_dump()
-
-
-def build_pending_action(
-    *,
-    kind: str,
-    title: str,
-    summary: str,
-    preview_payload: dict[str, Any],
-) -> dict[str, Any]:
-    if kind not in {"save_calculation", "save_recommendations", "save_recipe"}:
-        raise AppException("INVALID_ACTION", "Unsupported pending action type")
-    return {
-        "kind": kind,
-        "title": title,
-        "summary": summary,
-        "status": "pending",
-        "preview_payload": preview_payload,
-    }
-
-
-def validate_bmi_input(tool_input: dict[str, Any]) -> BMIRequest:
-    return BMIRequest.model_validate(tool_input)
-
-
-def validate_calorie_input(tool_input: dict[str, Any]) -> CaloriesRequest:
-    return CaloriesRequest.model_validate(tool_input)
-
-
-def validate_recommendation_input(tool_input: dict[str, Any]) -> RecommendationGenerateRequest:
-    return RecommendationGenerateRequest.model_validate(tool_input)
-
-
-def validate_recipe_input(tool_input: dict[str, Any]) -> RecipeGenerateRequest:
-    return RecipeGenerateRequest.model_validate(tool_input)

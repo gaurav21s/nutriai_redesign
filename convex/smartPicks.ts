@@ -11,7 +11,11 @@ export const create = mutation({
       record_id,
       clerk_user_id: args.clerk_user_id,
       operation_id: typeof args.payload.operation_id === "string" ? args.payload.operation_id : undefined,
-      title: args.payload.title ?? "Recommendations",
+      title: args.payload.title ?? "Nutri Smart Picks",
+      decision_summary: args.payload.decision_summary ?? "",
+      best_pick: args.payload.best_pick ?? "",
+      fallback_rule: args.payload.fallback_rule ?? "",
+      ranked_options: args.payload.ranked_options ?? [],
       recommendations: args.payload.recommendations ?? [],
       raw_response: args.payload.raw_response ?? "",
       input: args.payload.input ?? {},
@@ -52,7 +56,7 @@ export const getById = query({
 export const aggregateCount = action({
   args: { clerk_user_id: v.string() },
   handler: async (ctx, args) => {
-    const rows = await ctx.runQuery("recommendations:listByUser" as any, {
+    const rows = await ctx.runQuery("smartPicks:listByUser" as any, {
       clerk_user_id: args.clerk_user_id,
       limit: 1000,
     });

@@ -23,11 +23,11 @@ import type {
   QuizSessionResponse,
   QuizSubmitResponse,
   RecipeResponse,
-  RecommendationResponse,
+  SmartPickRequest,
+  SmartPickResponse,
   SubscriptionEvent,
   SubscriptionResponse,
   SubscriptionUsageResponse,
-  RecommendationType,
   RecipeType,
   ShoppingLinksResponse,
 } from "@/types/api";
@@ -172,7 +172,9 @@ export class APIClient {
     if (path.includes("/recipes/")) return { ...base, category: "llm", feature: "recipe_finder" };
     if (path.includes("/quizzes/")) return { ...base, category: "llm", feature: "nutri_quiz" };
     if (path.includes("/nutri-chat/")) return { ...base, category: "llm", feature: "nutri_chat" };
-    if (path.includes("/recommendations/")) return { ...base, category: "llm", feature: "recommendations" };
+    if (path.includes("/nutri-smart-picks/") || path.includes("/recommendations/")) {
+      return { ...base, category: "llm", feature: "recommendations" };
+    }
     if (path.includes("/calculators/")) return { ...base, category: "workflow", feature: "nutri_calc" };
     if (path.includes("/subscriptions/")) return { ...base, category: "billing", feature: "subscription" };
     if (path.includes("/articles")) return { ...base, category: "content", feature: "articles" };
@@ -877,27 +879,28 @@ export class APIClient {
     return this.request(`/api/v1/articles/${slug}`);
   }
 
-  async generateRecommendations(query: string, recommendationType: RecommendationType): Promise<RecommendationResponse> {
+  async generateSmartPicks(input: SmartPickRequest): Promise<SmartPickResponse> {
     return this.requestWithAnalytics(
-      "/api/v1/recommendations/generate",
+      "/api/v1/nutri-smart-picks/generate",
       {
         method: "POST",
-        body: JSON.stringify({ query, recommendation_type: recommendationType }),
+        body: JSON.stringify(input),
       },
       {
         category: "llm",
         feature: "recommendations",
         properties: {
-          recommendation_type: recommendationType,
-          query_length: query.trim().length,
+          mode: input.mode,
+          goal: input.goal,
+          option_count: input.options?.length ?? 0,
         },
       }
     );
   }
 
-  async getRecommendationHistory(limit = 20): Promise<RecommendationResponse[]> {
-    const payload = await this.request<{ items: RecommendationResponse[] }>(
-      `/api/v1/recommendations/history?limit=${limit}`
+  async getSmartPicksHistory(limit = 20): Promise<SmartPickResponse[]> {
+    const payload = await this.request<{ items: SmartPickResponse[] }>(
+      `/api/v1/nutri-smart-picks/history?limit=${limit}`
     );
     return payload.items;
   }

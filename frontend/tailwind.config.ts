@@ -30,6 +30,14 @@ const config: Config = {
           DEFAULT: "#d97706",
           foreground: "#FFFFFF",
         },
+        heritage: {
+          DEFAULT: "#d62176",
+          50: "#fdf2f8",
+          100: "#fce7f3",
+          200: "#fbcfe8",
+          600: "#d62176",
+          700: "#be185d",
+        },
         ochre: {
           DEFAULT: "#f3e7d3",
           foreground: "#292524",

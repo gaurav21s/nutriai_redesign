@@ -6,7 +6,6 @@ from fastapi.responses import StreamingResponse
 from app.core.security import AuthContext, get_auth_context
 from app.dependencies import chat_rate_limit, default_rate_limit, get_nutri_chat_service, get_operations_service
 from app.schemas.nutri_chat import (
-    ChatActionResponse,
     ChatContextResponse,
     ChatMessage,
     ChatMessageCreateRequest,
@@ -161,31 +160,3 @@ async def list_chat_messages(
     return ChatMessagesResponse(session_id=session_id, messages=items)
 
 
-@router.post(
-    "/sessions/{session_id}/actions/{action_id}/confirm",
-    response_model=ChatActionResponse,
-    summary="Confirm and save a pending agent action",
-    dependencies=[Depends(default_rate_limit)],
-)
-async def confirm_chat_action(
-    session_id: str,
-    action_id: str,
-    auth: AuthContext = Depends(get_auth_context),
-    service: NutriChatService = Depends(get_nutri_chat_service),
-) -> ChatActionResponse:
-    return await service.confirm_action(auth.clerk_user_id, session_id, action_id)
-
-
-@router.post(
-    "/sessions/{session_id}/actions/{action_id}/reject",
-    response_model=ChatActionResponse,
-    summary="Reject a pending agent action",
-    dependencies=[Depends(default_rate_limit)],
-)
-async def reject_chat_action(
-    session_id: str,
-    action_id: str,
-    auth: AuthContext = Depends(get_auth_context),
-    service: NutriChatService = Depends(get_nutri_chat_service),
-) -> ChatActionResponse:
-    return await service.reject_action(auth.clerk_user_id, session_id, action_id)

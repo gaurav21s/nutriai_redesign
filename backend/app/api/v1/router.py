@@ -13,7 +13,7 @@ from app.api.v1.endpoints import (
     operations,
     quizzes,
     recipes,
-    recommendations,
+    smart_picks,
     subscriptions,
 )
 from app.dependencies import require_permission
@@ -29,5 +29,5 @@ router.include_router(quizzes.router, dependencies=[Depends(require_permission("
 router.include_router(nutri_chat.router, dependencies=[Depends(require_permission("nutri_chat"))])
 router.include_router(calculators.router, dependencies=[Depends(require_permission("nutri_calc"))])
 router.include_router(articles.router, dependencies=[Depends(require_permission("articles"))])
-router.include_router(recommendations.router, dependencies=[Depends(require_permission("recommendations"))])
+router.include_router(smart_picks.router, dependencies=[Depends(require_permission("recommendations"))])
 router.include_router(subscriptions.router)

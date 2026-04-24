@@ -207,10 +207,18 @@ def test_full_api_smoke(monkeypatch) -> None:
     assert len(articles) > 0
     assert client.get(f"/api/v1/articles/{articles[0]['slug']}").status_code == 200
 
-    # Recommendations (allowed after plus plan selection)
-    recommendation = client.post(
-        "/api/v1/recommendations/generate",
-        json={"query": "white rice dinner", "recommendation_type": "both"},
+    # Nutri Smart Picks (allowed after plus plan selection)
+    smart_pick = client.post(
+        "/api/v1/nutri-smart-picks/generate",
+        json={
+            "goal": "fat_loss",
+            "mode": "compare_options",
+            "options": ["white rice dinner", "grilled chicken bowl", "paneer wrap"],
+            "context": "Need a practical dinner after work",
+        },
     )
-    assert recommendation.status_code == 200
-    assert client.get("/api/v1/recommendations/history").status_code == 200
+    assert smart_pick.status_code == 200
+    payload = smart_pick.json()
+    assert payload["best_pick"]
+    assert len(payload["ranked_options"]) >= 1
+    assert client.get("/api/v1/nutri-smart-picks/history").status_code == 200
